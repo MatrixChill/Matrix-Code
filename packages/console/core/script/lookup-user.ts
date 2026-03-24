@@ -178,9 +178,8 @@ async function printWorkspace(workspaceID: string) {
             balance: `$${(row.balance / 100000000).toFixed(2)}`,
             reload: row.reload ? "yes" : "no",
             customerID: row.customerID,
-            liteSubscriptionID: row.liteSubscriptionID,
-            blackSubscriptionID: row.blackSubscriptionID,
-            blackSubscription: row.blackSubscriptionID
+            GO: row.liteSubscriptionID,
+            Black: row.blackSubscriptionID
               ? [
                   `Black ${row.blackSubscription.enrichment!.plan}`,
                   row.blackSubscription.enrichment!.seats > 1
