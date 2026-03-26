@@ -1334,6 +1334,9 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
 
   const displayText = () => (part().text ?? "").trim()
   const throttledText = createThrottledValue(displayText)
+  const streaming = createMemo(
+    () => props.message.role === "assistant" && typeof (props.message as AssistantMessage).time.completed !== "number",
+  )
   const isLastTextPart = createMemo(() => {
     const last = (data.store.part?.[props.message.id] ?? [])
       .filter((item): item is TextPart => item?.type === "text" && !!item.text?.trim())
@@ -1360,7 +1363,7 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     <Show when={throttledText()}>
       <div data-component="text-part">
         <div data-slot="text-part-body">
-          <Markdown text={throttledText()} cacheKey={part().id} />
+          <Markdown text={throttledText()} cacheKey={part().id} streaming={streaming()} />
         </div>
         <Show when={showCopy()}>
           <div data-slot="text-part-copy-wrapper" data-interrupted={interrupted() ? "" : undefined}>
@@ -1394,11 +1397,14 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
   const part = () => props.part as ReasoningPart
   const text = () => part().text.trim()
   const throttledText = createThrottledValue(text)
+  const streaming = createMemo(
+    () => props.message.role === "assistant" && typeof (props.message as AssistantMessage).time.completed !== "number",
+  )
 
   return (
     <Show when={throttledText()}>
       <div data-component="reasoning-part">
-        <Markdown text={throttledText()} cacheKey={part().id} />
+        <Markdown text={throttledText()} cacheKey={part().id} streaming={streaming()} />
       </div>
     </Show>
   )
