@@ -1231,10 +1231,7 @@ export namespace Config {
                 if (provider && model) result.model = `${provider}/${model}`
                 result["$schema"] = "https://opencode.ai/config.json"
                 result = mergeDeep(result, rest)
-                await fsNode.writeFile(
-                  path.join(Global.Path.config, "config.json"),
-                  JSON.stringify(result, null, 2),
-                )
+                await fsNode.writeFile(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
                 await fsNode.unlink(legacy)
               })
               .catch(() => {}),
@@ -1244,9 +1241,7 @@ export namespace Config {
         return result
       })
 
-      let cachedGlobal = yield* Effect.cached(
-        loadGlobal().pipe(Effect.orElseSucceed(() => ({}) as Info)),
-      )
+      let cachedGlobal = yield* Effect.cached(loadGlobal().pipe(Effect.orElseSucceed(() => ({}) as Info)))
 
       const getGlobal = Effect.fn("Config.getGlobal")(function* () {
         return yield* cachedGlobal
@@ -1440,9 +1435,7 @@ export namespace Config {
       })
 
       const waitForDependencies = Effect.fn("Config.waitForDependencies")(function* () {
-        yield* InstanceState.useEffect(state, (s) =>
-          Effect.promise(() => Promise.all(s.deps).then(() => undefined)),
-        )
+        yield* InstanceState.useEffect(state, (s) => Effect.promise(() => Promise.all(s.deps).then(() => undefined)))
       })
 
       const update = Effect.fn("Config.update")(function* (config: Info) {
@@ -1453,9 +1446,7 @@ export namespace Config {
       })
 
       const invalidate = Effect.fn("Config.invalidate")(function* (wait?: boolean) {
-        cachedGlobal = yield* Effect.cached(
-          loadGlobal().pipe(Effect.orElseSucceed(() => ({}) as Info)),
-        )
+        cachedGlobal = yield* Effect.cached(loadGlobal().pipe(Effect.orElseSucceed(() => ({}) as Info)))
         const task = Instance.disposeAll()
           .catch(() => undefined)
           .finally(() =>

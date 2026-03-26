@@ -127,10 +127,10 @@ Use `Effect.cached` when multiple concurrent callers should share a single in-fl
 
 ```ts
 // Inside the layer — yield* to initialize the memo
-let cached = yield* Effect.cached(loadExpensive())
+let cached = yield * Effect.cached(loadExpensive())
 
 const get = Effect.fn("Foo.get")(function* () {
-  return yield* cached  // concurrent callers share the same fiber
+  return yield* cached // concurrent callers share the same fiber
 })
 
 // To invalidate: swap in a fresh memo
@@ -140,6 +140,7 @@ const invalidate = Effect.fn("Foo.invalidate")(function* () {
 ```
 
 Prefer `Effect.cached` over these patterns:
+
 - Storing a `Fiber.Fiber | undefined` with manual check-and-fork (e.g. `file/index.ts` `ensure`)
 - Storing a `Promise<void>` task for deduplication (e.g. `skill/index.ts` `ensure`)
 - `let cached: X | undefined` with check-and-load (races when two callers see `undefined` before either resolves)
