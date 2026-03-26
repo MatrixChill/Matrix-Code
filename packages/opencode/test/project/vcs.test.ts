@@ -82,8 +82,11 @@ describeVcs("Vcs", () => {
       const pending = nextBranchUpdate(tmp.path)
 
       const head = path.join(tmp.path, ".git", "HEAD")
-      await fs.writeFile(head, `ref: refs/heads/${branch}
-`)
+      await fs.writeFile(
+        head,
+        `ref: refs/heads/${branch}
+`,
+      )
 
       const updated = await pending
       expect(updated).toBe(branch)
@@ -99,8 +102,11 @@ describeVcs("Vcs", () => {
       const pending = nextBranchUpdate(tmp.path)
 
       const head = path.join(tmp.path, ".git", "HEAD")
-      await fs.writeFile(head, `ref: refs/heads/${branch}
-`)
+      await fs.writeFile(
+        head,
+        `ref: refs/heads/${branch}
+`,
+      )
 
       await pending
       const current = await Vcs.branch()

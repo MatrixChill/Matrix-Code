@@ -1994,7 +1994,7 @@ export type Path = {
 }
 
 export type VcsInfo = {
-  branch: string
+  branch?: string
 }
 
 export type Command = {
