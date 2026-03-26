@@ -43,7 +43,6 @@ describe("LSP service lifecycle", () => {
       const result = await Lsp.LSP.status()
       expect(Array.isArray(result)).toBe(true)
       expect(result.length).toBe(0)
-
     }),
   )
 
@@ -53,7 +52,6 @@ describe("LSP service lifecycle", () => {
       const result = await Lsp.LSP.diagnostics()
       expect(typeof result).toBe("object")
       expect(Object.keys(result).length).toBe(0)
-
     }),
   )
 
@@ -62,7 +60,6 @@ describe("LSP service lifecycle", () => {
     withInstance(async (dir) => {
       const result = await Lsp.LSP.hasClients(path.join(dir, "test.ts"))
       expect(result).toBe(true)
-
     }),
   )
 
@@ -74,7 +71,6 @@ describe("LSP service lifecycle", () => {
       // So hasClients may return true even for outside files (it checks extension + root)
       // The guard is in getClients, not hasClients
       expect(typeof result).toBe("boolean")
-
     }),
   )
 
@@ -84,7 +80,6 @@ describe("LSP service lifecycle", () => {
       const result = await Lsp.LSP.workspaceSymbol("test")
       expect(Array.isArray(result)).toBe(true)
       expect(result.length).toBe(0)
-
     }),
   )
 
@@ -97,7 +92,6 @@ describe("LSP service lifecycle", () => {
         character: 0,
       })
       expect(Array.isArray(result)).toBe(true)
-
     }),
   )
 
@@ -110,7 +104,6 @@ describe("LSP service lifecycle", () => {
         character: 0,
       })
       expect(Array.isArray(result)).toBe(true)
-
     }),
   )
 
@@ -121,7 +114,6 @@ describe("LSP service lifecycle", () => {
       await Lsp.LSP.init()
       await Lsp.LSP.init()
       // Should not throw or create duplicate state
-
     }),
   )
 })
