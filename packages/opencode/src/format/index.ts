@@ -178,7 +178,10 @@ export namespace Format {
     }),
   )
 
-  export const defaultLayer = layer.pipe(Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer))
+  export const defaultLayer = layer.pipe(
+    Layer.provide(Config.defaultLayer),
+    Layer.provide(CrossSpawnSpawner.defaultLayer),
+  )
 
   const { runPromise } = makeRuntime(Service, defaultLayer)
 

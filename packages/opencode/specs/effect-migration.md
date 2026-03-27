@@ -277,6 +277,7 @@ Some services are effectified but still use raw `Filesystem.*` or `Process.spawn
 Similarly, **28 files** still import raw `fs` or `fs/promises` directly. These should migrate to `AppFileSystem` or `Filesystem.*` as they're touched.
 
 Current raw fs users that will convert during tool migration:
+
 - `tool/read.ts` — fs.createReadStream, readline
 - `tool/apply_patch.ts` — fs/promises
 - `tool/bash.ts` — fs/promises
