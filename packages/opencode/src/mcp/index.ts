@@ -477,10 +477,8 @@ export namespace MCP {
         })
       }
 
-
       const cache = yield* InstanceState.make<State>(
         Effect.fn("MCP.state")(function* () {
-
           const cfg = yield* cfgSvc.get()
           const config = cfg.mcp ?? {}
           const s: State = {
@@ -706,7 +704,6 @@ export namespace MCP {
       })
 
       const getMcpConfig = Effect.fnUntraced(function* (mcpName: string) {
-
         const cfg = yield* cfgSvc.get()
         const mcpConfig = cfg.mcp?.[mcpName]
         if (!mcpConfig || !isMcpConfigured(mcpConfig)) return undefined
