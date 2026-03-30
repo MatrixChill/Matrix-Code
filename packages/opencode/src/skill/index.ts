@@ -190,45 +190,45 @@ export namespace Skill {
   export class Service extends ServiceMap.Service<Service, Interface>()("@opencode/Skill") {}
 
   export const layer = Layer.effect(
-      Service,
-      Effect.gen(function* () {
-        const discovery = yield* Discovery.Service
-        const config = yield* Config.Service
-        const bus = yield* Bus.Service
-        const fsys = yield* AppFileSystem.Service
-        const state = yield* InstanceState.make(
-          Effect.fn("Skill.state")(function* (ctx) {
-            const s: State = { skills: {}, dirs: new Set() }
-            yield* loadSkills(s, config, discovery, bus, fsys, ctx.directory, ctx.worktree)
-            return s
-          }),
-        )
+    Service,
+    Effect.gen(function* () {
+      const discovery = yield* Discovery.Service
+      const config = yield* Config.Service
+      const bus = yield* Bus.Service
+      const fsys = yield* AppFileSystem.Service
+      const state = yield* InstanceState.make(
+        Effect.fn("Skill.state")(function* (ctx) {
+          const s: State = { skills: {}, dirs: new Set() }
+          yield* loadSkills(s, config, discovery, bus, fsys, ctx.directory, ctx.worktree)
+          return s
+        }),
+      )
 
-        const get = Effect.fn("Skill.get")(function* (name: string) {
-          const s = yield* InstanceState.get(state)
-          return s.skills[name]
-        })
+      const get = Effect.fn("Skill.get")(function* (name: string) {
+        const s = yield* InstanceState.get(state)
+        return s.skills[name]
+      })
 
-        const all = Effect.fn("Skill.all")(function* () {
-          const s = yield* InstanceState.get(state)
-          return Object.values(s.skills)
-        })
+      const all = Effect.fn("Skill.all")(function* () {
+        const s = yield* InstanceState.get(state)
+        return Object.values(s.skills)
+      })
 
-        const dirs = Effect.fn("Skill.dirs")(function* () {
-          const s = yield* InstanceState.get(state)
-          return Array.from(s.dirs)
-        })
+      const dirs = Effect.fn("Skill.dirs")(function* () {
+        const s = yield* InstanceState.get(state)
+        return Array.from(s.dirs)
+      })
 
-        const available = Effect.fn("Skill.available")(function* (agent?: Agent.Info) {
-          const s = yield* InstanceState.get(state)
-          const list = Object.values(s.skills).toSorted((a, b) => a.name.localeCompare(b.name))
-          if (!agent) return list
-          return list.filter((skill) => Permission.evaluate("skill", skill.name, agent.permission).action !== "deny")
-        })
+      const available = Effect.fn("Skill.available")(function* (agent?: Agent.Info) {
+        const s = yield* InstanceState.get(state)
+        const list = Object.values(s.skills).toSorted((a, b) => a.name.localeCompare(b.name))
+        if (!agent) return list
+        return list.filter((skill) => Permission.evaluate("skill", skill.name, agent.permission).action !== "deny")
+      })
 
-        return Service.of({ get, all, dirs, available })
-      }),
-    )
+      return Service.of({ get, all, dirs, available })
+    }),
+  )
 
   export const defaultLayer = layer.pipe(
     Layer.provide(Discovery.defaultLayer),

@@ -70,7 +70,9 @@ export namespace Auth {
         const data = yield* all()
         if (norm !== key) delete data[key]
         delete data[norm + "/"]
-        yield* fsys.writeJson(file, { ...data, [norm]: info }, 0o600).pipe(Effect.mapError(fail("Failed to write auth data")))
+        yield* fsys
+          .writeJson(file, { ...data, [norm]: info }, 0o600)
+          .pipe(Effect.mapError(fail("Failed to write auth data")))
       })
 
       const remove = Effect.fn("Auth.remove")(function* (key: string) {
