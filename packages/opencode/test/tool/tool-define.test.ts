@@ -34,7 +34,10 @@ describe("Tool.define", () => {
   test("object-defined tool does not accumulate wrapper layers across init() calls", async () => {
     let executeCalls = 0
 
-    const tool = Tool.define("test-tool", makeTool("test", () => executeCalls++))
+    const tool = Tool.define(
+      "test-tool",
+      makeTool("test", () => executeCalls++),
+    )
 
     // Call init() many times to simulate many agentic steps
     for (let i = 0; i < 100; i++) {
