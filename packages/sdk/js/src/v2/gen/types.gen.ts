@@ -2670,6 +2670,7 @@ export type ExperimentalConsoleGetResponses = {
   200: {
     consoleManagedProviders: Array<string>
     activeOrgName?: string
+    switchableOrgCount: number
   }
 }
 
