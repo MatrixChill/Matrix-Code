@@ -125,6 +125,8 @@ import type { EventSource } from "./context/sdk"
 import { DialogVariant } from "./component/dialog-variant"
 
 function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
+  const mouseEnabled = !Flag.OPENCODE_DISABLE_MOUSE && (_config.mouse ?? true)
+
   return {
     externalOutputMode: "passthrough",
     targetFps: 60,
@@ -133,6 +135,7 @@ function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
     useKittyKeyboard: { events: process.platform === "win32" },
     autoFocus: false,
     openConsoleOnError: false,
+    useMouse: mouseEnabled,
     consoleOptions: {
       keyBindings: [{ name: "y", ctrl: true, action: "copy-selection" }],
       onCopySelection: (text) => {
