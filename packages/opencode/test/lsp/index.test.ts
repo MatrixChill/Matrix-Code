@@ -57,7 +57,7 @@ describe("lsp.spawn", () => {
 
   test("spawns builtin Typescript LSP with correct arguments", async () => {
     await using tmp = await tmpdir()
-    
+
     // Create dummy tsserver to satisfy Module.resolve
     const tsdk = path.join(tmp.path, "node_modules", "typescript", "lib")
     await fs.mkdir(tsdk, { recursive: true })
