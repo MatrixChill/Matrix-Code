@@ -132,7 +132,7 @@ function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
     targetFps: 60,
     gatherStats: false,
     exitOnCtrlC: false,
-    useKittyKeyboard: { events: process.platform === "win32" },
+    useKittyKeyboard: {},
     autoFocus: false,
     openConsoleOnError: false,
     useMouse: mouseEnabled,
