@@ -1,5 +1,11 @@
 import { Cache, Clock, Duration, Effect, Layer, Option, Schema, SchemaGetter, ServiceMap } from "effect"
-import { FetchHttpClient, HttpClient, HttpClientError, HttpClientRequest, HttpClientResponse } from "effect/unstable/http"
+import {
+  FetchHttpClient,
+  HttpClient,
+  HttpClientError,
+  HttpClientRequest,
+  HttpClientResponse,
+} from "effect/unstable/http"
 
 import { makeRuntime } from "@/effect/run-service"
 import { withTransientReadRetry } from "@/util/effect-http-client"
@@ -136,9 +142,7 @@ const isTokenFresh = (tokenExpiry: number | null, now: number) =>
 const mapAccountServiceError =
   (message = "Account service operation failed") =>
   <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, AccountError, R> =>
-    effect.pipe(
-      Effect.mapError((cause) => accountErrorFromCause(cause, message)),
-    )
+    effect.pipe(Effect.mapError((cause) => accountErrorFromCause(cause, message)))
 
 const accountErrorFromCause = (cause: unknown, message: string): AccountError => {
   if (cause instanceof AccountServiceError || cause instanceof AccountTransportError) {

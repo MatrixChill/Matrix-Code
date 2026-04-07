@@ -88,7 +88,9 @@ it.live("login normalizes trailing slashes in the provided server URL", () =>
       }),
     )
 
-    const result = yield* Account.Service.use((s) => s.login("https://one.example.com/")).pipe(Effect.provide(live(client)))
+    const result = yield* Account.Service.use((s) => s.login("https://one.example.com/")).pipe(
+      Effect.provide(live(client)),
+    )
 
     expect(seen).toEqual(["POST https://one.example.com/auth/device/code"])
     expect(result.server).toBe("https://one.example.com")
