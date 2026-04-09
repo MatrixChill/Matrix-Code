@@ -388,7 +388,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         model: Provider.Model
         session: Session.Info
         tools?: Record<string, boolean>
-        processor: Pick<SessionProcessor.Handle, "message" | "partFromToolCall">
+        processor: Pick<SessionProcessor.Handle, "message" | "updateToolCall" | "completeToolCall">
         bypassAgentCheck: boolean
         messages: MessageV2.WithParts[]
       }) {
@@ -405,10 +405,9 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           messages: input.messages,
           metadata: (val) =>
             Effect.runPromise(
-              Effect.gen(function* () {
-                const match = input.processor.partFromToolCall(options.toolCallId)
-                if (!match || !["running", "pending"].includes(match.state.status)) return
-                yield* sessions.updatePart({
+              input.processor.updateToolCall(options.toolCallId, (match) => {
+                if (!["running", "pending"].includes(match.state.status)) return match
+                return {
                   ...match,
                   state: {
                     title: val.title,
@@ -417,7 +416,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                     input: args,
                     time: { start: Date.now() },
                   },
-                })
+                }
               }),
             ),
           ask: (req) =>
@@ -465,6 +464,9 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                     { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID, args },
                     output,
                   )
+                  if (options.abortSignal?.aborted) {
+                    yield* input.processor.completeToolCall(options.toolCallId, output)
+                  }
                   return output
                 }),
               )
@@ -529,7 +531,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   ...(truncated.truncated && { outputPath: truncated.outputPath }),
                 }
 
-                return {
+                const output = {
                   title: "",
                   metadata,
                   output: truncated.content,
@@ -541,6 +543,10 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   })),
                   content: result.content,
                 }
+                if (opts.abortSignal?.aborted) {
+                  yield* input.processor.completeToolCall(opts.toolCallId, output)
+                }
+                return output
               }),
             )
           tools[key] = item
