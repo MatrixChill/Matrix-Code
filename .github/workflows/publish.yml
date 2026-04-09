@@ -213,6 +213,7 @@ jobs:
     needs:
       - build-cli
       - version
+    if: github.ref_name != 'beta'
     continue-on-error: false
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -547,6 +548,7 @@ jobs:
       - sign-cli-windows
       - build-tauri
       - build-electron
+    if: always() && !failure() && !cancelled()
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v3
