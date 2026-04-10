@@ -66,9 +66,11 @@ export const call = <F extends Schema.Struct.Fields>(
         params: { name: tool, arguments: value },
       }),
     )
-    const response = yield* HttpClient.filterStatusOk(http).execute(request).pipe(
-      Effect.timeoutOrElse({ duration: timeout, orElse: () => Effect.die(new Error(`${tool} request timed out`)) }),
-    )
+    const response = yield* HttpClient.filterStatusOk(http)
+      .execute(request)
+      .pipe(
+        Effect.timeoutOrElse({ duration: timeout, orElse: () => Effect.die(new Error(`${tool} request timed out`)) }),
+      )
     const body = yield* response.text
     return yield* parseSse(body)
   })
