@@ -142,9 +142,9 @@ export const ApplyPatchTool = Tool.defineEffect(
           }
 
           case "delete": {
-            const contentToDelete = yield* afs.readFileString(filePath).pipe(
-              Effect.catch((error) => Effect.fail(new Error(`apply_patch verification failed: ${error}`))),
-            )
+            const contentToDelete = yield* afs
+              .readFileString(filePath)
+              .pipe(Effect.catch((error) => Effect.fail(new Error(`apply_patch verification failed: ${error}`))))
             const deleteDiff = trimDiff(createTwoFilesPatch(filePath, filePath, contentToDelete, ""))
 
             const deletions = contentToDelete.split("\n").length
@@ -199,7 +199,7 @@ export const ApplyPatchTool = Tool.defineEffect(
         switch (change.type) {
           case "add":
             // Create parent directories (recursive: true is safe on existing/root dirs)
-            
+
             yield* afs.writeWithDirs(change.filePath, change.newContent)
             updates.push({ file: change.filePath, event: "add" })
             break
@@ -212,7 +212,7 @@ export const ApplyPatchTool = Tool.defineEffect(
           case "move":
             if (change.movePath) {
               // Create parent directories (recursive: true is safe on existing/root dirs)
-              
+
               yield* afs.writeWithDirs(change.movePath!, change.newContent)
               yield* afs.remove(change.filePath)
               updates.push({ file: change.filePath, event: "unlink" })
@@ -269,9 +269,7 @@ export const ApplyPatchTool = Tool.defineEffect(
         if (errors.length > 0) {
           const limited = errors.slice(0, MAX_DIAGNOSTICS_PER_FILE)
           const suffix =
-            errors.length > MAX_DIAGNOSTICS_PER_FILE
-              ? `\n... and ${errors.length - MAX_DIAGNOSTICS_PER_FILE} more`
-              : ""
+            errors.length > MAX_DIAGNOSTICS_PER_FILE ? `\n... and ${errors.length - MAX_DIAGNOSTICS_PER_FILE} more` : ""
           output += `\n\nLSP errors detected in ${path.relative(Instance.worktree, target).replaceAll("\\", "/")}, please fix:\n<diagnostics file="${target}">\n${limited.map(LSP.Diagnostic.pretty).join("\n")}${suffix}\n</diagnostics>`
         }
       }
