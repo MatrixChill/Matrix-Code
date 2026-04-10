@@ -39,6 +39,11 @@ export namespace SessionCompaction {
   const DEFAULT_TAIL_TURNS = 2
   const MIN_TAIL_TOKENS = 2_000
   const MAX_TAIL_TOKENS = 8_000
+  type Turn = {
+    start: number
+    end: number
+    id: MessageID
+  }
 
   function usable(input: { cfg: Config.Info; model: Provider.Model }) {
     const reserved =
@@ -53,6 +58,24 @@ export namespace SessionCompaction {
       input.cfg.compaction?.tail_tokens ??
       Math.min(MAX_TAIL_TOKENS, Math.max(MIN_TAIL_TOKENS, Math.floor(usable(input) * 0.25)))
     )
+  }
+
+  function turns(messages: MessageV2.WithParts[]) {
+    const result: Turn[] = []
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i]
+      if (msg.info.role !== "user") continue
+      if (msg.parts.some((part) => part.type === "compaction")) continue
+      result.push({
+        start: i,
+        end: messages.length,
+        id: msg.info.id,
+      })
+    }
+    for (let i = 0; i < result.length - 1; i++) {
+      result[i].end = result[i + 1].start
+    }
+    return result
   }
 
   export interface Interface {
@@ -123,36 +146,36 @@ export namespace SessionCompaction {
         const limit = input.cfg.compaction?.tail_turns ?? DEFAULT_TAIL_TURNS
         if (limit <= 0) return { head: input.messages, tail_start_id: undefined }
         const budget = tailBudget({ cfg: input.cfg, model: input.model })
-        const turns = input.messages.flatMap((msg, idx) =>
-          msg.info.role === "user" && !msg.parts.some((part) => part.type === "compaction") ? [idx] : [],
+        const all = turns(input.messages)
+        if (!all.length) return { head: input.messages, tail_start_id: undefined }
+        const recent = all.slice(-limit)
+        const sizes = yield* Effect.forEach(
+          recent,
+          (turn) =>
+            estimate({
+              messages: input.messages.slice(turn.start, turn.end),
+              model: input.model,
+            }),
+          { concurrency: 1 },
         )
-        if (!turns.length) return { head: input.messages, tail_start_id: undefined }
-
-        let total = 0
-        let start = input.messages.length
-        let kept = 0
-
-        for (let i = turns.length - 1; i >= 0 && kept < limit; i--) {
-          const idx = turns[i]
-          const end = i + 1 < turns.length ? turns[i + 1] : input.messages.length
-          const size = yield* estimate({
-            messages: input.messages.slice(idx, end),
-            model: input.model,
-          })
-          if (kept === 0 && size > budget) {
-            log.info("tail fallback", { budget, size })
-            return { head: input.messages, tail_start_id: undefined }
-          }
-          if (total + size > budget) break
-          total += size
-          start = idx
-          kept++
+        if (sizes.at(-1)! > budget) {
+          log.info("tail fallback", { budget, size: sizes.at(-1) })
+          return { head: input.messages, tail_start_id: undefined }
         }
 
-        if (kept === 0 || start === 0) return { head: input.messages, tail_start_id: undefined }
+        let total = 0
+        let keep: Turn | undefined
+        for (let i = recent.length - 1; i >= 0; i--) {
+          const size = sizes[i]
+          if (total + size > budget) break
+          total += size
+          keep = recent[i]
+        }
+
+        if (!keep || keep.start === 0) return { head: input.messages, tail_start_id: undefined }
         return {
-          head: input.messages.slice(0, start),
-          tail_start_id: input.messages[start]?.info.id,
+          head: input.messages.slice(0, keep.start),
+          tail_start_id: keep.id,
         }
       })
 
