@@ -29,9 +29,7 @@ async function touch(file: string, time: number) {
   await fs.utimes(file, date, date)
 }
 
-const runtime = ManagedRuntime.make(
-  Layer.mergeAll(LSP.defaultLayer, FileTime.defaultLayer),
-)
+const runtime = ManagedRuntime.make(Layer.mergeAll(LSP.defaultLayer, FileTime.defaultLayer))
 
 afterAll(async () => {
   await runtime.dispose()

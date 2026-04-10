@@ -70,50 +70,10 @@ export const EditTool = Tool.defineEffect(
           let contentOld = ""
           let contentNew = ""
           yield* filetime.withLock(filePath, async () => {
-              if (params.oldString === "") {
-                const existed = await Filesystem.exists(filePath)
-                contentNew = params.newString
-                diff = trimDiff(createTwoFilesPatch(filePath, filePath, contentOld, contentNew))
-                await ctx.ask({
-                  permission: "edit",
-                  patterns: [path.relative(Instance.worktree, filePath)],
-                  always: ["*"],
-                  metadata: {
-                    filepath: filePath,
-                    diff,
-                  },
-                })
-                await Filesystem.write(filePath, params.newString)
-                await Format.file(filePath)
-                Bus.publish(File.Event.Edited, { file: filePath })
-                await Bus.publish(FileWatcher.Event.Updated, {
-                  file: filePath,
-                  event: existed ? "change" : "add",
-                })
-                await FileTime.read(ctx.sessionID, filePath)
-                return
-              }
-
-              const stats = Filesystem.stat(filePath)
-              if (!stats) throw new Error(`File ${filePath} not found`)
-              if (stats.isDirectory()) throw new Error(`Path is a directory, not a file: ${filePath}`)
-              await FileTime.assert(ctx.sessionID, filePath)
-              contentOld = await Filesystem.readText(filePath)
-
-              const ending = detectLineEnding(contentOld)
-              const old = convertToLineEnding(normalizeLineEndings(params.oldString), ending)
-              const next = convertToLineEnding(normalizeLineEndings(params.newString), ending)
-
-              contentNew = replace(contentOld, old, next, params.replaceAll)
-
-              diff = trimDiff(
-                createTwoFilesPatch(
-                  filePath,
-                  filePath,
-                  normalizeLineEndings(contentOld),
-                  normalizeLineEndings(contentNew),
-                ),
-              )
+            if (params.oldString === "") {
+              const existed = await Filesystem.exists(filePath)
+              contentNew = params.newString
+              diff = trimDiff(createTwoFilesPatch(filePath, filePath, contentOld, contentNew))
               await ctx.ask({
                 permission: "edit",
                 patterns: [path.relative(Instance.worktree, filePath)],
@@ -123,25 +83,65 @@ export const EditTool = Tool.defineEffect(
                   diff,
                 },
               })
-
-              await Filesystem.write(filePath, contentNew)
+              await Filesystem.write(filePath, params.newString)
               await Format.file(filePath)
               Bus.publish(File.Event.Edited, { file: filePath })
               await Bus.publish(FileWatcher.Event.Updated, {
                 file: filePath,
-                event: "change",
+                event: existed ? "change" : "add",
               })
-              contentNew = await Filesystem.readText(filePath)
-              diff = trimDiff(
-                createTwoFilesPatch(
-                  filePath,
-                  filePath,
-                  normalizeLineEndings(contentOld),
-                  normalizeLineEndings(contentNew),
-                ),
-              )
               await FileTime.read(ctx.sessionID, filePath)
+              return
+            }
+
+            const stats = Filesystem.stat(filePath)
+            if (!stats) throw new Error(`File ${filePath} not found`)
+            if (stats.isDirectory()) throw new Error(`Path is a directory, not a file: ${filePath}`)
+            await FileTime.assert(ctx.sessionID, filePath)
+            contentOld = await Filesystem.readText(filePath)
+
+            const ending = detectLineEnding(contentOld)
+            const old = convertToLineEnding(normalizeLineEndings(params.oldString), ending)
+            const next = convertToLineEnding(normalizeLineEndings(params.newString), ending)
+
+            contentNew = replace(contentOld, old, next, params.replaceAll)
+
+            diff = trimDiff(
+              createTwoFilesPatch(
+                filePath,
+                filePath,
+                normalizeLineEndings(contentOld),
+                normalizeLineEndings(contentNew),
+              ),
+            )
+            await ctx.ask({
+              permission: "edit",
+              patterns: [path.relative(Instance.worktree, filePath)],
+              always: ["*"],
+              metadata: {
+                filepath: filePath,
+                diff,
+              },
             })
+
+            await Filesystem.write(filePath, contentNew)
+            await Format.file(filePath)
+            Bus.publish(File.Event.Edited, { file: filePath })
+            await Bus.publish(FileWatcher.Event.Updated, {
+              file: filePath,
+              event: "change",
+            })
+            contentNew = await Filesystem.readText(filePath)
+            diff = trimDiff(
+              createTwoFilesPatch(
+                filePath,
+                filePath,
+                normalizeLineEndings(contentOld),
+                normalizeLineEndings(contentNew),
+              ),
+            )
+            await FileTime.read(ctx.sessionID, filePath)
+          })
 
           const filediff: Snapshot.FileDiff = {
             file: filePath,

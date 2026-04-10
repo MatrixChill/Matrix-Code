@@ -27,7 +27,13 @@ export const MultiEditTool = Tool.defineEffect(
           )
           .describe("Array of edit operations to perform sequentially on the file"),
       }),
-      execute: (params: { filePath: string; edits: Array<{ filePath: string; oldString: string; newString: string; replaceAll?: boolean }> }, ctx: Tool.Context) =>
+      execute: (
+        params: {
+          filePath: string
+          edits: Array<{ filePath: string; oldString: string; newString: string; replaceAll?: boolean }>
+        },
+        ctx: Tool.Context,
+      ) =>
         Effect.gen(function* () {
           const results = []
           for (const [, entry] of params.edits.entries()) {
