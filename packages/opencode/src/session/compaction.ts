@@ -46,8 +46,7 @@ export namespace SessionCompaction {
   }
 
   function usable(input: { cfg: Config.Info; model: Provider.Model }) {
-    const reserved =
-      input.cfg.compaction?.reserved ?? Math.min(20_000, ProviderTransform.maxOutputTokens(input.model))
+    const reserved = input.cfg.compaction?.reserved ?? Math.min(20_000, ProviderTransform.maxOutputTokens(input.model))
     return input.model.limit.input
       ? Math.max(0, input.model.limit.input - reserved)
       : Math.max(0, input.model.limit.context - ProviderTransform.maxOutputTokens(input.model))
@@ -183,7 +182,7 @@ export namespace SessionCompaction {
       // calls, then erases output of older tool calls to free context space
       const prune = Effect.fn("SessionCompaction.prune")(function* (input: { sessionID: SessionID }) {
         const cfg = yield* config.get()
-        if (cfg.compaction?.prune === false) return
+        if (cfg.compaction?.prune !== true) return
         log.info("pruning")
 
         const msgs = yield* session
