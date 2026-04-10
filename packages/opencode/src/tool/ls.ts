@@ -45,7 +45,10 @@ export const ListTool = Tool.defineEffect(
     return {
       description: DESCRIPTION,
       parameters: z.object({
-        path: z.string().describe("The absolute path to the directory to list (must be absolute, not relative)").optional(),
+        path: z
+          .string()
+          .describe("The absolute path to the directory to list (must be absolute, not relative)")
+          .optional(),
         ignore: z.array(z.string()).describe("List of glob patterns to ignore").optional(),
       }),
       execute: (params: { path?: string; ignore?: string[] }, ctx: Tool.Context) =>
