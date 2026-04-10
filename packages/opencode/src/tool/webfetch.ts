@@ -52,8 +52,7 @@ export const WebFetchTool = Tool.defineEffect(
           let acceptHeader = "*/*"
           switch (params.format) {
             case "markdown":
-              acceptHeader =
-                "text/markdown;q=1.0, text/x-markdown;q=0.9, text/plain;q=0.8, text/html;q=0.7, */*;q=0.1"
+              acceptHeader = "text/markdown;q=1.0, text/x-markdown;q=0.9, text/plain;q=0.8, text/html;q=0.7, */*;q=0.1"
               break
             case "text":
               acceptHeader = "text/plain;q=1.0, text/markdown;q=0.9, text/html;q=0.8, */*;q=0.1"
