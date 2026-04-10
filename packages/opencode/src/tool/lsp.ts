@@ -35,13 +35,14 @@ export const LspTool = Tool.defineEffect(
         line: z.number().int().min(1).describe("The line number (1-based, as shown in editors)"),
         character: z.number().int().min(1).describe("The character offset (1-based, as shown in editors)"),
       }),
-      execute: (args: { operation: (typeof operations)[number]; filePath: string; line: number; character: number }, ctx: Tool.Context) =>
+      execute: (
+        args: { operation: (typeof operations)[number]; filePath: string; line: number; character: number },
+        ctx: Tool.Context,
+      ) =>
         Effect.gen(function* () {
           const file = path.isAbsolute(args.filePath) ? args.filePath : path.join(Instance.directory, args.filePath)
           yield* assertExternalDirectoryEffect(ctx, file)
-          yield* Effect.promise(() =>
-            ctx.ask({ permission: "lsp", patterns: ["*"], always: ["*"], metadata: {} }),
-          )
+          yield* Effect.promise(() => ctx.ask({ permission: "lsp", patterns: ["*"], always: ["*"], metadata: {} }))
 
           const uri = pathToFileURL(file).href
           const position = { file, line: args.line - 1, character: args.character - 1 }
