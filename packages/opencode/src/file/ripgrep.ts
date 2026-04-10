@@ -328,9 +328,9 @@ export namespace Ripgrep {
           }
         }
 
-        return spawner.streamLines(
-          ChildProcess.make(args[0], args.slice(1), { cwd: input.cwd }),
-        ).pipe(Stream.filter((line: string) => line.length > 0))
+        return spawner
+          .streamLines(ChildProcess.make(args[0], args.slice(1), { cwd: input.cwd }))
+          .pipe(Stream.filter((line: string) => line.length > 0))
       })
 
       return Service.of({

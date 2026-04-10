@@ -66,7 +66,10 @@ describe("Ripgrep.Service", () => {
 
     const files = await Effect.gen(function* () {
       const rg = yield* Ripgrep.Service
-      return yield* rg.files({ cwd: tmp.path }).pipe(Stream.runCollect, Effect.map((chunk) => [...chunk].sort()))
+      return yield* rg.files({ cwd: tmp.path }).pipe(
+        Stream.runCollect,
+        Effect.map((chunk) => [...chunk].sort()),
+      )
     }).pipe(Effect.provide(Ripgrep.defaultLayer), Effect.runPromise)
 
     expect(files).toEqual(["a.txt", "b.txt"])
@@ -82,7 +85,10 @@ describe("Ripgrep.Service", () => {
 
     const files = await Effect.gen(function* () {
       const rg = yield* Ripgrep.Service
-      return yield* rg.files({ cwd: tmp.path, glob: ["*.ts"] }).pipe(Stream.runCollect, Effect.map((chunk) => [...chunk]))
+      return yield* rg.files({ cwd: tmp.path, glob: ["*.ts"] }).pipe(
+        Stream.runCollect,
+        Effect.map((chunk) => [...chunk]),
+      )
     }).pipe(Effect.provide(Ripgrep.defaultLayer), Effect.runPromise)
 
     expect(files).toEqual(["keep.ts"])
