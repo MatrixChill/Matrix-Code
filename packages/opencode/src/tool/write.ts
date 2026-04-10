@@ -33,7 +33,9 @@ export const WriteTool = Tool.defineEffect(
       }),
       execute: (params: { content: string; filePath: string }, ctx: Tool.Context) =>
         Effect.gen(function* () {
-          const filepath = path.isAbsolute(params.filePath) ? params.filePath : path.join(Instance.directory, params.filePath)
+          const filepath = path.isAbsolute(params.filePath)
+            ? params.filePath
+            : path.join(Instance.directory, params.filePath)
           yield* assertExternalDirectoryEffect(ctx, filepath)
 
           const exists = yield* fs.existsSafe(filepath)
@@ -74,7 +76,9 @@ export const WriteTool = Tool.defineEffect(
             if (errors.length === 0) continue
             const limited = errors.slice(0, MAX_DIAGNOSTICS_PER_FILE)
             const suffix =
-              errors.length > MAX_DIAGNOSTICS_PER_FILE ? `\n... and ${errors.length - MAX_DIAGNOSTICS_PER_FILE} more` : ""
+              errors.length > MAX_DIAGNOSTICS_PER_FILE
+                ? `\n... and ${errors.length - MAX_DIAGNOSTICS_PER_FILE} more`
+                : ""
             if (file === normalizedFilepath) {
               output += `\n\nLSP errors detected in this file, please fix:\n<diagnostics file="${filepath}">\n${limited.map(LSP.Diagnostic.pretty).join("\n")}${suffix}\n</diagnostics>`
               continue
