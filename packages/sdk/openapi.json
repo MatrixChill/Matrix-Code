@@ -2550,6 +2550,9 @@
                   "title": {
                     "type": "string"
                   },
+                  "permission": {
+                    "$ref": "#/components/schemas/PermissionRuleset"
+                  },
                   "time": {
                     "type": "object",
                     "properties": {

@@ -708,9 +708,8 @@ export namespace Session {
     runPromise((svc) => svc.setArchived(input)),
   )
 
-  export const setPermission = fn(
-    z.object({ sessionID: SessionID.zod, permission: Permission.Ruleset }),
-    (input) => runPromise((svc) => svc.setPermission(input)),
+  export const setPermission = fn(z.object({ sessionID: SessionID.zod, permission: Permission.Ruleset }), (input) =>
+    runPromise((svc) => svc.setPermission(input)),
   )
 
   export const setRevert = fn(
