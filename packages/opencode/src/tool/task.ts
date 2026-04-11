@@ -63,9 +63,7 @@ export const TaskTool = Tool.define(
 
       const taskID = params.task_id
       const session = taskID
-        ? yield* sessions.get(SessionID.make(taskID)).pipe(
-            Effect.catchCause(() => Effect.succeed(undefined)),
-          )
+        ? yield* sessions.get(SessionID.make(taskID)).pipe(Effect.catchCause(() => Effect.succeed(undefined)))
         : undefined
       const nextSession =
         session ??
