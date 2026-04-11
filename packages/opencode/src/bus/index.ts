@@ -1,5 +1,5 @@
 import z from "zod"
-import { Effect, Exit, Layer, PubSub, Scope, ServiceMap, Stream } from "effect"
+import { Effect, Exit, Layer, PubSub, Scope, Context, Stream } from "effect"
 import { EffectLogger } from "@/effect/logger"
 import { Log } from "../util/log"
 import { BusEvent } from "./bus-event"
@@ -42,7 +42,7 @@ export namespace Bus {
     readonly subscribeAllCallback: (callback: (event: any) => unknown) => Effect.Effect<() => void>
   }
 
-  export class Service extends ServiceMap.Service<Service, Interface>()("@opencode/Bus") {}
+  export class Service extends Context.Service<Service, Interface>()("@opencode/Bus") {}
 
   export const layer = Layer.effect(
     Service,
