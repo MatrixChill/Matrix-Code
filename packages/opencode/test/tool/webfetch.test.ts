@@ -42,10 +42,9 @@ describe("tool.webfetch", () => {
           directory: projectRoot,
           fn: async () => {
             const webfetch = await initTool()
-            const result = await Effect.runPromise(webfetch.execute(
-              { url: new URL("/image.png", url).toString(), format: "markdown" },
-              ctx,
-            ))
+            const result = await Effect.runPromise(
+              webfetch.execute({ url: new URL("/image.png", url).toString(), format: "markdown" }, ctx),
+            )
             expect(result.output).toBe("Image fetched successfully")
             expect(result.attachments).toBeDefined()
             expect(result.attachments?.length).toBe(1)
@@ -74,7 +73,9 @@ describe("tool.webfetch", () => {
           directory: projectRoot,
           fn: async () => {
             const webfetch = await initTool()
-            const result = await Effect.runPromise(webfetch.execute({ url: new URL("/image.svg", url).toString(), format: "html" }, ctx))
+            const result = await Effect.runPromise(
+              webfetch.execute({ url: new URL("/image.svg", url).toString(), format: "html" }, ctx),
+            )
             expect(result.output).toContain("<svg")
             expect(result.attachments).toBeUndefined()
           },
@@ -95,7 +96,9 @@ describe("tool.webfetch", () => {
           directory: projectRoot,
           fn: async () => {
             const webfetch = await initTool()
-            const result = await Effect.runPromise(webfetch.execute({ url: new URL("/file.txt", url).toString(), format: "text" }, ctx))
+            const result = await Effect.runPromise(
+              webfetch.execute({ url: new URL("/file.txt", url).toString(), format: "text" }, ctx),
+            )
             expect(result.output).toBe("hello from webfetch")
             expect(result.attachments).toBeUndefined()
           },

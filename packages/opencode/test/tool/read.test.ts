@@ -96,7 +96,9 @@ const asks = () => {
     next: {
       ...ctx,
       ask: (req: Omit<Permission.Request, "id" | "sessionID" | "tool">) =>
-        Effect.sync(() => { items.push(req) }),
+        Effect.sync(() => {
+          items.push(req)
+        }),
     },
   }
 }

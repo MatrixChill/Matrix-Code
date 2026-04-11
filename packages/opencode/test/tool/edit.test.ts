@@ -65,14 +65,16 @@ describe("tool.edit", () => {
         directory: tmp.path,
         fn: async () => {
           const edit = await resolve()
-          const result = await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "",
-              newString: "new content",
-            },
-            ctx,
-          ))
+          const result = await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "",
+                newString: "new content",
+              },
+              ctx,
+            ),
+          )
 
           expect(result.metadata.diff).toContain("new content")
 
@@ -90,14 +92,16 @@ describe("tool.edit", () => {
         directory: tmp.path,
         fn: async () => {
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "",
-              newString: "nested file",
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "",
+                newString: "nested file",
+              },
+              ctx,
+            ),
+          )
 
           const content = await fs.readFile(filepath, "utf-8")
           expect(content).toBe("nested file")
@@ -118,14 +122,16 @@ describe("tool.edit", () => {
           const unsubUpdated = await subscribeBus(FileWatcher.Event.Updated, () => events.push("updated"))
 
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "",
-              newString: "content",
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "",
+                newString: "content",
+              },
+              ctx,
+            ),
+          )
 
           expect(events).toContain("updated")
           unsubUpdated()
@@ -146,14 +152,16 @@ describe("tool.edit", () => {
           await readFileTime(ctx.sessionID, filepath)
 
           const edit = await resolve()
-          const result = await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "old content",
-              newString: "new content",
-            },
-            ctx,
-          ))
+          const result = await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "old content",
+                newString: "new content",
+              },
+              ctx,
+            ),
+          )
 
           expect(result.output).toContain("Edit applied successfully")
 
@@ -174,14 +182,16 @@ describe("tool.edit", () => {
 
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "old",
-                newString: "new",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "old",
+                  newString: "new",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("not found")
         },
       })
@@ -197,14 +207,16 @@ describe("tool.edit", () => {
         fn: async () => {
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "same",
-                newString: "same",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "same",
+                  newString: "same",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("identical")
         },
       })
@@ -222,14 +234,16 @@ describe("tool.edit", () => {
 
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "not in file",
-                newString: "replacement",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "not in file",
+                  newString: "replacement",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow()
         },
       })
@@ -245,14 +259,16 @@ describe("tool.edit", () => {
         fn: async () => {
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "content",
-                newString: "modified",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "content",
+                  newString: "modified",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("You must read file")
         },
       })
@@ -277,14 +293,16 @@ describe("tool.edit", () => {
           // Try to edit with the new content
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "modified externally",
-                newString: "edited",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "modified externally",
+                  newString: "edited",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("modified since it was last read")
         },
       })
@@ -301,15 +319,17 @@ describe("tool.edit", () => {
           await readFileTime(ctx.sessionID, filepath)
 
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "foo",
-              newString: "qux",
-              replaceAll: true,
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "foo",
+                newString: "qux",
+                replaceAll: true,
+              },
+              ctx,
+            ),
+          )
 
           const content = await fs.readFile(filepath, "utf-8")
           expect(content).toBe("qux bar qux baz qux")
@@ -333,14 +353,16 @@ describe("tool.edit", () => {
           const unsubUpdated = await subscribeBus(FileWatcher.Event.Updated, () => events.push("updated"))
 
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "original",
-              newString: "modified",
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "original",
+                newString: "modified",
+              },
+              ctx,
+            ),
+          )
 
           expect(events).toContain("updated")
           unsubUpdated()
@@ -361,14 +383,16 @@ describe("tool.edit", () => {
           await readFileTime(ctx.sessionID, filepath)
 
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "line2",
-              newString: "new line 2\nextra line",
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "line2",
+                newString: "new line 2\nextra line",
+              },
+              ctx,
+            ),
+          )
 
           const content = await fs.readFile(filepath, "utf-8")
           expect(content).toBe("line1\nnew line 2\nextra line\nline3")
@@ -387,14 +411,16 @@ describe("tool.edit", () => {
           await readFileTime(ctx.sessionID, filepath)
 
           const edit = await resolve()
-          await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "old",
-              newString: "new",
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "old",
+                newString: "new",
+              },
+              ctx,
+            ),
+          )
 
           const content = await fs.readFile(filepath, "utf-8")
           expect(content).toBe("line1\r\nnew\r\nline3")
@@ -412,14 +438,16 @@ describe("tool.edit", () => {
         fn: async () => {
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: filepath,
-                oldString: "",
-                newString: "",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: filepath,
+                  oldString: "",
+                  newString: "",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("identical")
         },
       })
@@ -437,14 +465,16 @@ describe("tool.edit", () => {
 
           const edit = await resolve()
           await expect(
-            Effect.runPromise(edit.execute(
-              {
-                filePath: dirpath,
-                oldString: "old",
-                newString: "new",
-              },
-              ctx,
-            )),
+            Effect.runPromise(
+              edit.execute(
+                {
+                  filePath: dirpath,
+                  oldString: "old",
+                  newString: "new",
+                },
+                ctx,
+              ),
+            ),
           ).rejects.toThrow("directory")
         },
       })
@@ -461,14 +491,16 @@ describe("tool.edit", () => {
           await readFileTime(ctx.sessionID, filepath)
 
           const edit = await resolve()
-          const result = await Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "line2",
-              newString: "new line a\nnew line b",
-            },
-            ctx,
-          ))
+          const result = await Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "line2",
+                newString: "new line a\nnew line b",
+              },
+              ctx,
+            ),
+          )
 
           expect(result.metadata.filediff).toBeDefined()
           expect(result.metadata.filediff.file).toBe(filepath)
@@ -530,15 +562,17 @@ describe("tool.edit", () => {
           const edit = await resolve()
           const filePath = path.join(tmp.path, "test.txt")
           await readFileTime(ctx.sessionID, filePath)
-          await Effect.runPromise(edit.execute(
-            {
-              filePath,
-              oldString: input.oldString,
-              newString: input.newString,
-              replaceAll: input.replaceAll,
-            },
-            ctx,
-          ))
+          await Effect.runPromise(
+            edit.execute(
+              {
+                filePath,
+                oldString: input.oldString,
+                newString: input.newString,
+                replaceAll: input.replaceAll,
+              },
+              ctx,
+            ),
+          )
           return await Bun.file(filePath).text()
         },
       })
@@ -675,26 +709,30 @@ describe("tool.edit", () => {
           const edit = await resolve()
 
           // Two concurrent edits
-          const promise1 = Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "0",
-              newString: "1",
-            },
-            ctx,
-          ))
+          const promise1 = Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "0",
+                newString: "1",
+              },
+              ctx,
+            ),
+          )
 
           // Need to read again since FileTime tracks per-session
           await readFileTime(ctx.sessionID, filepath)
 
-          const promise2 = Effect.runPromise(edit.execute(
-            {
-              filePath: filepath,
-              oldString: "0",
-              newString: "2",
-            },
-            ctx,
-          ))
+          const promise2 = Effect.runPromise(
+            edit.execute(
+              {
+                filePath: filepath,
+                oldString: "0",
+                newString: "2",
+              },
+              ctx,
+            ),
+          )
 
           // Both should complete without error (though one might fail due to content mismatch)
           const results = await Promise.allSettled([promise1, promise2])

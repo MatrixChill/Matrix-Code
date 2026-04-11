@@ -195,23 +195,23 @@ describe("tool.task", () => {
         const promptOps = stubOps({ text: "resumed", onPrompt: (input) => (seen = input) })
 
         const result = yield* def.execute(
-            {
-              description: "inspect bug",
-              prompt: "look into the cache key path",
-              subagent_type: "general",
-              task_id: child.id,
-            },
-            {
-              sessionID: chat.id,
-              messageID: assistant.id,
-              agent: "build",
-              abort: new AbortController().signal,
-              extra: { promptOps },
-              messages: [],
-              metadata() {},
-              ask: () => Effect.void,
-            },
-          )
+          {
+            description: "inspect bug",
+            prompt: "look into the cache key path",
+            subagent_type: "general",
+            task_id: child.id,
+          },
+          {
+            sessionID: chat.id,
+            messageID: assistant.id,
+            agent: "build",
+            abort: new AbortController().signal,
+            extra: { promptOps },
+            messages: [],
+            metadata() {},
+            ask: () => Effect.void,
+          },
+        )
 
         const kids = yield* sessions.children(chat.id)
         expect(kids).toHaveLength(1)
@@ -234,23 +234,25 @@ describe("tool.task", () => {
 
         const exec = (extra?: Record<string, any>) =>
           def.execute(
-              {
-                description: "inspect bug",
-                prompt: "look into the cache key path",
-                subagent_type: "general",
-              },
-              {
-                sessionID: chat.id,
-                messageID: assistant.id,
-                agent: "build",
-                abort: new AbortController().signal,
-                extra: { promptOps, ...extra },
-                messages: [],
-                metadata() {},
-                ask: (input) =>
-                  Effect.sync(() => { calls.push(input) }),
-              },
-            )
+            {
+              description: "inspect bug",
+              prompt: "look into the cache key path",
+              subagent_type: "general",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "build",
+              abort: new AbortController().signal,
+              extra: { promptOps, ...extra },
+              messages: [],
+              metadata() {},
+              ask: (input) =>
+                Effect.sync(() => {
+                  calls.push(input)
+                }),
+            },
+          )
 
         yield* exec()
         yield* exec({ bypassAgentCheck: true })
@@ -280,23 +282,23 @@ describe("tool.task", () => {
         const promptOps = stubOps({ text: "created", onPrompt: (input) => (seen = input) })
 
         const result = yield* def.execute(
-            {
-              description: "inspect bug",
-              prompt: "look into the cache key path",
-              subagent_type: "general",
-              task_id: "ses_missing",
-            },
-            {
-              sessionID: chat.id,
-              messageID: assistant.id,
-              agent: "build",
-              abort: new AbortController().signal,
-              extra: { promptOps },
-              messages: [],
-              metadata() {},
-              ask: () => Effect.void,
-            },
-          )
+          {
+            description: "inspect bug",
+            prompt: "look into the cache key path",
+            subagent_type: "general",
+            task_id: "ses_missing",
+          },
+          {
+            sessionID: chat.id,
+            messageID: assistant.id,
+            agent: "build",
+            abort: new AbortController().signal,
+            extra: { promptOps },
+            messages: [],
+            metadata() {},
+            ask: () => Effect.void,
+          },
+        )
 
         const kids = yield* sessions.children(chat.id)
         expect(kids).toHaveLength(1)
@@ -320,22 +322,22 @@ describe("tool.task", () => {
           const promptOps = stubOps({ onPrompt: (input) => (seen = input) })
 
           const result = yield* def.execute(
-              {
-                description: "inspect bug",
-                prompt: "look into the cache key path",
-                subagent_type: "reviewer",
-              },
-              {
-                sessionID: chat.id,
-                messageID: assistant.id,
-                agent: "build",
-                abort: new AbortController().signal,
-                extra: { promptOps },
-                messages: [],
-                metadata() {},
-                ask: () => Effect.void,
-              },
-            )
+            {
+              description: "inspect bug",
+              prompt: "look into the cache key path",
+              subagent_type: "reviewer",
+            },
+            {
+              sessionID: chat.id,
+              messageID: assistant.id,
+              agent: "build",
+              abort: new AbortController().signal,
+              extra: { promptOps },
+              messages: [],
+              metadata() {},
+              ask: () => Effect.void,
+            },
+          )
 
           const child = yield* sessions.get(result.metadata.sessionId)
           expect(child.parentID).toBe(chat.id)

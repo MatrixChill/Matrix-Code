@@ -26,7 +26,10 @@ function makeCtx() {
   const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
   const ctx: Tool.Context = {
     ...baseCtx,
-    ask: (req) => Effect.sync(() => { requests.push(req) }),
+    ask: (req) =>
+      Effect.sync(() => {
+        requests.push(req)
+      }),
   }
   return { requests, ctx }
 }

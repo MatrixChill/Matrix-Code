@@ -31,7 +31,14 @@ afterEach(async () => {
 })
 
 const it = testEffect(
-  Layer.mergeAll(LSP.defaultLayer, AppFileSystem.defaultLayer, FileTime.defaultLayer, Bus.layer, Format.defaultLayer, CrossSpawnSpawner.defaultLayer),
+  Layer.mergeAll(
+    LSP.defaultLayer,
+    AppFileSystem.defaultLayer,
+    FileTime.defaultLayer,
+    Bus.layer,
+    Format.defaultLayer,
+    CrossSpawnSpawner.defaultLayer,
+  ),
 )
 
 const init = Effect.fn("WriteToolTest.init")(function* () {

@@ -11,7 +11,9 @@ import { Bus } from "../../src/bus"
 import { tmpdir } from "../fixture/fixture"
 import { SessionID, MessageID } from "../../src/session/schema"
 
-const runtime = ManagedRuntime.make(Layer.mergeAll(LSP.defaultLayer, AppFileSystem.defaultLayer, Format.defaultLayer, Bus.layer))
+const runtime = ManagedRuntime.make(
+  Layer.mergeAll(LSP.defaultLayer, AppFileSystem.defaultLayer, Format.defaultLayer, Bus.layer),
+)
 
 const baseCtx = {
   sessionID: SessionID.make("ses_test"),
@@ -57,7 +59,9 @@ const makeCtx = () => {
   const ctx: ToolCtx = {
     ...baseCtx,
     ask: (input) =>
-      Effect.sync(() => { calls.push(input) }),
+      Effect.sync(() => {
+        calls.push(input)
+      }),
   }
 
   return { ctx, calls }

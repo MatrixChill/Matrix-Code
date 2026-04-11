@@ -157,7 +157,9 @@ Use this skill.
           const ctx: Tool.Context = {
             ...baseCtx,
             ask: (req) =>
-              Effect.sync(() => { requests.push(req) }),
+              Effect.sync(() => {
+                requests.push(req)
+              }),
           }
 
           const result = await runtime.runPromise(tool.execute({ name: "tool-skill" }, ctx))

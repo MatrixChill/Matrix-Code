@@ -106,8 +106,7 @@ export namespace SessionPrompt {
       const run = {
         promise: <A, E>(effect: Effect.Effect<A, E>) =>
           Effect.runPromise(effect.pipe(Effect.provide(EffectLogger.layer))),
-        fork: <A, E>(effect: Effect.Effect<A, E>) =>
-          Effect.runFork(effect.pipe(Effect.provide(EffectLogger.layer))),
+        fork: <A, E>(effect: Effect.Effect<A, E>) => Effect.runFork(effect.pipe(Effect.provide(EffectLogger.layer))),
       }
 
       const cancel = Effect.fn("SessionPrompt.cancel")(function* (sessionID: SessionID) {
@@ -622,23 +621,24 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             }),
             Effect.onInterrupt(() =>
               Effect.gen(function* () {
-              taskAbort.abort()
-              assistantMessage.finish = "tool-calls"
-              assistantMessage.time.completed = Date.now()
-              yield* sessions.updateMessage(assistantMessage)
-              if (part.state.status === "running") {
-                yield* sessions.updatePart({
-                  ...part,
-                  state: {
-                    status: "error",
-                    error: "Cancelled",
-                    time: { start: part.state.time.start, end: Date.now() },
-                    metadata: part.state.metadata,
-                    input: part.state.input,
-                  },
-                } satisfies MessageV2.ToolPart)
-              }
-            })),
+                taskAbort.abort()
+                assistantMessage.finish = "tool-calls"
+                assistantMessage.time.completed = Date.now()
+                yield* sessions.updateMessage(assistantMessage)
+                if (part.state.status === "running") {
+                  yield* sessions.updatePart({
+                    ...part,
+                    state: {
+                      status: "error",
+                      error: "Cancelled",
+                      time: { start: part.state.time.start, end: Date.now() },
+                      metadata: part.state.metadata,
+                      input: part.state.input,
+                    },
+                  } satisfies MessageV2.ToolPart)
+                }
+              }),
+            ),
           )
 
         const attachments = result?.attachments?.map((attachment) => ({

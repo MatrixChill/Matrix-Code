@@ -32,7 +32,10 @@ describe("Tool.define", () => {
 
   test("function-defined tool returns fresh objects and is unaffected", async () => {
     const info = await Effect.runPromise(
-      Tool.define("test-fn-tool", Effect.succeed(() => Promise.resolve(makeTool("test")))),
+      Tool.define(
+        "test-fn-tool",
+        Effect.succeed(() => Promise.resolve(makeTool("test"))),
+      ),
     )
 
     const first = await info.init()
