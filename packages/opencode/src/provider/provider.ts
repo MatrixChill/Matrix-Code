@@ -1216,7 +1216,8 @@ export namespace Provider {
 
             const options = yield* Effect.promise(() =>
               plugin.auth!.loader!(
-                () => Effect.runPromise(auth.get(providerID).pipe(Effect.orDie, Effect.provide(EffectLogger.layer))) as any,
+                () =>
+                  Effect.runPromise(auth.get(providerID).pipe(Effect.orDie, Effect.provide(EffectLogger.layer))) as any,
                 database[plugin.auth!.provider],
               ),
             )

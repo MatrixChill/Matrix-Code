@@ -84,7 +84,11 @@ export namespace Plugin {
   }
 
   function publishPluginError(bus: Bus.Interface, message: string) {
-    Effect.runFork(bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() }).pipe(Effect.provide(EffectLogger.layer)))
+    Effect.runFork(
+      bus
+        .publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        .pipe(Effect.provide(EffectLogger.layer)),
+    )
   }
 
   async function applyPlugin(load: PluginLoader.Loaded, input: PluginInput, hooks: Hooks[]) {

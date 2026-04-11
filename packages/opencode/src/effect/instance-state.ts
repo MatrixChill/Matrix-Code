@@ -48,7 +48,9 @@ export namespace InstanceState {
           }),
       })
 
-      const off = registerDisposer((directory) => Effect.runPromise(ScopedCache.invalidate(cache, directory).pipe(Effect.provide(EffectLogger.layer))))
+      const off = registerDisposer((directory) =>
+        Effect.runPromise(ScopedCache.invalidate(cache, directory).pipe(Effect.provide(EffectLogger.layer))),
+      )
       yield* Effect.addFinalizer(() => Effect.sync(off))
 
       return {

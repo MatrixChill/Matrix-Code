@@ -475,7 +475,9 @@ export namespace MCP {
           if (s.clients[name] !== client || s.status[name]?.status !== "connected") return
 
           s.defs[name] = listed
-          await Effect.runPromise(bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore, Effect.provide(EffectLogger.layer)))
+          await Effect.runPromise(
+            bus.publish(ToolsChanged, { server: name }).pipe(Effect.ignore, Effect.provide(EffectLogger.layer)),
+          )
         })
       }
 
