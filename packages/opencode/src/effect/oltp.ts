@@ -6,9 +6,8 @@ import { Flag } from "@/flag/flag"
 import { CHANNEL, VERSION } from "@/installation/meta"
 
 export namespace Observability {
-  export const enabled = !!Flag.OTEL_EXPORTER_OTLP_ENDPOINT
-
   const base = Flag.OTEL_EXPORTER_OTLP_ENDPOINT
+  export const enabled = !!base
 
   const resource = {
     serviceName: "opencode",
@@ -36,7 +35,7 @@ export namespace Observability {
         EffectLogger.layer,
         Otlp.layerJson({
           baseUrl: base,
-          loggerExportInterval: Duration.seconds(5),
+          loggerExportInterval: Duration.seconds(1),
           loggerMergeWithExisting: true,
           resource,
           headers,
