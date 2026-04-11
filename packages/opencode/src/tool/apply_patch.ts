@@ -19,12 +19,13 @@ const PatchParams = z.object({
   patchText: z.string().describe("The full patch text that describes all changes to be made"),
 })
 
-export const ApplyPatchTool = Tool.defineEffect(
+export const ApplyPatchTool = Tool.define(
   "apply_patch",
   Effect.gen(function* () {
     const lsp = yield* LSP.Service
     const afs = yield* AppFileSystem.Service
     const format = yield* Format.Service
+    const bus = yield* Bus.Service
 
     const run = Effect.fn("ApplyPatchTool.execute")(function* (params: z.infer<typeof PatchParams>, ctx: Tool.Context) {
       if (!params.patchText) {
@@ -178,18 +179,16 @@ export const ApplyPatchTool = Tool.defineEffect(
 
       // Check permissions if needed
       const relativePaths = fileChanges.map((c) => path.relative(Instance.worktree, c.filePath).replaceAll("\\", "/"))
-      yield* Effect.promise(() =>
-        ctx.ask({
-          permission: "edit",
-          patterns: relativePaths,
-          always: ["*"],
-          metadata: {
-            filepath: relativePaths.join(", "),
-            diff: totalDiff,
-            files,
-          },
-        }),
-      )
+      yield* ctx.ask({
+        permission: "edit",
+        patterns: relativePaths,
+        always: ["*"],
+        metadata: {
+          filepath: relativePaths.join(", "),
+          diff: totalDiff,
+          files,
+        },
+      })
 
       // Apply the changes
       const updates: Array<{ file: string; event: "add" | "change" | "unlink" }> = []
@@ -228,13 +227,13 @@ export const ApplyPatchTool = Tool.defineEffect(
 
         if (edited) {
           yield* format.file(edited)
-          Bus.publish(File.Event.Edited, { file: edited })
+          yield* bus.publish(File.Event.Edited, { file: edited })
         }
       }
 
       // Publish file change events
       for (const update of updates) {
-        Bus.publish(FileWatcher.Event.Updated, update)
+        yield* bus.publish(FileWatcher.Event.Updated, update)
       }
 
       // Notify LSP of file changes and collect diagnostics
@@ -281,9 +280,7 @@ export const ApplyPatchTool = Tool.defineEffect(
     return {
       description: DESCRIPTION,
       parameters: PatchParams,
-      async execute(params: z.infer<typeof PatchParams>, ctx) {
-        return Effect.runPromise(run(params, ctx).pipe(Effect.orDie))
-      },
+      execute: (params: z.infer<typeof PatchParams>, ctx: Tool.Context) => run(params, ctx).pipe(Effect.orDie),
     }
   }),
 )

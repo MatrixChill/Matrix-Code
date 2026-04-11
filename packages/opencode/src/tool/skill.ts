@@ -11,7 +11,7 @@ const Parameters = z.object({
   name: z.string().describe("The name of the skill from available_skills"),
 })
 
-export const SkillTool = Tool.defineEffect(
+export const SkillTool = Tool.define(
   "skill",
   Effect.gen(function* () {
     const skill = yield* Skill.Service
@@ -51,14 +51,12 @@ export const SkillTool = Tool.defineEffect(
               throw new Error(`Skill "${params.name}" not found. Available skills: ${available || "none"}`)
             }
 
-            yield* Effect.promise(() =>
-              ctx.ask({
-                permission: "skill",
-                patterns: [params.name],
-                always: [params.name],
-                metadata: {},
-              }),
-            )
+            yield* ctx.ask({
+              permission: "skill",
+              patterns: [params.name],
+              always: [params.name],
+              metadata: {},
+            })
 
             const dir = path.dirname(info.location)
             const base = pathToFileURL(dir).href
@@ -94,7 +92,7 @@ export const SkillTool = Tool.defineEffect(
                 dir,
               },
             }
-          }).pipe(Effect.orDie, Effect.runPromise),
+          }).pipe(Effect.orDie),
       }
     }
   }),

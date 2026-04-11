@@ -226,25 +226,21 @@ const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan) 
       if (process.platform === "win32") return AppFileSystem.normalizePathPattern(path.join(dir, "*"))
       return path.join(dir, "*")
     })
-    yield* Effect.promise(() =>
-      ctx.ask({
-        permission: "external_directory",
-        patterns: globs,
-        always: globs,
-        metadata: {},
-      }),
-    )
+    yield* ctx.ask({
+      permission: "external_directory",
+      patterns: globs,
+      always: globs,
+      metadata: {},
+    })
   }
 
   if (scan.patterns.size === 0) return
-  yield* Effect.promise(() =>
-    ctx.ask({
-      permission: "bash",
-      patterns: Array.from(scan.patterns),
-      always: Array.from(scan.always),
-      metadata: {},
-    }),
-  )
+  yield* ctx.ask({
+    permission: "bash",
+    patterns: Array.from(scan.patterns),
+    always: Array.from(scan.always),
+    metadata: {},
+  })
 })
 
 function cmd(shell: string, name: string, command: string, cwd: string, env: NodeJS.ProcessEnv) {
@@ -294,7 +290,7 @@ const parser = lazy(async () => {
 })
 
 // TODO: we may wanna rename this tool so it works better on other shells
-export const BashTool = Tool.defineEffect(
+export const BashTool = Tool.define(
   "bash",
   Effect.gen(function* () {
     const spawner = yield* ChildProcessSpawner
@@ -504,7 +500,7 @@ export const BashTool = Tool.defineEffect(
               },
               ctx,
             )
-          }).pipe(Effect.orDie, Effect.runPromise),
+          }),
       }
     }
   }),

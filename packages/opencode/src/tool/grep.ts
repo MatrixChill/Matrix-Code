@@ -14,7 +14,7 @@ import { assertExternalDirectoryEffect } from "./external-directory"
 
 const MAX_LINE_LENGTH = 2000
 
-export const GrepTool = Tool.defineEffect(
+export const GrepTool = Tool.define(
   "grep",
   Effect.gen(function* () {
     const spawner = yield* ChildProcessSpawner
@@ -32,18 +32,16 @@ export const GrepTool = Tool.defineEffect(
             throw new Error("pattern is required")
           }
 
-          yield* Effect.promise(() =>
-            ctx.ask({
-              permission: "grep",
-              patterns: [params.pattern],
-              always: ["*"],
-              metadata: {
-                pattern: params.pattern,
-                path: params.path,
-                include: params.include,
-              },
-            }),
-          )
+          yield* ctx.ask({
+            permission: "grep",
+            patterns: [params.pattern],
+            always: ["*"],
+            metadata: {
+              pattern: params.pattern,
+              path: params.path,
+              include: params.include,
+            },
+          })
 
           let searchPath = params.path ?? Instance.directory
           searchPath = path.isAbsolute(searchPath) ? searchPath : path.resolve(Instance.directory, searchPath)
@@ -171,7 +169,7 @@ export const GrepTool = Tool.defineEffect(
             },
             output: outputLines.join("\n"),
           }
-        }).pipe(Effect.orDie, Effect.runPromise),
+        }).pipe(Effect.orDie),
     }
   }),
 )

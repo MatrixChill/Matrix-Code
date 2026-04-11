@@ -103,6 +103,13 @@ export namespace SessionPrompt {
       const state = yield* SessionRunState.Service
       const revert = yield* SessionRevert.Service
 
+      const run = {
+        promise: <A, E>(effect: Effect.Effect<A, E>) =>
+          Effect.runPromise(effect.pipe(Effect.provide(EffectLogger.layer))),
+        fork: <A, E>(effect: Effect.Effect<A, E>) =>
+          Effect.runFork(effect.pipe(Effect.provide(EffectLogger.layer))),
+      }
+
       const cancel = Effect.fn("SessionPrompt.cancel")(function* (sessionID: SessionID) {
         yield* elog.info("cancel", { sessionID })
         yield* state.cancel(sessionID)
@@ -358,7 +365,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           agent: input.agent.name,
           messages: input.messages,
           metadata: (val) =>
-            Effect.runPromise(
+            run.promise(
               input.processor.updateToolCall(options.toolCallId, (match) => {
                 if (!["running", "pending"].includes(match.state.status)) return match
                 return {
@@ -374,14 +381,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               }),
             ),
           ask: (req) =>
-            Effect.runPromise(
-              permission.ask({
+            permission
+              .ask({
                 ...req,
                 sessionID: input.session.id,
                 tool: { messageID: input.processor.message.id, callID: options.toolCallId },
                 ruleset: Permission.merge(input.agent.permission, input.session.permission ?? []),
-              }),
-            ),
+              })
+              .pipe(Effect.orDie),
         })
 
         for (const item of yield* registry.tools({
@@ -395,7 +402,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             description: item.description,
             inputSchema: jsonSchema(schema as any),
             execute(args, options) {
-              return Effect.runPromise(
+              return run.promise(
                 Effect.gen(function* () {
                   const ctx = context(args, options)
                   yield* plugin.trigger(
@@ -403,7 +410,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                     { tool: item.id, sessionID: ctx.sessionID, callID: ctx.callID },
                     { args },
                   )
-                  const result = yield* Effect.promise(() => item.execute(args, ctx))
+                  const result = yield* item.execute(args, ctx)
                   const output = {
                     ...result,
                     attachments: result.attachments?.map((attachment) => ({
@@ -436,7 +443,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           const transformed = ProviderTransform.schema(input.model, schema)
           item.inputSchema = jsonSchema(transformed)
           item.execute = (args, opts) =>
-            Effect.runPromise(
+            run.promise(
               Effect.gen(function* () {
                 const ctx = context(args, opts)
                 yield* plugin.trigger(
@@ -444,7 +451,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   { tool: key, sessionID: ctx.sessionID, callID: opts.toolCallId },
                   { args },
                 )
-                yield* Effect.promise(() => ctx.ask({ permission: key, metadata: {}, patterns: ["*"], always: ["*"] }))
+                yield* ctx.ask({ permission: key, metadata: {}, patterns: ["*"], always: ["*"] })
                 const result: Awaited<ReturnType<NonNullable<typeof execute>>> = yield* Effect.promise(() =>
                   execute(args, opts),
                 )
@@ -576,45 +583,46 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         }
 
         let error: Error | undefined
-        const result = yield* Effect.promise((signal) =>
-          taskTool
-            .execute(taskArgs, {
-              agent: task.agent,
-              messageID: assistantMessage.id,
-              sessionID,
-              abort: signal,
-              callID: part.callID,
-              extra: { bypassAgentCheck: true, promptOps },
-              messages: msgs,
-              metadata(val: { title?: string; metadata?: Record<string, any> }) {
-                return Effect.runPromise(
-                  Effect.gen(function* () {
-                    part = yield* sessions.updatePart({
-                      ...part,
-                      type: "tool",
-                      state: { ...part.state, ...val },
-                    } satisfies MessageV2.ToolPart)
-                  }),
-                )
-              },
-              ask(req: any) {
-                return Effect.runPromise(
-                  permission.ask({
-                    ...req,
-                    sessionID,
-                    ruleset: Permission.merge(taskAgent.permission, session.permission ?? []),
-                  }),
-                )
-              },
-            })
-            .catch((e) => {
-              error = e instanceof Error ? e : new Error(String(e))
+        const taskAbort = new AbortController()
+        const result = yield* taskTool
+          .execute(taskArgs, {
+            agent: task.agent,
+            messageID: assistantMessage.id,
+            sessionID,
+            abort: taskAbort.signal,
+            callID: part.callID,
+            extra: { bypassAgentCheck: true, promptOps },
+            messages: msgs,
+            metadata(val: { title?: string; metadata?: Record<string, any> }) {
+              return run.promise(
+                Effect.gen(function* () {
+                  part = yield* sessions.updatePart({
+                    ...part,
+                    type: "tool",
+                    state: { ...part.state, ...val },
+                  } satisfies MessageV2.ToolPart)
+                }),
+              )
+            },
+            ask: (req: any) =>
+              permission
+                .ask({
+                  ...req,
+                  sessionID,
+                  ruleset: Permission.merge(taskAgent.permission, session.permission ?? []),
+                })
+                .pipe(Effect.orDie),
+          })
+          .pipe(
+            Effect.catchCause((cause) => {
+              const defect = Cause.squash(cause)
+              error = defect instanceof Error ? defect : new Error(String(defect))
               log.error("subtask execution failed", { error, agent: task.agent, description: task.description })
-              return undefined
+              return Effect.void
             }),
-        ).pipe(
-          Effect.onInterrupt(() =>
-            Effect.gen(function* () {
+            Effect.onInterrupt(() =>
+              Effect.gen(function* () {
+              taskAbort.abort()
               assistantMessage.finish = "tool-calls"
               assistantMessage.time.completed = Date.now()
               yield* sessions.updateMessage(assistantMessage)
@@ -630,9 +638,8 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   },
                 } satisfies MessageV2.ToolPart)
               }
-            }),
-          ),
-        )
+            })),
+          )
 
         const attachments = result?.attachments?.map((attachment) => ({
           ...attachment,
@@ -855,7 +862,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               output += chunk
               if (part.state.status === "running") {
                 part.state.metadata = { output, description: "" }
-                void Effect.runFork(sessions.updatePart(part))
+                void run.fork(sessions.updatePart(part))
               }
             }),
           )
@@ -1037,19 +1044,21 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 if (yield* fsys.isDir(filepath)) part.mime = "application/x-directory"
 
                 const { read } = yield* registry.named()
-                const execRead = (args: Parameters<typeof read.execute>[0], extra?: Tool.Context["extra"]) =>
-                  Effect.promise((signal: AbortSignal) =>
-                    read.execute(args, {
+                const execRead = (args: Parameters<typeof read.execute>[0], extra?: Tool.Context["extra"]) => {
+                  const controller = new AbortController()
+                  return read
+                    .execute(args, {
                       sessionID: input.sessionID,
-                      abort: signal,
+                      abort: controller.signal,
                       agent: input.agent!,
                       messageID: info.id,
                       extra: { bypassCwdCheck: true, ...extra },
                       messages: [],
-                      metadata: async () => {},
-                      ask: async () => {},
-                    }),
-                  )
+                      metadata: () => {},
+                      ask: () => Effect.void,
+                    })
+                    .pipe(Effect.onInterrupt(() => Effect.sync(() => controller.abort())))
+                }
 
                 if (part.mime === "text/plain") {
                   let offset: number | undefined
@@ -1655,9 +1664,9 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       })
 
       const promptOps: TaskPromptOps = {
-        cancel: (sessionID) => Effect.runFork(cancel(sessionID)),
-        resolvePromptParts: (template) => Effect.runPromise(resolvePromptParts(template)),
-        prompt: (input) => Effect.runPromise(prompt(input)),
+        cancel: (sessionID) => run.fork(cancel(sessionID)),
+        resolvePromptParts: (template) => run.promise(resolvePromptParts(template)),
+        prompt: (input) => run.promise(prompt(input)),
       }
 
       return Service.of({

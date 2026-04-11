@@ -31,7 +31,7 @@ const parameters = z.object({
   command: z.string().describe("The command that triggered this task").optional(),
 })
 
-export const TaskTool = Tool.defineEffect(
+export const TaskTool = Tool.define(
   id,
   Effect.gen(function* () {
     const agent = yield* Agent.Service
@@ -41,17 +41,15 @@ export const TaskTool = Tool.defineEffect(
       const cfg = yield* config.get()
 
       if (!ctx.extra?.bypassAgentCheck) {
-        yield* Effect.promise(() =>
-          ctx.ask({
-            permission: id,
-            patterns: [params.subagent_type],
-            always: ["*"],
-            metadata: {
-              description: params.description,
-              subagent_type: params.subagent_type,
-            },
-          }),
-        )
+        yield* ctx.ask({
+          permission: id,
+          patterns: [params.subagent_type],
+          always: ["*"],
+          metadata: {
+            description: params.description,
+            subagent_type: params.subagent_type,
+          },
+        })
       }
 
       const next = yield* agent.get(params.subagent_type)
@@ -178,9 +176,7 @@ export const TaskTool = Tool.defineEffect(
     return {
       description: DESCRIPTION,
       parameters,
-      async execute(params: z.infer<typeof parameters>, ctx) {
-        return Effect.runPromise(run(params, ctx))
-      },
+      execute: (params: z.infer<typeof parameters>, ctx: Tool.Context) => run(params, ctx).pipe(Effect.orDie),
     }
   }),
 )

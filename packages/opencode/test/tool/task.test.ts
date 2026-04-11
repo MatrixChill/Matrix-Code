@@ -194,8 +194,7 @@ describe("tool.task", () => {
         let seen: SessionPrompt.PromptInput | undefined
         const promptOps = stubOps({ text: "resumed", onPrompt: (input) => (seen = input) })
 
-        const result = yield* Effect.promise(() =>
-          def.execute(
+        const result = yield* def.execute(
             {
               description: "inspect bug",
               prompt: "look into the cache key path",
@@ -210,10 +209,9 @@ describe("tool.task", () => {
               extra: { promptOps },
               messages: [],
               metadata() {},
-              ask: async () => {},
+              ask: () => Effect.void,
             },
-          ),
-        )
+          )
 
         const kids = yield* sessions.children(chat.id)
         expect(kids).toHaveLength(1)
@@ -235,8 +233,7 @@ describe("tool.task", () => {
         const promptOps = stubOps()
 
         const exec = (extra?: Record<string, any>) =>
-          Effect.promise(() =>
-            def.execute(
+          def.execute(
               {
                 description: "inspect bug",
                 prompt: "look into the cache key path",
@@ -250,12 +247,10 @@ describe("tool.task", () => {
                 extra: { promptOps, ...extra },
                 messages: [],
                 metadata() {},
-                ask: async (input) => {
-                  calls.push(input)
-                },
+                ask: (input) =>
+                  Effect.sync(() => { calls.push(input) }),
               },
-            ),
-          )
+            )
 
         yield* exec()
         yield* exec({ bypassAgentCheck: true })
@@ -284,8 +279,7 @@ describe("tool.task", () => {
         let seen: SessionPrompt.PromptInput | undefined
         const promptOps = stubOps({ text: "created", onPrompt: (input) => (seen = input) })
 
-        const result = yield* Effect.promise(() =>
-          def.execute(
+        const result = yield* def.execute(
             {
               description: "inspect bug",
               prompt: "look into the cache key path",
@@ -300,10 +294,9 @@ describe("tool.task", () => {
               extra: { promptOps },
               messages: [],
               metadata() {},
-              ask: async () => {},
+              ask: () => Effect.void,
             },
-          ),
-        )
+          )
 
         const kids = yield* sessions.children(chat.id)
         expect(kids).toHaveLength(1)
@@ -326,8 +319,7 @@ describe("tool.task", () => {
           let seen: SessionPrompt.PromptInput | undefined
           const promptOps = stubOps({ onPrompt: (input) => (seen = input) })
 
-          const result = yield* Effect.promise(() =>
-            def.execute(
+          const result = yield* def.execute(
               {
                 description: "inspect bug",
                 prompt: "look into the cache key path",
@@ -341,10 +333,9 @@ describe("tool.task", () => {
                 extra: { promptOps },
                 messages: [],
                 metadata() {},
-                ask: async () => {},
+                ask: () => Effect.void,
               },
-            ),
-          )
+            )
 
           const child = yield* sessions.get(result.metadata.sessionId)
           expect(child.parentID).toBe(chat.id)

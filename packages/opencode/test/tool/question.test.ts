@@ -16,7 +16,7 @@ const ctx = {
   abort: AbortSignal.any([]),
   messages: [],
   metadata: () => {},
-  ask: async () => {},
+  ask: () => Effect.void,
 }
 
 const it = testEffect(Layer.mergeAll(Question.defaultLayer, CrossSpawnSpawner.defaultLayer))
@@ -49,7 +49,7 @@ describe("tool.question", () => {
           },
         ]
 
-        const fiber = yield* Effect.promise(() => tool.execute({ questions }, ctx)).pipe(Effect.forkScoped)
+        const fiber = yield* tool.execute({ questions }, ctx).pipe(Effect.forkScoped)
         const item = yield* pending(question)
         yield* question.reply({ requestID: item.id, answers: [["Red"]] })
 
@@ -73,7 +73,7 @@ describe("tool.question", () => {
           },
         ]
 
-        const fiber = yield* Effect.promise(() => tool.execute({ questions }, ctx)).pipe(Effect.forkScoped)
+        const fiber = yield* tool.execute({ questions }, ctx).pipe(Effect.forkScoped)
         const item = yield* pending(question)
         yield* question.reply({ requestID: item.id, answers: [["Dog"]] })
 
