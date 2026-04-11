@@ -850,5 +850,4 @@ export namespace Session {
     MessageV2.Part.parse(part)
     return runPromise((svc) => svc.updatePart(part))
   }
-
 }
