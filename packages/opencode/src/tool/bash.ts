@@ -405,8 +405,7 @@ export const BashTool = Tool.define(
                   description: input.description,
                 },
               })
-            },
-            ),
+            }),
           )
 
           const abort = Effect.callback<void>((resume) => {
