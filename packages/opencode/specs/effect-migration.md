@@ -355,14 +355,14 @@ Route handlers should wrap their entire body in a single `AppRuntime.runPromise(
 
 ```ts
 // Before — one facade call per service
-async (c) => {
+;async (c) => {
   await SessionRunState.assertNotBusy(id)
   await Session.removeMessage({ sessionID: id, messageID })
   return c.json(true)
 }
 
 // After — one Effect.gen, yield services from context
-async (c) => {
+;async (c) => {
   await AppRuntime.runPromise(
     Effect.gen(function* () {
       const state = yield* SessionRunState.Service
