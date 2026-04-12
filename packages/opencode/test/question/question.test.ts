@@ -6,11 +6,8 @@ import { tmpdir } from "../fixture/fixture"
 import { SessionID } from "../../src/session/schema"
 import { AppRuntime } from "../../src/effect/app-runtime"
 
-const ask = (input: {
-  sessionID: SessionID
-  questions: Question.Info[]
-  tool?: { messageID: any; callID: string }
-}) => AppRuntime.runPromise(Question.Service.use((svc) => svc.ask(input)))
+const ask = (input: { sessionID: SessionID; questions: Question.Info[]; tool?: { messageID: any; callID: string } }) =>
+  AppRuntime.runPromise(Question.Service.use((svc) => svc.ask(input)))
 
 const list = () => AppRuntime.runPromise(Question.Service.use((svc) => svc.list()))
 
