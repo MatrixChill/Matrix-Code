@@ -180,6 +180,7 @@ export namespace Snapshot {
             // Filter out files that are now gitignored even if previously tracked
             // Files may have been tracked before being gitignored, so we need to check
             // against the source project's current gitignore rules
+            // Use --no-index to check purely against patterns (ignoring whether file is tracked)
             const checkArgs = [
               ...quote,
               "--git-dir",
@@ -187,6 +188,7 @@ export namespace Snapshot {
               "--work-tree",
               state.worktree,
               "check-ignore",
+              "--no-index",
               "--",
               ...all,
             ]
@@ -303,6 +305,7 @@ export namespace Snapshot {
                     "--work-tree",
                     state.worktree,
                     "check-ignore",
+                    "--no-index",
                     "--",
                     ...files,
                   ]
@@ -669,6 +672,30 @@ export namespace Snapshot {
                       } satisfies Row,
                     ]
                   })
+
+                // Filter out files that are now gitignored
+                if (rows.length > 0) {
+                  const files = rows.map((r) => r.file)
+                  const checkArgs = [
+                    ...quote,
+                    "--git-dir",
+                    path.join(state.worktree, ".git"),
+                    "--work-tree",
+                    state.worktree,
+                    "check-ignore",
+                    "--no-index",
+                    "--",
+                    ...files,
+                  ]
+                  const check = yield* git(checkArgs, { cwd: state.directory })
+                  if (check.code === 0) {
+                    const ignored = new Set(check.text.trim().split("\n").filter(Boolean))
+                    const filtered = rows.filter((r) => !ignored.has(r.file))
+                    rows.length = 0
+                    rows.push(...filtered)
+                  }
+                }
+
                 const step = 100
                 const patch = (file: string, before: string, after: string) =>
                   formatPatch(structuredPatch(file, file, before, after, "", "", { context: Number.MAX_SAFE_INTEGER }))
