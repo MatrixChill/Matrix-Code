@@ -152,7 +152,9 @@ Use this skill.
       await Instance.provide({
         directory: tmp.path,
         fn: async () => {
-          const runtime = ManagedRuntime.make(Layer.mergeAll(Skill.defaultLayer, Ripgrep.defaultLayer, Truncate.defaultLayer, Agent.defaultLayer))
+          const runtime = ManagedRuntime.make(
+            Layer.mergeAll(Skill.defaultLayer, Ripgrep.defaultLayer, Truncate.defaultLayer, Agent.defaultLayer),
+          )
           const info = await runtime.runPromise(SkillTool)
           const tool = await runtime.runPromise(info.init())
           const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []

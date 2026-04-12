@@ -21,7 +21,9 @@ const ctx = {
   ask: () => Effect.void,
 }
 
-const it = testEffect(Layer.mergeAll(Question.defaultLayer, CrossSpawnSpawner.defaultLayer, Truncate.defaultLayer, Agent.defaultLayer))
+const it = testEffect(
+  Layer.mergeAll(Question.defaultLayer, CrossSpawnSpawner.defaultLayer, Truncate.defaultLayer, Agent.defaultLayer),
+)
 
 const pending = Effect.fn("QuestionToolTest.pending")(function* (question: Question.Interface) {
   for (;;) {
