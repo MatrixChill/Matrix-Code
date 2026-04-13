@@ -15,6 +15,7 @@ import { Global } from "../../global"
 import { modify, applyEdits } from "jsonc-parser"
 import { Filesystem } from "../../util/filesystem"
 import { Bus } from "../../bus"
+import { AppRuntime } from "@/effect/app-runtime"
 
 function getAuthStatusIcon(status: MCP.AuthStatus): string {
   switch (status) {
@@ -75,7 +76,7 @@ export const McpListCommand = cmd({
         UI.empty()
         prompts.intro("MCP Servers")
 
-        const config = await Config.get()
+        const config = await AppRuntime.runPromise(Config.Service.use((cfg) => cfg.get()))
         const mcpServers = config.mcp ?? {}
         const statuses = await MCP.status()
 
@@ -152,7 +153,7 @@ export const McpAuthCommand = cmd({
         UI.empty()
         prompts.intro("MCP OAuth Authentication")
 
-        const config = await Config.get()
+        const config = await AppRuntime.runPromise(Config.Service.use((cfg) => cfg.get()))
         const mcpServers = config.mcp ?? {}
 
         // Get OAuth-capable servers (remote servers with oauth not explicitly disabled)
@@ -289,7 +290,7 @@ export const McpAuthListCommand = cmd({
         UI.empty()
         prompts.intro("MCP OAuth Status")
 
-        const config = await Config.get()
+        const config = await AppRuntime.runPromise(Config.Service.use((cfg) => cfg.get()))
         const mcpServers = config.mcp ?? {}
 
         // Get OAuth-capable servers
@@ -595,7 +596,7 @@ export const McpDebugCommand = cmd({
         UI.empty()
         prompts.intro("MCP OAuth Debug")
 
-        const config = await Config.get()
+        const config = await AppRuntime.runPromise(Config.Service.use((cfg) => cfg.get()))
         const mcpServers = config.mcp ?? {}
         const serverName = args.name
 
