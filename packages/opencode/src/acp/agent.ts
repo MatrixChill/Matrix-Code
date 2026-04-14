@@ -453,7 +453,7 @@ export namespace ACP {
                 return
             }
           }
-          
+
           // ACP clients already know the prompt they just submitted, so replaying
           // live user parts duplicates the message. We still replay user history in
           // loadSession() and forkSession() via processMessage().
