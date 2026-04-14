@@ -18,6 +18,7 @@ import { lazy } from "../../util/lazy"
 import { Effect, Option } from "effect"
 import { WorkspaceRoutes } from "./workspace"
 import { Agent } from "@/agent/agent"
+import { HttpApiRoutes } from "./httpapi"
 
 const ConsoleOrgOption = z.object({
   accountID: z.string(),
@@ -39,6 +40,7 @@ const ConsoleSwitchBody = z.object({
 
 export const ExperimentalRoutes = lazy(() =>
   new Hono()
+    .route("/httpapi", HttpApiRoutes())
     .get(
       "/console",
       describeRoute({
