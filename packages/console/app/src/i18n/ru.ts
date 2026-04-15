@@ -304,7 +304,8 @@ export const dict = {
   "go.problem.item1": "Недорогая подписка",
   "go.problem.item2": "Щедрые лимиты и надежный доступ",
   "go.problem.item3": "Создан для максимального числа программистов",
-  "go.problem.item4": "Включает GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 и MiniMax M2.7",
+  "go.problem.item4":
+    "Включает GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 и MiniMax M2.7",
   "go.how.title": "Как работает Go",
   "go.how.body":
     "Go начинается с $5 за первый месяц, затем $10/месяц. Вы можете использовать его с OpenCode или любым агентом.",
@@ -327,8 +328,7 @@ export const dict = {
   "go.faq.a1":
     "Go — это недорогая подписка, дающая надежный доступ к мощным моделям с открытым исходным кодом для агентов-программистов.",
   "go.faq.q2": "Какие модели включает Go?",
-  "go.faq.a2":
-    "Go включает GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 и MiniMax M2.7, с щедрыми лимитами и надежным доступом.",
+  "go.faq.a2": "Go включает перечисленные ниже модели с щедрыми лимитами и надежным доступом.",
   "go.faq.q3": "Go — это то же самое, что и Zen?",
   "go.faq.a3":
     "Нет. Zen - это оплата по мере использования, в то время как Go начинается с $5 за первый месяц, затем $10/месяц, с щедрыми лимитами и надежным доступом к моделям с открытым исходным кодом GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 и MiniMax M2.7.",

@@ -22,6 +22,18 @@ const checkLoggedIn = query(async () => {
   return await getLastSeenWorkspaceID().catch(() => undefined)
 }, "checkLoggedIn.get")
 
+const models = [
+  { name: "GLM-5.1", provider: "DeepInfra, Z.ai" },
+  { name: "GLM-5", provider: "DeepInfra, Z.ai" },
+  { name: "Kimi K2.5", provider: "Moonshot AI" },
+  { name: "MiMo-V2-Pro", provider: "Xiaomi MiMo" },
+  { name: "MiMo-V2-Omni", provider: "Xiaomi MiMo" },
+  { name: "Qwen3.5 Plus", provider: "Alibaba Cloud Model Studio" },
+  { name: "Qwen3.6 Plus", provider: "Alibaba Cloud Model Studio" },
+  { name: "MiniMax M2.7", provider: "MiniMax" },
+  { name: "MiniMax M2.5", provider: "MiniMax" },
+]
+
 function LimitsGraph(props: { href: string }) {
   let root!: HTMLElement
   const [visible, setVisible] = createSignal(false)
@@ -44,7 +56,7 @@ function LimitsGraph(props: { href: string }) {
   })
 
   const free = 200
-  const models = [
+  const graph = [
     { id: "glm-5.1", name: "GLM-5.1", req: 880, d: "100ms" },
     { id: "mimo-v2-pro", name: "MiMo-V2-Pro", req: 1290, d: "150ms" },
     { id: "kimi", name: "Kimi K2.5", req: 1850, d: "240ms" },
@@ -62,7 +74,7 @@ function LimitsGraph(props: { href: string }) {
   const plot = w - left - right
 
   const ratio = (n: number) => n / free
-  const rmax = Math.max(1, ...models.map((m) => ratio(m.req)))
+  const rmax = Math.max(1, ...graph.map((m) => ratio(m.req)))
   const log = (n: number) => Math.log10(Math.max(n, 1))
   const base = 24
   const p = 1.8
@@ -93,7 +105,7 @@ function LimitsGraph(props: { href: string }) {
   const sep = bh + 40
   const fy = top + 22
   const gy = (i: number) => fy + sep + step * i
-  const my = models.length < 2 ? gy(0) : (gy(0) + gy(models.length - 1)) / 2
+  const my = graph.length < 2 ? gy(0) : (gy(0) + gy(graph.length - 1)) / 2
   const px = (n: number) => `${(n / w) * 100}%`
   const py = (n: number) => `${(n / h) * 100}%`
   const lx = px(left - 16)
@@ -132,7 +144,7 @@ function LimitsGraph(props: { href: string }) {
               <rect x={left} y={fy - bh / 2} width={Math.max(0, x(1) - left)} height={bh} data-bar data-kind="free" />
             </g>
 
-            <For each={models}>
+            <For each={graph}>
               {(m, i) => (
                 <g style={{ "--d": m.d } as any}>
                   <rect
@@ -174,7 +186,7 @@ function LimitsGraph(props: { href: string }) {
             <span data-value>{free.toLocaleString()}</span>
             <span data-name>{i18n.t("go.graph.freePill")}</span>
           </span>
-          <For each={models}>
+          <For each={graph}>
             {(m, i) => (
               <span
                 data-item
@@ -423,7 +435,31 @@ export default function Home() {
                 <Faq question={i18n.t("go.faq.q1")}>{i18n.t("go.faq.a1")}</Faq>
               </li>
               <li>
-                <Faq question={i18n.t("go.faq.q2")}>{i18n.t("go.faq.a2")}</Faq>
+                <Faq question={i18n.t("go.faq.q2")}>
+                  {i18n.t("go.faq.a2")}
+                  {language.locale() === "en" && (
+                    <div data-slot="faq-models">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{i18n.t("workspace.models.table.model")}</th>
+                            <th>{i18n.t("workspace.providers.table.provider")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <For each={models}>
+                            {(m) => (
+                              <tr>
+                                <td>{m.name}</td>
+                                <td>{m.provider}</td>
+                              </tr>
+                            )}
+                          </For>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Faq>
               </li>
               <li>
                 <Faq question={i18n.t("go.faq.q9")}>{i18n.t("go.faq.a9")}</Faq>

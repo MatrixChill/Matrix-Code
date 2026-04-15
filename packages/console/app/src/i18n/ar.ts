@@ -297,7 +297,8 @@ export const dict = {
   "go.problem.item1": "أسعار اشتراك منخفضة التكلفة",
   "go.problem.item2": "حدود سخية ووصول موثوق",
   "go.problem.item3": "مصمم لأكبر عدد ممكن من المبرمجين",
-  "go.problem.item4": "يتضمن GLM-5.1 وGLM-5 وKimi K2.5 وMiMo-V2-Pro وMiMo-V2-Omni وQwen3.5 Plus وQwen3.6 Plus وMiniMax M2.5 وMiniMax M2.7",
+  "go.problem.item4":
+    "يتضمن GLM-5.1 وGLM-5 وKimi K2.5 وMiMo-V2-Pro وMiMo-V2-Omni وQwen3.5 Plus وQwen3.6 Plus وMiniMax M2.5 وMiniMax M2.7",
   "go.how.title": "كيف يعمل Go",
   "go.how.body": "يبدأ Go من $5 للشهر الأول، ثم $10/شهر. يمكنك استخدامه مع OpenCode أو أي وكيل.",
   "go.how.step1.title": "أنشئ حسابًا",
@@ -318,8 +319,7 @@ export const dict = {
   "go.faq.q1": "ما هو OpenCode Go؟",
   "go.faq.a1": "Go هو اشتراك منخفض التكلفة يمنحك وصولًا موثوقًا إلى نماذج مفتوحة المصدر قادرة على البرمجة الوكيلة.",
   "go.faq.q2": "ما النماذج التي يتضمنها Go؟",
-  "go.faq.a2":
-    "يتضمن Go نماذج GLM-5.1 وGLM-5 وKimi K2.5 وMiMo-V2-Pro وMiMo-V2-Omni وQwen3.5 Plus وQwen3.6 Plus وMiniMax M2.5 وMiniMax M2.7، مع حدود سخية ووصول موثوق.",
+  "go.faq.a2": "يتضمن Go النماذج المدرجة أدناه، مع حدود سخية وإتاحة موثوقة.",
   "go.faq.q3": "هل Go هو نفسه Zen؟",
   "go.faq.a3":
     "لا. Zen هو الدفع حسب الاستخدام، بينما يبدأ Go من $5 للشهر الأول، ثم $10/شهر، مع حدود سخية ووصول موثوق إلى نماذج المصدر المفتوح GLM-5.1 وGLM-5 و Kimi K2.5 وMiMo-V2-Pro وMiMo-V2-Omni و Qwen3.5 Plus و Qwen3.6 Plus و MiniMax M2.5 وMiniMax M2.7.",

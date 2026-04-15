@@ -299,7 +299,8 @@ export const dict = {
   "go.problem.item1": "低価格なサブスクリプション料金",
   "go.problem.item2": "十分な制限と安定したアクセス",
   "go.problem.item3": "できるだけ多くのプログラマーのために構築",
-  "go.problem.item4": "GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5、MiniMax M2.7を含む",
+  "go.problem.item4":
+    "GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5、MiniMax M2.7を含む",
   "go.how.title": "Goの仕組み",
   "go.how.body": "Goは最初の月$5、その後$10/月で始まります。OpenCodeまたは任意のエージェントで使えます。",
   "go.how.step1.title": "アカウントを作成",
@@ -321,8 +322,7 @@ export const dict = {
   "go.faq.a1":
     "Goは、エージェント型コーディングのための有能なオープンソースモデルへの安定したアクセスを提供する低価格なサブスクリプションです。",
   "go.faq.q2": "Goにはどのモデルが含まれますか？",
-  "go.faq.a2":
-    "Goには、GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5、MiniMax M2.7が含まれており、十分な制限と安定したアクセスが提供されます。",
+  "go.faq.a2": "Go には、十分な利用上限と安定したアクセスを備えた、以下のモデルが含まれます。",
   "go.faq.q3": "GoはZenと同じですか？",
   "go.faq.a3":
     "いいえ。Zenは従量課金制ですが、Goは最初の月$5、その後$10/月で始まり、GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5、MiniMax M2.7のオープンソースモデルに対して、ゆとりある上限と信頼できるアクセスを提供します。",

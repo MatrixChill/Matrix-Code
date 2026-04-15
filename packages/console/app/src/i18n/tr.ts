@@ -302,7 +302,8 @@ export const dict = {
   "go.problem.item1": "Düşük maliyetli abonelik fiyatlandırması",
   "go.problem.item2": "Cömert limitler ve güvenilir erişim",
   "go.problem.item3": "Mümkün olduğunca çok programcı için geliştirildi",
-  "go.problem.item4": "GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 ve MiniMax M2.7 içerir",
+  "go.problem.item4":
+    "GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 ve MiniMax M2.7 içerir",
   "go.how.title": "Go nasıl çalışır?",
   "go.how.body":
     "Go ilk ay $5, sonrasında ayda 10$ fiyatıyla başlar. OpenCode veya herhangi bir ajanla kullanabilirsiniz.",
@@ -325,8 +326,7 @@ export const dict = {
   "go.faq.a1":
     "Go, ajan tabanlı kodlama için yetenekli açık kaynaklı modellere güvenilir erişim sağlayan düşük maliyetli bir aboneliktir.",
   "go.faq.q2": "Go hangi modelleri içerir?",
-  "go.faq.a2":
-    "Go, cömert limitler ve güvenilir erişim ile GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 ve MiniMax M2.7 modellerini içerir.",
+  "go.faq.a2": "Go, aşağıda listelenen modelleri cömert limitler ve güvenilir erişimle sunar.",
   "go.faq.q3": "Go, Zen ile aynı mı?",
   "go.faq.a3":
     "Hayır. Zen kullandıkça öde modelidir, Go ise ilk ay $5, sonrasında ayda 10$ fiyatıyla başlar; GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5 ve MiniMax M2.7 açık kaynak modellerine cömert limitler ve güvenilir erişim sunar.",

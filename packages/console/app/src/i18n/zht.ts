@@ -288,7 +288,8 @@ export const dict = {
   "go.problem.item1": "低成本訂閱定價",
   "go.problem.item2": "寬裕的限額與穩定存取",
   "go.problem.item3": "專為盡可能多的程式設計師打造",
-  "go.problem.item4": "包含 GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5 與 MiniMax M2.7",
+  "go.problem.item4":
+    "包含 GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5 與 MiniMax M2.7",
   "go.how.title": "Go 如何運作",
   "go.how.body": "Go 起價為首月 $5，之後 $10/月。您可以將其與 OpenCode 或任何代理搭配使用。",
   "go.how.step1.title": "建立帳號",
@@ -307,8 +308,7 @@ export const dict = {
   "go.faq.q1": "什麼是 OpenCode Go？",
   "go.faq.a1": "Go 是一個低成本訂閱方案，讓你穩定存取強大的開源模型以進行代理編碼。",
   "go.faq.q2": "Go 包含哪些模型？",
-  "go.faq.a2":
-    "Go 包含 GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5 與 MiniMax M2.7，並提供寬裕的限額與穩定存取。",
+  "go.faq.a2": "Go 包含下方列出的模型，提供充足的額度與穩定的存取。",
   "go.faq.q3": "Go 與 Zen 一樣嗎？",
   "go.faq.a3":
     "不。Zen 是按量付費，而 Go 首月 $5，之後 $10/月，提供充裕的額度，並可可靠地存取 GLM-5.1、GLM-5、Kimi K2.5、MiMo-V2-Pro、MiMo-V2-Omni、Qwen3.5 Plus、Qwen3.6 Plus、MiniMax M2.5 和 MiniMax M2.7 等開源模型。",

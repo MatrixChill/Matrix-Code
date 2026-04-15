@@ -296,7 +296,8 @@ export const dict = {
   "go.problem.item1": "저렴한 구독 가격",
   "go.problem.item2": "넉넉한 한도와 안정적인 액세스",
   "go.problem.item3": "가능한 한 많은 프로그래머를 위해 제작됨",
-  "go.problem.item4": "GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5, MiniMax M2.7 포함",
+  "go.problem.item4":
+    "GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5, MiniMax M2.7 포함",
   "go.how.title": "Go 작동 방식",
   "go.how.body": "Go는 첫 달 $5, 이후 $10/월로 시작합니다. OpenCode 또는 어떤 에이전트와도 함께 사용할 수 있습니다.",
   "go.how.step1.title": "계정 생성",
@@ -317,8 +318,7 @@ export const dict = {
   "go.faq.q1": "OpenCode Go란 무엇인가요?",
   "go.faq.a1": "Go는 에이전트 코딩을 위한 유능한 오픈 소스 모델에 대해 안정적인 액세스를 제공하는 저비용 구독입니다.",
   "go.faq.q2": "Go에는 어떤 모델이 포함되나요?",
-  "go.faq.a2":
-    "Go에는 넉넉한 한도와 안정적인 액세스를 제공하는 GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5, MiniMax M2.7가 포함됩니다.",
+  "go.faq.a2": "Go에는 넉넉한 한도와 안정적인 액세스를 제공하는 아래 모델이 포함됩니다.",
   "go.faq.q3": "Go는 Zen과 같은가요?",
   "go.faq.a3":
     "아니요. Zen은 종량제인 반면, Go는 첫 달 $5, 이후 $10/월로 시작하며, GLM-5.1, GLM-5, Kimi K2.5, MiMo-V2-Pro, MiMo-V2-Omni, Qwen3.5 Plus, Qwen3.6 Plus, MiniMax M2.5, MiniMax M2.7 오픈 소스 모델에 대한 넉넉한 한도와 안정적인 액세스를 제공합니다.",
