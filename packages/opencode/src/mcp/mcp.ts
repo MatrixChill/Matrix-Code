@@ -275,10 +275,7 @@ export const layer = Layer.effect(
 
     const DISABLED_RESULT: CreateResult = { status: { status: "disabled" } }
 
-    const connectRemote = Effect.fn("MCP.connectRemote")(function* (
-      key: string,
-      mcp: Config.Mcp & { type: "remote" },
-    ) {
+    const connectRemote = Effect.fn("MCP.connectRemote")(function* (key: string, mcp: Config.Mcp & { type: "remote" }) {
       const oauthDisabled = mcp.oauth === false
       const oauthConfig = typeof mcp.oauth === "object" ? mcp.oauth : undefined
       let authProvider: McpOAuthProvider | undefined
@@ -451,9 +448,7 @@ export const layer = Layer.effect(
         const queue = [pid]
         while (queue.length > 0) {
           const current = queue.shift()!
-          const handle = yield* spawner.spawn(
-            ChildProcess.make("pgrep", ["-P", String(current)], { stdin: "ignore" }),
-          )
+          const handle = yield* spawner.spawn(ChildProcess.make("pgrep", ["-P", String(current)], { stdin: "ignore" }))
           const text = yield* Stream.mkString(Stream.decodeText(handle.stdout))
           yield* handle.exitCode
           for (const tok of text.split("\n")) {
