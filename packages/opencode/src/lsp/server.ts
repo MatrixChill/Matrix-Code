@@ -457,9 +457,7 @@ export const Ty: Info = {
     if (!binary) {
       for (const venvPath of potentialVenvPaths) {
         const isWindows = process.platform === "win32"
-        const potentialTyPath = isWindows
-          ? path.join(venvPath, "Scripts", "ty.exe")
-          : path.join(venvPath, "bin", "ty")
+        const potentialTyPath = isWindows ? path.join(venvPath, "Scripts", "ty.exe") : path.join(venvPath, "bin", "ty")
         if (await Filesystem.exists(potentialTyPath)) {
           binary = potentialTyPath
           break

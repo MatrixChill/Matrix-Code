@@ -54,9 +54,7 @@ type Row = typeof ProjectTable.$inferSelect
 
 export function fromRow(row: Row): Info {
   const icon =
-    row.icon_url || row.icon_color
-      ? { url: row.icon_url ?? undefined, color: row.icon_color ?? undefined }
-      : undefined
+    row.icon_url || row.icon_color ? { url: row.icon_url ?? undefined, color: row.icon_color ?? undefined } : undefined
   return {
     id: row.id,
     worktree: row.worktree,
@@ -256,8 +254,7 @@ export const layer: Layer.Layer<
             time: { created: Date.now(), updated: Date.now() },
           }
 
-      if (Flag.OPENCODE_EXPERIMENTAL_ICON_DISCOVERY)
-        yield* discover(existing).pipe(Effect.ignore, Effect.forkIn(scope))
+      if (Flag.OPENCODE_EXPERIMENTAL_ICON_DISCOVERY) yield* discover(existing).pipe(Effect.ignore, Effect.forkIn(scope))
 
       const result: Info = {
         ...existing,
