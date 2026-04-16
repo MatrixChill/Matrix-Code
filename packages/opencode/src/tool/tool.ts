@@ -54,11 +54,7 @@ type Init<Parameters extends z.ZodType, M extends Metadata> =
   | (() => Effect.Effect<DefWithoutID<Parameters, M>>)
 
 export type InferParameters<T> =
-  T extends Info<infer P, any>
-    ? z.infer<P>
-    : T extends Effect.Effect<Info<infer P, any>, any, any>
-      ? z.infer<P>
-      : never
+  T extends Info<infer P, any> ? z.infer<P> : T extends Effect.Effect<Info<infer P, any>, any, any> ? z.infer<P> : never
 export type InferMetadata<T> =
   T extends Info<any, infer M> ? M : T extends Effect.Effect<Info<any, infer M>, any, any> ? M : never
 
