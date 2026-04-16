@@ -49,9 +49,7 @@ export const Remote = z
     oauth: z
       .union([OAuth, z.literal(false)])
       .optional()
-      .describe(
-        "OAuth authentication configuration for the MCP server. Set to false to disable OAuth auto-detection.",
-      ),
+      .describe("OAuth authentication configuration for the MCP server. Set to false to disable OAuth auto-detection."),
     timeout: z
       .number()
       .int()
