@@ -63,8 +63,7 @@ export const get = <A, E, R>(self: InstanceState<A, E, R>) =>
     return yield* ScopedCache.get(self.cache, yield* directory)
   })
 
-export const use = <A, E, R, B>(self: InstanceState<A, E, R>, select: (value: A) => B) =>
-  Effect.map(get(self), select)
+export const use = <A, E, R, B>(self: InstanceState<A, E, R>, select: (value: A) => B) => Effect.map(get(self), select)
 
 export const useEffect = <A, E, R, B, E2, R2>(
   self: InstanceState<A, E, R>,
