@@ -15,7 +15,9 @@ import {
 import { Dynamic } from "solid-js/web"
 import path from "path"
 import { useRoute, useRouteData } from "@tui/context/route"
+import { useProject } from "@tui/context/project"
 import { useSync } from "@tui/context/sync"
+import { useEvent } from "@tui/context/event"
 import { SplitBorder } from "@tui/component/border"
 import { Spinner } from "@tui/component/spinner"
 import { selectedForeground, useTheme } from "@tui/context/theme"
@@ -31,15 +33,14 @@ import type {
   ReasoningPart,
 } from "@opencode-ai/sdk/v2"
 import { useLocal } from "@tui/context/local"
-import { Locale } from "@/util/locale"
-import type { Tool } from "@/tool/tool"
+import { Locale } from "@/util"
+import type { Tool } from "@/tool"
 import type { ReadTool } from "@/tool/read"
 import type { WriteTool } from "@/tool/write"
 import { BashTool } from "@/tool/bash"
 import type { GlobTool } from "@/tool/glob"
 import { TodoWriteTool } from "@/tool/todo"
 import type { GrepTool } from "@/tool/grep"
-import type { ListTool } from "@/tool/ls"
 import type { EditTool } from "@/tool/edit"
 import type { ApplyPatchTool } from "@/tool/apply_patch"
 import type { WebFetchTool } from "@/tool/webfetch"
@@ -65,14 +66,14 @@ import { SubagentFooter } from "./subagent-footer.tsx"
 import { Flag } from "@/flag/flag"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 import parsers from "../../../../../../parsers-config.ts"
-import { Clipboard } from "../../util/clipboard"
+import * as Clipboard from "../../util/clipboard"
 import { Toast, useToast } from "../../ui/toast"
 import { useKV } from "../../context/kv.tsx"
-import { Editor } from "../../util/editor"
+import * as Editor from "../../util/editor"
 import stripAnsi from "strip-ansi"
 import { usePromptRef } from "../../context/prompt"
 import { useExit } from "../../context/exit"
-import { Filesystem } from "@/util/filesystem"
+import { Filesystem } from "@/util"
 import { Global } from "@/global"
 import { PermissionPrompt } from "./permission"
 import { QuestionPrompt } from "./question"
@@ -116,6 +117,8 @@ export function Session() {
   const route = useRouteData("session")
   const { navigate } = useRoute()
   const sync = useSync()
+  const event = useEvent()
+  const project = useProject()
   const tuiConfig = useTuiConfig()
   const kv = useKV()
   const { theme } = useTheme()
@@ -154,10 +157,10 @@ export function Session() {
   const [showThinking, setShowThinking] = kv.signal("thinking_visibility", true)
   const [timestamps, setTimestamps] = kv.signal<"hide" | "show">("timestamps", "hide")
   const [showDetails, setShowDetails] = kv.signal("tool_details_visibility", true)
-  const [showAssistantMetadata, setShowAssistantMetadata] = kv.signal("assistant_metadata_visibility", true)
+  const [showAssistantMetadata, _setShowAssistantMetadata] = kv.signal("assistant_metadata_visibility", true)
   const [showScrollbar, setShowScrollbar] = kv.signal("scrollbar_visible", false)
   const [diffWrapMode] = kv.signal<"word" | "none">("diff_wrap_mode", "word")
-  const [animationsEnabled, setAnimationsEnabled] = kv.signal("animations_enabled", true)
+  const [_animationsEnabled, _setAnimationsEnabled] = kv.signal("animations_enabled", true)
   const [showGenericToolOutput, setShowGenericToolOutput] = kv.signal("generic_tool_output_visibility", false)
 
   const wide = createMemo(() => dimensions().width > 120)
@@ -172,10 +175,16 @@ export function Session() {
   const providers = createMemo(() => Model.index(sync.data.provider))
 
   const scrollAcceleration = createMemo(() => getScrollAcceleration(tuiConfig))
+  const toast = useToast()
+  const sdk = useSDK()
 
   createEffect(async () => {
-    await sync.session
-      .sync(route.sessionID)
+    await sdk.client.session
+      .get({ sessionID: route.sessionID }, { throwOnError: true })
+      .then((x) => {
+        project.workspace.set(x.data?.workspaceID)
+      })
+      .then(() => sync.session.sync(route.sessionID))
       .then(() => {
         if (scroll) scroll.scrollBy(100_000)
       })
@@ -189,13 +198,10 @@ export function Session() {
       })
   })
 
-  const toast = useToast()
-  const sdk = useSDK()
-
   // Handle initial prompt from fork
   let seeded = false
   let lastSwitch: string | undefined = undefined
-  sdk.event.on("message.part.updated", (evt) => {
+  event.on("message.part.updated", (evt) => {
     const part = evt.properties.part
     if (part.type !== "tool") return
     if (part.sessionID !== route.sessionID) return
@@ -224,7 +230,7 @@ export function Session() {
   const dialog = useDialog()
   const renderer = useRenderer()
 
-  sdk.event.on("session.status", (evt) => {
+  event.on("session.status", (evt) => {
     if (evt.properties.sessionID !== route.sessionID) return
     if (evt.properties.status.type !== "retry") return
     if (evt.properties.status.message !== SessionRetry.GO_UPSELL_MESSAGE) return
@@ -235,7 +241,7 @@ export function Session() {
 
     if (kv.get(GO_UPSELL_DONT_SHOW)) return
 
-    DialogGoUpsell.show(dialog).then((dontShowAgain) => {
+    void DialogGoUpsell.show(dialog).then((dontShowAgain) => {
       if (dontShowAgain) kv.set(GO_UPSELL_DONT_SHOW, true)
       kv.set(GO_UPSELL_LAST_SEEN_AT, Date.now())
     })
@@ -266,7 +272,7 @@ export function Session() {
   useKeyboard((evt) => {
     if (!session()?.parentID) return
     if (keybind.match("app_exit", evt)) {
-      exit()
+      void exit()
     }
   })
 
@@ -477,7 +483,7 @@ export function Session() {
           })
           return
         }
-        sdk.client.session.summarize({
+        void sdk.client.session.summarize({
           sessionID: route.sessionID,
           modelID: selectedModel.modelID,
           providerID: selectedModel.providerID,
@@ -523,7 +529,7 @@ export function Session() {
         const revert = session()?.revert?.messageID
         const message = messages().findLast((x) => (!revert || x.id < revert) && x.role === "user")
         if (!message) return
-        sdk.client.session
+        void sdk.client.session
           .revert({
             sessionID: route.sessionID,
             messageID: message.id,
@@ -562,13 +568,13 @@ export function Session() {
         if (!messageID) return
         const message = messages().find((x) => x.role === "user" && x.id > messageID)
         if (!message) {
-          sdk.client.session.unrevert({
+          void sdk.client.session.unrevert({
             sessionID: route.sessionID,
           })
           prompt?.set({ input: "", parts: [] })
           return
         }
-        sdk.client.session.revert({
+        void sdk.client.session.revert({
           sessionID: route.sessionID,
           messageID: message.id,
         })
@@ -857,7 +863,7 @@ export function Session() {
           )
           await Clipboard.copy(transcript)
           toast.show({ message: "Session transcript copied to clipboard!", variant: "success" })
-        } catch (error) {
+        } catch {
           toast.show({ message: "Failed to copy session transcript", variant: "error" })
         }
         dialog.clear()
@@ -919,7 +925,7 @@ export function Session() {
 
             toast.show({ message: `Session exported to ${filename}`, variant: "success" })
           }
-        } catch (error) {
+        } catch {
           toast.show({ message: "Failed to export session", variant: "error" })
         }
         dialog.clear()
@@ -1004,7 +1010,7 @@ export function Session() {
           ),
         }
       })
-    } catch (error) {
+    } catch {
       return []
     }
   })
@@ -1548,9 +1554,6 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         <Match when={props.part.tool === "grep"}>
           <Grep {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "list"}>
-          <List {...toolprops} />
-        </Match>
         <Match when={props.part.tool === "webfetch"}>
           <WebFetch {...toolprops} />
         </Match>
@@ -1791,7 +1794,7 @@ function Bash(props: ToolProps<typeof BashTool>) {
     const workdir = props.input.workdir
     if (!workdir || workdir === ".") return undefined
 
-    const base = sync.data.path.directory
+    const base = sync.path.directory
     if (!base) return undefined
 
     const absolute = path.resolve(base, workdir)
@@ -1929,20 +1932,6 @@ function Grep(props: ToolProps<typeof GrepTool>) {
   )
 }
 
-function List(props: ToolProps<typeof ListTool>) {
-  const dir = createMemo(() => {
-    if (props.input.path) {
-      return normalizePath(props.input.path)
-    }
-    return ""
-  })
-  return (
-    <InlineTool icon="→" pending="Listing directory..." complete={props.input.path !== undefined} part={props.part}>
-      List {dir()}
-    </InlineTool>
-  )
-}
-
 function WebFetch(props: ToolProps<typeof WebFetchTool>) {
   return (
     <InlineTool icon="%" pending="Fetching from the web..." complete={(props.input as any).url} part={props.part}>
@@ -1977,7 +1966,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
 
   onMount(() => {
     if (props.metadata.sessionId && !sync.data.message[props.metadata.sessionId]?.length)
-      sync.session.sync(props.metadata.sessionId)
+      void sync.session.sync(props.metadata.sessionId)
   })
 
   const messages = createMemo(() => sync.data.message[props.metadata.sessionId ?? ""] ?? [])
@@ -2188,7 +2177,7 @@ function Question(props: ToolProps<typeof QuestionTool>) {
   const { theme } = useTheme()
   const count = createMemo(() => props.input.questions?.length ?? 0)
 
-  function format(answer?: string[]) {
+  function format(answer?: ReadonlyArray<string>) {
     if (!answer?.length) return "(no answer)"
     return answer.join(", ")
   }

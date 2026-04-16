@@ -1,21 +1,42 @@
 import { describe, expect, test } from "bun:test"
+import { Effect } from "effect"
 import path from "path"
 import { Instance } from "../../src/project/instance"
-import { Session } from "../../src/session"
+import { Session as SessionNs } from "../../src/session"
 import { MessageV2 } from "../../src/session/message-v2"
 import { MessageID, PartID, type SessionID } from "../../src/session/schema"
 import { ModelID, ProviderID } from "../../src/provider/schema"
-import { Log } from "../../src/util/log"
+import { Log } from "../../src/util"
 
 const root = path.join(__dirname, "../..")
-Log.init({ print: false })
+void Log.init({ print: false })
+
+function run<A, E>(fx: Effect.Effect<A, E, SessionNs.Service>) {
+  return Effect.runPromise(fx.pipe(Effect.provide(SessionNs.defaultLayer)))
+}
+
+const svc = {
+  ...SessionNs,
+  create(input?: SessionNs.CreateInput) {
+    return run(SessionNs.Service.use((svc) => svc.create(input)))
+  },
+  remove(id: SessionID) {
+    return run(SessionNs.Service.use((svc) => svc.remove(id)))
+  },
+  updateMessage<T extends MessageV2.Info>(msg: T) {
+    return run(SessionNs.Service.use((svc) => svc.updateMessage(msg)))
+  },
+  updatePart<T extends MessageV2.Part>(part: T) {
+    return run(SessionNs.Service.use((svc) => svc.updatePart(part)))
+  },
+}
 
 async function fill(sessionID: SessionID, count: number, time = (i: number) => Date.now() + i) {
   const ids = [] as MessageID[]
   for (let i = 0; i < count; i++) {
     const id = MessageID.ascending()
     ids.push(id)
-    await Session.updateMessage({
+    await svc.updateMessage({
       id,
       sessionID,
       role: "user",
@@ -25,7 +46,7 @@ async function fill(sessionID: SessionID, count: number, time = (i: number) => D
       tools: {},
       mode: "",
     } as unknown as MessageV2.Info)
-    await Session.updatePart({
+    await svc.updatePart({
       id: PartID.ascending(),
       sessionID,
       messageID: id,
@@ -38,7 +59,7 @@ async function fill(sessionID: SessionID, count: number, time = (i: number) => D
 
 async function addUser(sessionID: SessionID, text?: string) {
   const id = MessageID.ascending()
-  await Session.updateMessage({
+  await svc.updateMessage({
     id,
     sessionID,
     role: "user",
@@ -49,7 +70,7 @@ async function addUser(sessionID: SessionID, text?: string) {
     mode: "",
   } as unknown as MessageV2.Info)
   if (text) {
-    await Session.updatePart({
+    await svc.updatePart({
       id: PartID.ascending(),
       sessionID,
       messageID: id,
@@ -66,7 +87,7 @@ async function addAssistant(
   opts?: { summary?: boolean; finish?: string; error?: MessageV2.Assistant["error"] },
 ) {
   const id = MessageID.ascending()
-  await Session.updateMessage({
+  await svc.updateMessage({
     id,
     sessionID,
     role: "assistant",
@@ -87,7 +108,7 @@ async function addAssistant(
 }
 
 async function addCompactionPart(sessionID: SessionID, messageID: MessageID, tailStartID?: MessageID) {
-  await Session.updatePart({
+  await svc.updatePart({
     id: PartID.ascending(),
     sessionID,
     messageID,
@@ -102,14 +123,14 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         await fill(session.id, 2)
 
         const result = MessageV2.page({ sessionID: session.id, limit: 10 })
         expect(result).toBeDefined()
         expect(result.items).toBeArray()
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -118,7 +139,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 6)
 
         const a = MessageV2.page({ sessionID: session.id, limit: 2 })
@@ -137,7 +158,7 @@ describe("MessageV2.page", () => {
         expect(c.more).toBe(false)
         expect(c.cursor).toBeUndefined()
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -146,13 +167,13 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 4)
 
         const result = MessageV2.page({ sessionID: session.id, limit: 4 })
         expect(result.items.map((item) => item.info.id)).toEqual(ids)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -161,14 +182,14 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const result = MessageV2.page({ sessionID: session.id, limit: 10 })
         expect(result.items).toEqual([])
         expect(result.more).toBe(false)
         expect(result.cursor).toBeUndefined()
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -187,7 +208,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 3)
 
         const result = MessageV2.page({ sessionID: session.id, limit: 3 })
@@ -195,7 +216,7 @@ describe("MessageV2.page", () => {
         expect(result.more).toBe(false)
         expect(result.cursor).toBeUndefined()
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -204,7 +225,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 5)
 
         const result = MessageV2.page({ sessionID: session.id, limit: 1 })
@@ -212,7 +233,7 @@ describe("MessageV2.page", () => {
         expect(result.items[0].info.id).toBe(ids[ids.length - 1])
         expect(result.more).toBe(true)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -221,10 +242,10 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: id,
@@ -236,7 +257,7 @@ describe("MessageV2.page", () => {
         expect(result.items).toHaveLength(1)
         expect(result.items[0].parts).toHaveLength(2)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -245,7 +266,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 4, (i) => 1000.5 + i)
 
         const a = MessageV2.page({ sessionID: session.id, limit: 2 })
@@ -254,7 +275,7 @@ describe("MessageV2.page", () => {
         expect(a.items.map((item) => item.info.id)).toEqual(ids.slice(-2))
         expect(b.items.map((item) => item.info.id)).toEqual(ids.slice(0, 2))
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -263,7 +284,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 4, () => 1000)
 
         const a = MessageV2.page({ sessionID: session.id, limit: 2 })
@@ -274,7 +295,7 @@ describe("MessageV2.page", () => {
         expect(b.items.map((item) => item.info.id)).toEqual(ids.slice(0, 2))
         expect(b.more).toBe(false)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -283,8 +304,8 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const a = await Session.create({})
-        const b = await Session.create({})
+        const a = await svc.create({})
+        const b = await svc.create({})
         await fill(a.id, 3)
         await fill(b.id, 2)
 
@@ -295,8 +316,8 @@ describe("MessageV2.page", () => {
         expect(resultA.items.every((item) => item.info.sessionID === a.id)).toBe(true)
         expect(resultB.items.every((item) => item.info.sessionID === b.id)).toBe(true)
 
-        await Session.remove(a.id)
-        await Session.remove(b.id)
+        await svc.remove(a.id)
+        await svc.remove(b.id)
       },
     })
   })
@@ -305,7 +326,7 @@ describe("MessageV2.page", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 10)
 
         const result = MessageV2.page({ sessionID: session.id, limit: 100 })
@@ -314,7 +335,7 @@ describe("MessageV2.page", () => {
         expect(result.more).toBe(false)
         expect(result.cursor).toBeUndefined()
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -325,13 +346,13 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 5)
 
         const items = Array.from(MessageV2.stream(session.id))
         expect(items.map((item) => item.info.id)).toEqual(ids.slice().reverse())
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -340,12 +361,12 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const items = Array.from(MessageV2.stream(session.id))
         expect(items).toHaveLength(0)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -354,14 +375,14 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 1)
 
         const items = Array.from(MessageV2.stream(session.id))
         expect(items).toHaveLength(1)
         expect(items[0].info.id).toBe(ids[0])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -370,7 +391,7 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         await fill(session.id, 3)
 
         const items = Array.from(MessageV2.stream(session.id))
@@ -379,7 +400,7 @@ describe("MessageV2.stream", () => {
           expect(item.parts[0].type).toBe("text")
         }
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -388,7 +409,7 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 60)
 
         const items = Array.from(MessageV2.stream(session.id))
@@ -396,7 +417,7 @@ describe("MessageV2.stream", () => {
         expect(items[0].info.id).toBe(ids[ids.length - 1])
         expect(items[59].info.id).toBe(ids[0])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -405,7 +426,7 @@ describe("MessageV2.stream", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         await fill(session.id, 1)
 
         const gen = MessageV2.stream(session.id)
@@ -415,7 +436,7 @@ describe("MessageV2.stream", () => {
         expect(first).toHaveProperty("done")
         expect(first.done).toBe(false)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -426,7 +447,7 @@ describe("MessageV2.parts", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
         const result = MessageV2.parts(id)
@@ -434,7 +455,7 @@ describe("MessageV2.parts", () => {
         expect(result[0].type).toBe("text")
         expect((result[0] as MessageV2.TextPart).text).toBe("m0")
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -443,13 +464,13 @@ describe("MessageV2.parts", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const id = await addUser(session.id)
 
         const result = MessageV2.parts(id)
         expect(result).toEqual([])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -458,17 +479,17 @@ describe("MessageV2.parts", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: id,
           type: "text",
           text: "second",
         })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: id,
@@ -482,7 +503,7 @@ describe("MessageV2.parts", () => {
         expect((result[1] as MessageV2.TextPart).text).toBe("second")
         expect((result[2] as MessageV2.TextPart).text).toBe("third")
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -491,7 +512,7 @@ describe("MessageV2.parts", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        await Session.create({})
+        await svc.create({})
         const result = MessageV2.parts(MessageID.ascending())
         expect(result).toEqual([])
       },
@@ -502,14 +523,14 @@ describe("MessageV2.parts", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
         const result = MessageV2.parts(id)
         expect(result[0].sessionID).toBe(session.id)
         expect(result[0].messageID).toBe(id)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -520,7 +541,7 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
         const result = MessageV2.get({ sessionID: session.id, messageID: id })
@@ -530,7 +551,7 @@ describe("MessageV2.get", () => {
         expect(result.parts).toHaveLength(1)
         expect((result.parts[0] as MessageV2.TextPart).text).toBe("m0")
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -539,13 +560,13 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         expect(() => MessageV2.get({ sessionID: session.id, messageID: MessageID.ascending() })).toThrow(
           "NotFoundError",
         )
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -554,16 +575,16 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const a = await Session.create({})
-        const b = await Session.create({})
+        const a = await svc.create({})
+        const b = await svc.create({})
         const [id] = await fill(a.id, 1)
 
         expect(() => MessageV2.get({ sessionID: b.id, messageID: id })).toThrow("NotFoundError")
         const result = MessageV2.get({ sessionID: a.id, messageID: id })
         expect(result.info.id).toBe(id)
 
-        await Session.remove(a.id)
-        await Session.remove(b.id)
+        await svc.remove(a.id)
+        await svc.remove(b.id)
       },
     })
   })
@@ -572,10 +593,10 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: id,
@@ -586,7 +607,7 @@ describe("MessageV2.get", () => {
         const result = MessageV2.get({ sessionID: session.id, messageID: id })
         expect(result.parts).toHaveLength(2)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -595,11 +616,11 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const uid = await addUser(session.id, "hello")
         const aid = await addAssistant(session.id, uid)
 
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: aid,
@@ -612,7 +633,7 @@ describe("MessageV2.get", () => {
         expect(result.parts).toHaveLength(1)
         expect((result.parts[0] as MessageV2.TextPart).text).toBe("response")
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -621,14 +642,14 @@ describe("MessageV2.get", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const id = await addUser(session.id)
 
         const result = MessageV2.get({ sessionID: session.id, messageID: id })
         expect(result.info.id).toBe(id)
         expect(result.parts).toEqual([])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -639,7 +660,7 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const ids = await fill(session.id, 5)
 
         const result = MessageV2.filterCompacted(MessageV2.stream(session.id))
@@ -647,7 +668,7 @@ describe("MessageV2.filterCompacted", () => {
         // reversed from newest-first to chronological
         expect(result.map((item) => item.info.id)).toEqual(ids)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -656,13 +677,13 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         // Chronological: u1(+compaction part), a1(summary, parentID=u1), u2, a2
         // Stream (newest first): a2, u2, a1(adds u1 to completed), u1(in completed + compaction) -> break
         const u1 = await addUser(session.id, "first question")
         const a1 = await addAssistant(session.id, u1, { summary: true, finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a1,
@@ -673,7 +694,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u2 = await addUser(session.id, "new question")
         const a2 = await addAssistant(session.id, u2)
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a2,
@@ -686,7 +707,7 @@ describe("MessageV2.filterCompacted", () => {
         expect(result[0].info.id).toBe(u1)
         expect(result.length).toBe(4)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -700,16 +721,16 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const u1 = await addUser(session.id, "hello")
         await addCompactionPart(session.id, u1)
-        const u2 = await addUser(session.id, "world")
+        await addUser(session.id, "world")
 
         const result = MessageV2.filterCompacted(MessageV2.stream(session.id))
         expect(result).toHaveLength(2)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -718,7 +739,7 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const u1 = await addUser(session.id, "hello")
         await addCompactionPart(session.id, u1)
@@ -728,13 +749,13 @@ describe("MessageV2.filterCompacted", () => {
           isRetryable: true,
         }).toObject() as MessageV2.Assistant["error"]
         await addAssistant(session.id, u1, { summary: true, finish: "end_turn", error })
-        const u2 = await addUser(session.id, "retry")
+        await addUser(session.id, "retry")
 
         const result = MessageV2.filterCompacted(MessageV2.stream(session.id))
         // Error assistant doesn't add to completed, so compaction boundary never triggers
         expect(result).toHaveLength(3)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -743,19 +764,19 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const u1 = await addUser(session.id, "hello")
         await addCompactionPart(session.id, u1)
 
         // summary=true but no finish
         await addAssistant(session.id, u1, { summary: true })
-        const u2 = await addUser(session.id, "next")
+        await addUser(session.id, "next")
 
         const result = MessageV2.filterCompacted(MessageV2.stream(session.id))
         expect(result).toHaveLength(3)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -764,11 +785,11 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const u1 = await addUser(session.id, "first")
         const a1 = await addAssistant(session.id, u1, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a1,
@@ -778,7 +799,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u2 = await addUser(session.id, "second")
         const a2 = await addAssistant(session.id, u2, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a2,
@@ -789,7 +810,7 @@ describe("MessageV2.filterCompacted", () => {
         const c1 = await addUser(session.id)
         await addCompactionPart(session.id, c1, u2)
         const s1 = await addAssistant(session.id, c1, { summary: true, finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: s1,
@@ -799,7 +820,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u3 = await addUser(session.id, "third")
         const a3 = await addAssistant(session.id, u3, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a3,
@@ -811,7 +832,7 @@ describe("MessageV2.filterCompacted", () => {
 
         expect(result.map((item) => item.info.id)).toEqual([u2, a2, c1, s1, u3, a3])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -820,11 +841,11 @@ describe("MessageV2.filterCompacted", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
 
         const u1 = await addUser(session.id, "first")
         const a1 = await addAssistant(session.id, u1, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a1,
@@ -834,7 +855,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u2 = await addUser(session.id, "second")
         const a2 = await addAssistant(session.id, u2, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a2,
@@ -845,7 +866,7 @@ describe("MessageV2.filterCompacted", () => {
         const c1 = await addUser(session.id)
         await addCompactionPart(session.id, c1, u2)
         const s1 = await addAssistant(session.id, c1, { summary: true, finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: s1,
@@ -855,7 +876,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u3 = await addUser(session.id, "third")
         const a3 = await addAssistant(session.id, u3, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a3,
@@ -866,7 +887,7 @@ describe("MessageV2.filterCompacted", () => {
         const c2 = await addUser(session.id)
         await addCompactionPart(session.id, c2, u3)
         const s2 = await addAssistant(session.id, c2, { summary: true, finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: s2,
@@ -876,7 +897,7 @@ describe("MessageV2.filterCompacted", () => {
 
         const u4 = await addUser(session.id, "fourth")
         const a4 = await addAssistant(session.id, u4, { finish: "end_turn" })
-        await Session.updatePart({
+        await svc.updatePart({
           id: PartID.ascending(),
           sessionID: session.id,
           messageID: a4,
@@ -888,7 +909,7 @@ describe("MessageV2.filterCompacted", () => {
 
         expect(result.map((item) => item.info.id)).toEqual([u3, a3, c2, s2, u4, a4])
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -942,7 +963,7 @@ describe("MessageV2 consistency", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         await fill(session.id, 3)
 
         const paged = MessageV2.page({ sessionID: session.id, limit: 10 })
@@ -952,7 +973,7 @@ describe("MessageV2 consistency", () => {
           expect(got.parts).toEqual(item.parts)
         }
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -961,14 +982,14 @@ describe("MessageV2 consistency", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         const [id] = await fill(session.id, 1)
 
         const got = MessageV2.get({ sessionID: session.id, messageID: id })
         const standalone = MessageV2.parts(id)
         expect(got.parts).toEqual(standalone)
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -977,7 +998,7 @@ describe("MessageV2 consistency", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
+        const session = await svc.create({})
         await fill(session.id, 7)
 
         const streamed = Array.from(MessageV2.stream(session.id))
@@ -995,7 +1016,7 @@ describe("MessageV2 consistency", () => {
 
         expect(streamed.map((m) => m.info.id)).toEqual(paged.map((m) => m.info.id))
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
@@ -1004,15 +1025,15 @@ describe("MessageV2 consistency", () => {
     await Instance.provide({
       directory: root,
       fn: async () => {
-        const session = await Session.create({})
-        const ids = await fill(session.id, 4)
+        const session = await svc.create({})
+        await fill(session.id, 4)
 
         const filtered = MessageV2.filterCompacted(MessageV2.stream(session.id))
         const all = Array.from(MessageV2.stream(session.id)).reverse()
 
         expect(filtered.map((m) => m.info.id)).toEqual(all.map((m) => m.info.id))
 
-        await Session.remove(session.id)
+        await svc.remove(session.id)
       },
     })
   })
