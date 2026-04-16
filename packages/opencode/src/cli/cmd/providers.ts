@@ -41,9 +41,9 @@ async function handlePluginAuth(plugin: { auth: PluginAuth }, provider: string, 
     const method = await prompts.select({
       message: "Login method",
       options: plugin.auth.methods.map((x, index) => ({
-          label: x.label,
-          value: index.toString(),
-        })),
+        label: x.label,
+        value: index.toString(),
+      })),
     })
     if (prompts.isCancel(method)) throw new UI.CancelledError()
     index = parseInt(method)

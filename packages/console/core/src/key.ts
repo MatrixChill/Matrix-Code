@@ -25,8 +25,8 @@ export namespace Key {
         .where(
           and(
             eq(KeyTable.workspaceID, Actor.workspace()),
-              isNull(KeyTable.timeDeleted),
-              ...(Actor.userRole() === "admin" ? [] : [eq(KeyTable.userID, Actor.userID())]),
+            isNull(KeyTable.timeDeleted),
+            ...(Actor.userRole() === "admin" ? [] : [eq(KeyTable.userID, Actor.userID())]),
           ),
         )
         .orderBy(sql`${KeyTable.name} DESC`),
@@ -83,8 +83,8 @@ export namespace Key {
         .where(
           and(
             eq(KeyTable.id, input.id),
-              eq(KeyTable.workspaceID, Actor.workspace()),
-              ...(Actor.userRole() === "admin" ? [] : [eq(KeyTable.userID, Actor.userID())]),
+            eq(KeyTable.workspaceID, Actor.workspace()),
+            ...(Actor.userRole() === "admin" ? [] : [eq(KeyTable.userID, Actor.userID())]),
           ),
         ),
     )
