@@ -32,7 +32,7 @@ import { isRecord } from "@/util/record"
 import { ConfigPaths } from "./paths"
 import type { ConsoleState } from "./console-state"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
-import { InstanceState } from "@/effect/instance-state"
+import { InstanceState } from "@/effect"
 import { Context, Duration, Effect, Exit, Fiber, Layer, Option } from "effect"
 import { EffectFlock } from "@opencode-ai/shared/util/effect-flock"
 
