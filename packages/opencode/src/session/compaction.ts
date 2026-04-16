@@ -2,7 +2,7 @@ import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import * as Session from "./session"
 import { SessionID, MessageID, PartID } from "./schema"
-import { Provider, ProviderTransform } from "../provider"
+import { Provider } from "../provider"
 import { MessageV2 } from "./message-v2"
 import z from "zod"
 import { Token } from "../util"
@@ -17,7 +17,7 @@ import { Effect, Layer, Context } from "effect"
 import { InstanceState } from "@/effect"
 import { makeRuntime } from "@/effect/run-service"
 import { fn } from "@/util/fn"
-import { isOverflow as overflow } from "./overflow"
+import { isOverflow as overflow, usable } from "./overflow"
 
 export namespace SessionCompaction {
   const log = Log.create({ service: "session.compaction" })
@@ -41,13 +41,6 @@ export namespace SessionCompaction {
     start: number
     end: number
     id: MessageID
-  }
-
-  function usable(input: { cfg: Config.Info; model: Provider.Model }) {
-    const reserved = input.cfg.compaction?.reserved ?? Math.min(20_000, ProviderTransform.maxOutputTokens(input.model))
-    return input.model.limit.input
-      ? Math.max(0, input.model.limit.input - reserved)
-      : Math.max(0, input.model.limit.context - ProviderTransform.maxOutputTokens(input.model))
   }
 
   function tailBudget(input: { cfg: Config.Info; model: Provider.Model }) {
@@ -131,7 +124,7 @@ export namespace SessionCompaction {
         messages: MessageV2.WithParts[]
         model: Provider.Model
       }) {
-        const msgs = yield* MessageV2.toModelMessagesEffect(input.messages, input.model, { stripMedia: true })
+        const msgs = yield* MessageV2.toModelMessagesEffect(input.messages, input.model)
         return Token.estimate(JSON.stringify(msgs))
       })
 
@@ -282,14 +275,7 @@ export namespace SessionCompaction {
           { sessionID: input.sessionID },
           { context: [], prompt: undefined },
         )
-        const defaultPrompt = `Summarize the older conversation history so another agent can continue the work with the retained recent turns.
-The most recent conversation turns will remain verbatim outside this summary, so focus on older context that is still needed to understand and continue the work.
-Include what we did, what we're doing, which files we're working on, and what we're going to do next.
-The summary that you construct will be used so that another agent can read it and continue the work.
-Do not call any tools. Respond only with the summary text.
-Respond in the same language as the user's messages in the conversation.
-
-When constructing the summary, try to stick to this template:
+        const defaultPrompt = `When constructing the summary, try to stick to this template:
 ---
 ## Goal
 

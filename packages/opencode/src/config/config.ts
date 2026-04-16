@@ -1009,13 +1009,15 @@ export const Info = z
           .int()
           .min(0)
           .optional()
-          .describe("Number of recent real user turns to keep verbatim during compaction (default: 2)"),
+          .describe(
+            "Number of recent user turns, including their following assistant/tool responses, to keep verbatim during compaction (default: 2)",
+          ),
         tail_tokens: z
           .number()
           .int()
           .min(0)
           .optional()
-          .describe("Token budget for retained recent turns during compaction"),
+          .describe("Token budget for retained recent turn spans during compaction"),
         reserved: z
           .number()
           .int()
