@@ -454,8 +454,7 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
       return {
         autoload: true,
         vars(_options: Record<string, any>) {
-          const endpoint =
-            location === "global" ? "aiplatform.googleapis.com" : `${location}-aiplatform.googleapis.com`
+          const endpoint = location === "global" ? "aiplatform.googleapis.com" : `${location}-aiplatform.googleapis.com`
           return {
             ...(project && { GOOGLE_VERTEX_PROJECT: project }),
             GOOGLE_VERTEX_LOCATION: location,
@@ -1136,12 +1135,9 @@ const layer: Layer.Layer<
                 toolcall: model.tool_call ?? existingModel?.capabilities.toolcall ?? true,
                 input: {
                   text: model.modalities?.input?.includes("text") ?? existingModel?.capabilities.input.text ?? true,
-                  audio:
-                    model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false,
-                  image:
-                    model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false,
-                  video:
-                    model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false,
+                  audio: model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false,
+                  image: model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false,
+                  video: model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false,
                   pdf: model.modalities?.input?.includes("pdf") ?? existingModel?.capabilities.input.pdf ?? false,
                 },
                 output: {
@@ -1246,9 +1242,7 @@ const layer: Layer.Layer<
             if (result.vars) varsLoaders[providerID] = result.vars
             if (result.discoverModels) discoveryLoaders[providerID] = result.discoverModels
             const opts = result.options ?? {}
-            const patch: Partial<Info> = providers[providerID]
-              ? { options: opts }
-              : { source: "custom", options: opts }
+            const patch: Partial<Info> = providers[providerID] ? { options: opts } : { source: "custom", options: opts }
             mergeProvider(providerID, patch)
           }
         }
@@ -1424,8 +1418,7 @@ const layer: Layer.Layer<
         options["fetch"] = async (input: any, init?: BunFetchRequestInit) => {
           const fetchFn = customFetch ?? fetch
           const opts = init ?? {}
-          const chunkAbortCtl =
-            typeof chunkTimeout === "number" && chunkTimeout > 0 ? new AbortController() : undefined
+          const chunkAbortCtl = typeof chunkTimeout === "number" && chunkTimeout > 0 ? new AbortController() : undefined
           const signals: AbortSignal[] = []
 
           if (opts.signal) signals.push(opts.signal)
@@ -1646,9 +1639,7 @@ const layer: Layer.Layer<
         return { providerID: entry.providerID, modelID: entry.modelID }
       }
 
-      const provider = Object.values(s.providers).find(
-        (p) => !cfg.provider || Object.keys(cfg.provider).includes(p.id),
-      )
+      const provider = Object.values(s.providers).find((p) => !cfg.provider || Object.keys(cfg.provider).includes(p.id))
       if (!provider) throw new Error("no providers found")
       const [model] = sort(Object.values(provider.models))
       if (!model) throw new Error("no models found")
