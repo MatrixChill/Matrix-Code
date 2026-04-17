@@ -19,8 +19,6 @@ let daytona = function daytona(): Promise<Daytona> {
   return client
 }
 
-
-
 const preview = new Map<string, { url: string; token: string }>()
 const repo = "/home/daytona/workspace/repo"
 const root = "/home/daytona/workspace"
