@@ -577,7 +577,7 @@ export default function Layout(props: ParentProps) {
 
     return projects.find((p) => p.worktree === root)
   })
-  
+
   const [autoselecting] = createResource(async () => {
     await ready.promise
     await layout.ready.promise
