@@ -56,7 +56,10 @@ function walkUncached(ast: SchemaAST.AST): z.ZodTypeAny {
 // prior transforms — typical encoding.length is 1.
 function encoded(ast: SchemaAST.AST): z.ZodTypeAny {
   const encoding = ast.encoding!
-  return encoding.reduce<z.ZodTypeAny>((acc, link) => acc.transform((v) => decode(link.transformation, v)), walk(encoding[0].to))
+  return encoding.reduce<z.ZodTypeAny>(
+    (acc, link) => acc.transform((v) => decode(link.transformation, v)),
+    walk(encoding[0].to),
+  )
 }
 
 // Transformations built via pure `SchemaGetter.transform(fn)` (the common
@@ -64,7 +67,9 @@ function encoded(ast: SchemaAST.AST): z.ZodTypeAny {
 // Effectful / middleware-based transforms will surface as Effect defects.
 function decode(transformation: SchemaAST.Link["transformation"], value: unknown): unknown {
   const exit = Effect.runSyncExit(
-    (transformation.decode as any).run(Option.some(value), EMPTY_PARSE_OPTIONS) as Effect.Effect<Option.Option<unknown>>,
+    (transformation.decode as any).run(Option.some(value), EMPTY_PARSE_OPTIONS) as Effect.Effect<
+      Option.Option<unknown>
+    >,
   )
   if (exit._tag === "Failure") throw new Error(`effect-zod: transform failed: ${String(exit.cause)}`)
   return Option.getOrElse(exit.value, () => value)
