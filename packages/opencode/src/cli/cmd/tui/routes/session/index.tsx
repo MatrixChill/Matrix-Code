@@ -207,8 +207,6 @@ export function Session() {
     if (scroll) scroll.scrollBy(100_000)
   })
 
-  // Handle initial prompt from fork
-  let seeded = false
   let lastSwitch: string | undefined = undefined
   event.on("message.part.updated", (evt) => {
     const part = evt.properties.part
@@ -226,14 +224,15 @@ export function Session() {
     }
   })
 
+  let seeded = false
   let scroll: ScrollBoxRenderable
   let prompt: PromptRef | undefined
   const bind = (r: PromptRef | undefined) => {
     prompt = r
     promptRef.set(r)
-    if (seeded || !route.initialPrompt || !r) return
+    if (seeded || !route.prompt || !r) return
     seeded = true
-    r.set(route.initialPrompt)
+    r.set(route.prompt)
   }
   const keybind = useKeybind()
   const dialog = useDialog()
