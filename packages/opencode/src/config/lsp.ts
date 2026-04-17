@@ -18,22 +18,20 @@ export const Entry = z.union([
   }),
 ])
 
-export const Info = z
-  .union([z.literal(false), z.record(z.string(), Entry)])
-  .refine(
-    (data) => {
-      if (typeof data === "boolean") return true
-      const serverIds = new Set(Object.values(LSPServer).map((server) => server.id))
+export const Info = z.union([z.literal(false), z.record(z.string(), Entry)]).refine(
+  (data) => {
+    if (typeof data === "boolean") return true
+    const serverIds = new Set(Object.values(LSPServer).map((server) => server.id))
 
-      return Object.entries(data).every(([id, config]) => {
-        if (config.disabled) return true
-        if (serverIds.has(id)) return true
-        return Boolean(config.extensions)
-      })
-    },
-    {
-      error: "For custom LSP servers, 'extensions' array is required.",
-    },
-  )
+    return Object.entries(data).every(([id, config]) => {
+      if (config.disabled) return true
+      if (serverIds.has(id)) return true
+      return Boolean(config.extensions)
+    })
+  },
+  {
+    error: "For custom LSP servers, 'extensions' array is required.",
+  },
+)
 
 export type Info = z.infer<typeof Info>
