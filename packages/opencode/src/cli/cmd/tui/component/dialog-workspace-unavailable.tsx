@@ -5,9 +5,7 @@ import { For } from "solid-js"
 import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 
-export function DialogWorkspaceUnavailable(props: {
-  onRestore?: () => boolean | void | Promise<boolean | void>
-}) {
+export function DialogWorkspaceUnavailable(props: { onRestore?: () => boolean | void | Promise<boolean | void> }) {
   const dialog = useDialog()
   const { theme } = useTheme()
   const [store, setStore] = createStore({
