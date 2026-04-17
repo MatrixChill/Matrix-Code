@@ -544,10 +544,7 @@ const part = (row: typeof PartTable.$inferSelect) =>
   }) as Part
 
 const older = (row: Cursor) =>
-  or(
-    lt(MessageTable.time_created, row.time),
-    and(eq(MessageTable.time_created, row.time), lt(MessageTable.id, row.id)),
-  )
+  or(lt(MessageTable.time_created, row.time), and(eq(MessageTable.time_created, row.time), lt(MessageTable.id, row.id)))
 
 function hydrate(rows: (typeof MessageTable.$inferSelect)[]) {
   const ids = rows.map((row) => row.id)
@@ -930,11 +927,7 @@ export function filterCompacted(msgs: Iterable<WithParts>) {
   const completed = new Set<string>()
   for (const msg of msgs) {
     result.push(msg)
-    if (
-      msg.info.role === "user" &&
-      completed.has(msg.info.id) &&
-      msg.parts.some((part) => part.type === "compaction")
-    )
+    if (msg.info.role === "user" && completed.has(msg.info.id) && msg.parts.some((part) => part.type === "compaction"))
       break
     if (msg.info.role === "assistant" && msg.info.summary && msg.info.finish && !msg.info.error)
       completed.add(msg.info.parentID)

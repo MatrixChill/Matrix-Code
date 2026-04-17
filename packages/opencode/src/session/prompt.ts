@@ -1073,9 +1073,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   let start = parseInt(range.start)
                   let end = range.end ? parseInt(range.end) : undefined
                   if (start === end) {
-                    const symbols = yield* lsp
-                      .documentSymbol(filePathURI)
-                      .pipe(Effect.catch(() => Effect.succeed([])))
+                    const symbols = yield* lsp.documentSymbol(filePathURI).pipe(Effect.catch(() => Effect.succeed([])))
                     for (const symbol of symbols) {
                       let r: LSP.Range | undefined
                       if ("range" in symbol) r = symbol.range
@@ -1453,9 +1451,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             }
 
             if (step === 1)
-              yield* summary
-                .summarize({ sessionID, messageID: lastUser.id })
-                .pipe(Effect.ignore, Effect.forkIn(scope))
+              yield* summary.summarize({ sessionID, messageID: lastUser.id }).pipe(Effect.ignore, Effect.forkIn(scope))
 
             if (step > 1 && lastFinished) {
               for (const m of msgs) {
@@ -1723,9 +1719,7 @@ export const PromptInput = z.object({
   tools: z
     .record(z.string(), z.boolean())
     .optional()
-    .describe(
-      "@deprecated tools and permissions have been merged, you can set permissions on the session itself now",
-    ),
+    .describe("@deprecated tools and permissions have been merged, you can set permissions on the session itself now"),
   format: MessageV2.Format.optional(),
   system: z.string().optional(),
   variant: z.string().optional(),

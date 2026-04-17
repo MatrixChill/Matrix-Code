@@ -61,12 +61,7 @@ export const layer = Layer.effect(
     const get = Effect.fn("Todo.get")(function* (sessionID: SessionID) {
       const rows = yield* Effect.sync(() =>
         Database.use((db) =>
-          db
-            .select()
-            .from(TodoTable)
-            .where(eq(TodoTable.session_id, sessionID))
-            .orderBy(asc(TodoTable.position))
-            .all(),
+          db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position)).all(),
         ),
       )
       return rows.map((row) => ({
