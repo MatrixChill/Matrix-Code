@@ -71,8 +71,8 @@ export namespace PluginLoader {
     kind: PluginKind,
   ): Promise<
     | { ok: true; value: Resolved }
-      | { ok: false; stage: "missing"; value: Missing }
-      | { ok: false; stage: "install" | "entry" | "compatibility"; error: unknown }
+    | { ok: false; stage: "missing"; value: Missing }
+    | { ok: false; stage: "install" | "entry" | "compatibility"; error: unknown }
   > {
     // First make sure the plugin exists locally, installing npm plugins on demand.
     let target = ""
