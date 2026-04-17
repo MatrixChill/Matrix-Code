@@ -63,36 +63,6 @@ interface ArboristTree {
   edgesOut: Map<string, { to?: ArboristNode }>
 }
 
-const reify = (input: { dir: string; add?: string[] }) =>
-  Effect.gen(function* () {
-    const { Arborist } = yield* Effect.promise(() => import("@npmcli/arborist"))
-    const arborist = new Arborist({
-      path: input.dir,
-      binLinks: true,
-      progress: false,
-      savePrefix: "",
-      ignoreScripts: true,
-    })
-    return yield* Effect.tryPromise({
-      try: () =>
-        arborist.reify({
-          add: input?.add || [],
-          save: true,
-          saveType: "prod",
-        }),
-      catch: (cause) =>
-        new InstallFailedError({
-          cause,
-          add: input?.add,
-          dir: input.dir,
-        }),
-    }) as Effect.Effect<ArboristTree, InstallFailedError>
-  }).pipe(
-    Effect.withSpan("Npm.reify", {
-      attributes: input,
-    }),
-  )
-
 export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
@@ -101,6 +71,36 @@ export const layer = Layer.effect(
     const fs = yield* FileSystem.FileSystem
     const flock = yield* EffectFlock.Service
     const directory = (pkg: string) => path.join(global.cache, "packages", sanitize(pkg))
+    const reify = (input: { dir: string; add?: string[] }) =>
+      Effect.gen(function* () {
+        yield* flock.acquire(`npm-install:${input.dir}`)
+        const { Arborist } = yield* Effect.promise(() => import("@npmcli/arborist"))
+        const arborist = new Arborist({
+          path: input.dir,
+          binLinks: true,
+          progress: false,
+          savePrefix: "",
+          ignoreScripts: true,
+        })
+        return yield* Effect.tryPromise({
+          try: () =>
+            arborist.reify({
+              add: input?.add || [],
+              save: true,
+              saveType: "prod",
+            }),
+          catch: (cause) =>
+            new InstallFailedError({
+              cause,
+              add: input?.add,
+              dir: input.dir,
+            }),
+        }) as Effect.Effect<ArboristTree, InstallFailedError>
+      }).pipe(
+        Effect.withSpan("Npm.reify", {
+          attributes: input,
+        }),
+      )
 
     const outdated = Effect.fn("Npm.outdated")(function* (pkg: string, cachedVersion: string) {
       const response = yield* Effect.tryPromise({
@@ -130,7 +130,6 @@ export const layer = Layer.effect(
 
     const add = Effect.fn("Npm.add")(function* (pkg: string) {
       const dir = directory(pkg)
-      yield* flock.acquire(`npm-install:${dir}`)
 
       const tree = yield* reify({ dir, add: [pkg] })
       const first = tree.edgesOut.values().next().value?.to
@@ -144,8 +143,6 @@ export const layer = Layer.effect(
         Effect.orElseSucceed(() => false),
       )
       if (!canWrite) return
-
-      yield* flock.acquire(`npm-install:${dir}`)
 
       yield* Effect.gen(function* () {
         const nodeModulesExists = yield* afs.existsSafe(path.join(dir, "node_modules"))
