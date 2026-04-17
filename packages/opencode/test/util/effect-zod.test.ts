@@ -189,9 +189,7 @@ describe("util.effect-zod", () => {
 
   describe("Schema.check translation", () => {
     test("filter returning string triggers refinement with that message", () => {
-      const isEven = Schema.makeFilter((n: number) =>
-        n % 2 === 0 ? undefined : "expected an even number",
-      )
+      const isEven = Schema.makeFilter((n: number) => (n % 2 === 0 ? undefined : "expected an even number"))
       const schema = zod(Schema.Number.check(isEven))
 
       expect(schema.parse(4)).toBe(4)
@@ -218,10 +216,7 @@ describe("util.effect-zod", () => {
     })
 
     test("annotations.message on the filter is used when filter returns false", () => {
-      const positive = Schema.makeFilter(
-        (n: number) => n > 0,
-        { message: "must be positive" },
-      )
+      const positive = Schema.makeFilter((n: number) => n > 0, { message: "must be positive" })
       const schema = zod(Schema.Number.check(positive))
 
       const result = schema.safeParse(-1)
@@ -230,13 +225,10 @@ describe("util.effect-zod", () => {
     })
 
     test("cross-field check on a record flags missing key", () => {
-      const hasKey = Schema.makeFilter(
-        (data: Record<string, { enabled: boolean }>) =>
-          "required" in data ? undefined : "missing 'required' key",
+      const hasKey = Schema.makeFilter((data: Record<string, { enabled: boolean }>) =>
+        "required" in data ? undefined : "missing 'required' key",
       )
-      const schema = zod(
-        Schema.Record(Schema.String, Schema.Struct({ enabled: Schema.Boolean })).check(hasKey),
-      )
+      const schema = zod(Schema.Record(Schema.String, Schema.Struct({ enabled: Schema.Boolean })).check(hasKey))
 
       expect(schema.parse({ required: { enabled: true } })).toEqual({
         required: { enabled: true },
