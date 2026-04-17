@@ -807,7 +807,7 @@ export function options(input: {
     result["promptCacheKey"] = input.sessionID
   }
 
-  if (input.model.api.npm === "@openrouter/ai-sdk-provider") {
+  if (input.model.api.npm === "@openrouter/ai-sdk-provider" || input.model.api.npm === "@llmgateway/ai-sdk-provider") {
     result["usage"] = {
       include: true,
     }
@@ -944,7 +944,7 @@ export function smallOptions(model: Provider.Model) {
     }
     return { thinkingConfig: { thinkingBudget: 0 } }
   }
-  if (model.providerID === "openrouter") {
+  if (model.providerID === "openrouter" || model.providerID === "llmgateway") {
     if (model.api.id.includes("google")) {
       return { reasoning: { enabled: false } }
     }
