@@ -104,9 +104,7 @@ const normalize = (agent: z.infer<typeof Info>) => {
   return { ...agent, options, permission, steps: agent.steps ?? agent.maxSteps }
 }
 
-export const Info = zod(AgentSchema)
-  .transform(normalize)
-  .meta({ ref: "AgentConfig" }) as unknown as z.ZodType<
+export const Info = zod(AgentSchema).transform(normalize).meta({ ref: "AgentConfig" }) as unknown as z.ZodType<
   Omit<z.infer<ReturnType<typeof zod<typeof AgentSchema>>>, "options" | "permission" | "steps"> & {
     options?: Record<string, unknown>
     permission?: ConfigPermission.Info
