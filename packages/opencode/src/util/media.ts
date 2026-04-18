@@ -18,10 +18,7 @@ export function sniffAttachmentMime(bytes: Uint8Array, fallback: string) {
   if (startsWith(bytes, [0x47, 0x49, 0x46, 0x38])) return "image/gif"
   if (startsWith(bytes, [0x42, 0x4d])) return "image/bmp"
   if (startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])) return "application/pdf"
-  if (
-    startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) &&
-    startsWith(bytes.subarray(8), [0x57, 0x45, 0x42, 0x50])
-  ) {
+  if (startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) && startsWith(bytes.subarray(8), [0x57, 0x45, 0x42, 0x50])) {
     return "image/webp"
   }
 

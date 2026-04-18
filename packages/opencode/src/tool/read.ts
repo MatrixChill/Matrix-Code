@@ -78,7 +78,11 @@ export const ReadTool = Tool.define(
       yield* lsp.touchFile(filepath, false).pipe(Effect.ignore, Effect.forkIn(scope))
     })
 
-    const readSample = Effect.fn("ReadTool.readSample")(function* (filepath: string, fileSize: number, sampleSize: number) {
+    const readSample = Effect.fn("ReadTool.readSample")(function* (
+      filepath: string,
+      fileSize: number,
+      sampleSize: number,
+    ) {
       if (fileSize === 0) return new Uint8Array()
 
       return yield* Effect.scoped(
