@@ -1,5 +1,5 @@
 import { Stripe } from "stripe"
-import { and, Database, eq, sql } from "./drizzle"
+import { and, Database, eq, isNull, sql } from "./drizzle"
 import {
   BillingTable,
   CouponTable,
@@ -176,6 +176,16 @@ export namespace Billing {
     )
   }
 
+  export const hasCoupon = async (email: string, type: (typeof CouponType)[number]) => {
+    return await Database.use((tx) =>
+      tx
+        .select()
+        .from(CouponTable)
+        .where(and(eq(CouponTable.email, email), eq(CouponTable.type, type), isNull(CouponTable.timeRedeemed)))
+        .then((rows) => rows.length > 0),
+    )
+  }
+
   export const setMonthlyLimit = fn(z.number(), async (input) => {
     return await Database.use((tx) =>
       tx
@@ -274,16 +284,19 @@ export namespace Billing {
       const user = Actor.assert("user")
       const { successUrl, cancelUrl, method } = input
 
-      const email = await User.getAuthEmail(user.properties.userID)
+      const email = (await User.getAuthEmail(user.properties.userID))!
       const billing = await Billing.get()
 
       if (billing.subscriptionID) throw new Error("Already subscribed to Black")
       if (billing.liteSubscriptionID) throw new Error("Already subscribed to Lite")
 
+      const coupon = (await Billing.hasCoupon(email, "GOFREEMONTH"))
+        ? LiteData.firstMonth100Coupon
+        : LiteData.firstMonth50Coupon
       const createSession = () =>
         Billing.stripe().checkout.sessions.create({
           mode: "subscription",
-          discounts: [{ coupon: LiteData.firstMonthCoupon(email!) }],
+          discounts: [{ coupon }],
           ...(billing.customerID
             ? {
                 customer: billing.customerID,
@@ -293,7 +306,7 @@ export namespace Billing {
                 },
               }
             : {
-                customer_email: email!,
+                customer_email: email,
               }),
           ...(() => {
             if (method === "alipay") {
@@ -341,6 +354,8 @@ export namespace Billing {
             metadata: {
               workspaceID: Actor.workspace(),
               userID: user.properties.userID,
+              userEmail: email,
+              coupon,
               type: "lite",
             },
           },

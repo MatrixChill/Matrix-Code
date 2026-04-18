@@ -25,9 +25,9 @@ export default function () {
           <Show when={billingInfo()?.customerID}>
             <ReloadSection />
             <MonthlyLimitSection />
+            <RedeemSection />
             <PaymentSection />
           </Show>
-          <RedeemSection />
         </Show>
       </div>
     </div>
