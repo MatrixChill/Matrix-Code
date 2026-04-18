@@ -848,12 +848,11 @@ describe("util.effect-zod", () => {
     test("identifier + description propagate through the preprocess wrapper", () => {
       const Inner = Schema.Struct({
         x: Schema.optional(Schema.String),
+      }).annotate({
+        identifier: "WithPreproc",
+        description: "A schema with preprocess",
+        [ZodPreprocess]: (v: unknown) => v,
       })
-        .annotate({
-          identifier: "WithPreproc",
-          description: "A schema with preprocess",
-          [ZodPreprocess]: (v: unknown) => v,
-        })
       const schema = zod(Inner)
       expect(schema.meta()?.ref).toBe("WithPreproc")
       expect(schema.meta()?.description).toBe("A schema with preprocess")
