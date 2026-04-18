@@ -1,6 +1,14 @@
 import { Stripe } from "stripe"
-import { Database, eq, sql } from "./drizzle"
-import { BillingTable, LiteTable, PaymentTable, SubscriptionTable, UsageTable } from "./schema/billing.sql"
+import { and, Database, eq, sql } from "./drizzle"
+import {
+  BillingTable,
+  CouponTable,
+  CouponType,
+  LiteTable,
+  PaymentTable,
+  SubscriptionTable,
+  UsageTable,
+} from "./schema/billing.sql"
 import { Actor } from "./actor"
 import { fn } from "./util/fn"
 import { z } from "zod"
@@ -145,6 +153,27 @@ export namespace Billing {
       })
     })
     return amountInMicroCents
+  }
+
+  export const redeemCoupon = async (email: string, type: (typeof CouponType)[number]) => {
+    const coupon = await Database.use((tx) =>
+      tx
+        .select()
+        .from(CouponTable)
+        .where(and(eq(CouponTable.email, email), eq(CouponTable.type, type)))
+        .then((rows) => rows[0]),
+    )
+    if (!coupon) throw new Error("Invalid coupon code")
+    if (coupon.timeRedeemed) throw new Error("Coupon already redeemed")
+
+    if (type === "BUILDATHON") await grantCredit(Actor.workspace(), 500)
+
+    await Database.use((tx) =>
+      tx
+        .update(CouponTable)
+        .set({ timeRedeemed: sql`now()` })
+        .where(and(eq(CouponTable.email, email), eq(CouponTable.type, type))),
+    )
   }
 
   export const setMonthlyLimit = fn(z.number(), async (input) => {
