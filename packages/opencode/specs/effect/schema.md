@@ -64,9 +64,9 @@ the corresponding zod methods, so JSON Schema output (`type: integer`,
 `exclusiveMinimum`, `pattern`, `format: uuid`, …) is preserved.
 
 ```ts
-const PositiveInt    = Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))
+const PositiveInt = Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))
 const NonNegativeInt = Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0))
-const HexColor       = Schema.String.check(Schema.isPattern(/^#[0-9a-fA-F]{6}$/))
+const HexColor = Schema.String.check(Schema.isPattern(/^#[0-9a-fA-F]{6}$/))
 ```
 
 See `test/util/effect-zod.test.ts` for the full set of translated checks.
@@ -321,5 +321,5 @@ piecewise.
 - Keep the migration incremental. Converting the domain model first is more
   valuable than converting every boundary in the same change.
 - Every migrated file should leave the generated SDK output (`packages/sdk/
-  openapi.json` and `packages/sdk/js/src/v2/gen/types.gen.ts`) byte-identical
+openapi.json` and `packages/sdk/js/src/v2/gen/types.gen.ts`) byte-identical
   unless the change is deliberately user-visible.
