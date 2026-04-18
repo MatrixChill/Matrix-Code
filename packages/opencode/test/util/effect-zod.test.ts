@@ -737,10 +737,7 @@ describe("util.effect-zod", () => {
       const fallback = platform === "darwin" ? "cmd-k" : "ctrl-k"
       const schema = zod(
         Schema.Struct({
-          command_palette: Schema.String.pipe(
-            Schema.optional,
-            Schema.withDecodingDefault(Effect.sync(() => fallback)),
-          ),
+          command_palette: Schema.String.pipe(Schema.optional, Schema.withDecodingDefault(Effect.sync(() => fallback))),
         }),
       )
       expect(schema.parse({})).toEqual({ command_palette: "cmd-k" })
