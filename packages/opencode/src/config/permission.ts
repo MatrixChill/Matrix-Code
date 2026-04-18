@@ -72,7 +72,5 @@ const transform = (x: unknown): Record<string, Rule> => {
   return result
 }
 
-export const Info = zod(InnerSchema)
-  .transform(transform)
-  .meta({ ref: "PermissionConfig" })
+export const Info = zod(InnerSchema).transform(transform).meta({ ref: "PermissionConfig" })
 export type Info = Record<string, Rule>
