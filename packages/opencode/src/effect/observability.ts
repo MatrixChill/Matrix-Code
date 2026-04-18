@@ -21,7 +21,7 @@ const headers = Flag.OTEL_EXPORTER_OTLP_HEADERS
     )
   : undefined
 
-export function resource(): { serviceName: string, serviceVersion: string, attributes: Record<string, string> } {
+export function resource(): { serviceName: string; serviceVersion: string; attributes: Record<string, string> } {
   const processMetadata = ensureProcessMetadata("main")
   const attributes: Record<string, string> = (() => {
     const value = process.env.OTEL_RESOURCE_ATTRIBUTES
