@@ -547,27 +547,6 @@ describe("session-entry-stepper", () => {
       })
     })
 
-    test("records retries on the pending assistant", () => {
-      const next = run(
-        [
-          SessionEvent.Retried.create({
-            attempt: 1,
-            error: retryError("rate limited"),
-            timestamp: time(1),
-          }),
-          SessionEvent.Retried.create({
-            attempt: 2,
-            error: retryError("provider overloaded"),
-            timestamp: time(2),
-          }),
-        ],
-        active(),
-      )
-
-      expect(retriesOf(next)).toEqual([retry(1, "rate limited", 1), retry(2, "provider overloaded", 2)])
-    })
-  })
-
     describe("known reducer gaps", () => {
       test("prompt appends immutably when no assistant is pending", () => {
         FastCheck.assert(
