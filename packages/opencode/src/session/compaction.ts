@@ -88,7 +88,7 @@ export const layer: Layer.Layer<
     // calls, then erases output of older tool calls to free context space
     const prune = Effect.fn("SessionCompaction.prune")(function* (input: { sessionID: SessionID }) {
       const cfg = yield* config.get()
-      if (cfg.compaction?.prune === false) return
+      if (!cfg.compaction?.prune) return
       log.info("pruning")
 
       const msgs = yield* session
