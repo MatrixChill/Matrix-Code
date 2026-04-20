@@ -60,9 +60,7 @@ async function readSnapshot() {
 }
 
 function startDevServer(data: any) {
-  const env = Object.fromEntries(
-    Object.entries(data.env ?? {}).filter(([, value]) => value !== undefined),
-  )
+  const env = Object.fromEntries(Object.entries(data.env ?? {}).filter(([, value]) => value !== undefined))
 
   return Bun.spawn(["bun", "run", "dev", "serve", "--port", String(data.port), "--print-logs"], {
     env: {
