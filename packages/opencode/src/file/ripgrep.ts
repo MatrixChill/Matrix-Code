@@ -275,7 +275,11 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
           }
         }
 
-        const extracted = path.join(dir, `ripgrep-${VERSION}-${config.platform}`, process.platform === "win32" ? "rg.exe" : "rg")
+        const extracted = path.join(
+          dir,
+          `ripgrep-${VERSION}-${config.platform}`,
+          process.platform === "win32" ? "rg.exe" : "rg",
+        )
         if (!(yield* fs.isFile(extracted))) {
           return yield* Effect.fail(new Error(`ripgrep archive did not contain executable: ${extracted}`))
         }
