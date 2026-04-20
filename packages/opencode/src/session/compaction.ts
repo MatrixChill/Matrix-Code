@@ -45,10 +45,7 @@ type Turn = {
 function preserveRecentBudget(input: { cfg: Config.Info; model: Provider.Model }) {
   return (
     input.cfg.compaction?.preserve_recent_tokens ??
-    Math.min(
-      MAX_PRESERVE_RECENT_TOKENS,
-      Math.max(MIN_PRESERVE_RECENT_TOKENS, Math.floor(usable(input) * 0.25)),
-    )
+    Math.min(MAX_PRESERVE_RECENT_TOKENS, Math.max(MIN_PRESERVE_RECENT_TOKENS, Math.floor(usable(input) * 0.25)))
   )
 }
 

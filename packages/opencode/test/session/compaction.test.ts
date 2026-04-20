@@ -925,7 +925,12 @@ describe("session.compaction.process", () => {
           auto: false,
         })
 
-        const rt = runtime("continue", Plugin.defaultLayer, wide(), cfg({ tail_turns: 2, preserve_recent_tokens: 10_000 }))
+        const rt = runtime(
+          "continue",
+          Plugin.defaultLayer,
+          wide(),
+          cfg({ tail_turns: 2, preserve_recent_tokens: 10_000 }),
+        )
         try {
           const msgs = await svc.messages({ sessionID: session.id })
           const parent = msgs.at(-1)?.info.id
