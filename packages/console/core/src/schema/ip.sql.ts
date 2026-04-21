@@ -38,5 +38,5 @@ export const ModelTpmRateLimitTable = mysqlTable(
     interval: bigint("interval", { mode: "number" }).notNull(),
     count: int("count").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [primaryKey({ columns: [table.id, table.interval] })],
 )
