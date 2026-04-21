@@ -57,7 +57,10 @@ const createPlatform = (): Platform => {
 
   const isWslEnabled = async () => {
     if (os !== "windows") return false
-    return window.api.getWslConfig().then((config) => config.enabled).catch(() => false)
+    return window.api
+      .getWslConfig()
+      .then((config) => config.enabled)
+      .catch(() => false)
   }
 
   const wslHome = async () => {
@@ -327,7 +330,15 @@ render(() => {
   return (
     <PlatformProvider value={platform}>
       <AppBaseProviders locale={locale.latest}>
-        <Show when={!defaultServer.loading && !sidecar.loading && !windowConfig.loading && !windowCount.loading && !locale.loading}>
+        <Show
+          when={
+            !defaultServer.loading &&
+            !sidecar.loading &&
+            !windowConfig.loading &&
+            !windowCount.loading &&
+            !locale.loading
+          }
+        >
           {(_) => {
             return (
               <AppInterface
