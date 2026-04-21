@@ -247,9 +247,9 @@ export const Info = Schema.Struct({
   .annotate({ identifier: "Config" })
   .pipe(
     withStatics((s) => ({
-      zod: (zod(s) as unknown as z.ZodObject<any>)
-        .strict()
-        .meta({ ref: "Config" }) as unknown as z.ZodType<DeepMutable<Schema.Schema.Type<typeof s>>>,
+      zod: (zod(s) as unknown as z.ZodObject<any>).strict().meta({ ref: "Config" }) as unknown as z.ZodType<
+        DeepMutable<Schema.Schema.Type<typeof s>>
+      >,
     })),
   )
 
