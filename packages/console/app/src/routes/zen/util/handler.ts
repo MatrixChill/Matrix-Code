@@ -448,35 +448,28 @@ export async function handler(
         return modelInfo.providers.find((provider) => provider.id === modelInfo.byokProvider)
       }
 
-      // Filter out TPM limited providers
-      const allProviders = modelInfo.providers.filter((provider) => {
-        if (!provider.tpmLimit) return true
-        const usage = modelTpmLimits?.[`${provider.id}/${provider.model}`] ?? 0
-        return usage < provider.tpmLimit * 1_000_000
-      })
-
       // Always use the same provider for the same session
       if (stickyProvider) {
-        const provider = allProviders.find((provider) => provider.id === stickyProvider)
+        const provider = modelInfo.providers.find((provider) => provider.id === stickyProvider)
         if (provider) return provider
       }
 
       if (trialProviders) {
         const trialProvider = trialProviders[Math.floor(Math.random() * trialProviders.length)]
-        const provider = allProviders.find((provider) => provider.id === trialProvider)
+        const provider = modelInfo.providers.find((provider) => provider.id === trialProvider)
         if (provider) return provider
       }
 
       if (retry.retryCount !== MAX_FAILOVER_RETRIES) {
         let topPriority = Infinity
-        const providers = allProviders
+        const providers = modelInfo.providers
           .filter((provider) => !provider.disabled)
           .filter((provider) => provider.weight !== 0)
           .filter((provider) => !retry.excludeProviders.includes(provider.id))
           .filter((provider) => {
             if (!provider.tpmLimit) return true
             const usage = modelTpmLimits?.[`${provider.id}/${provider.model}`] ?? 0
-            return usage < provider.tpmLimit * 1_000_000 * 0.8
+            return usage < provider.tpmLimit * 1_000_000
           })
           .map((provider) => {
             topPriority = Math.min(topPriority, provider.priority)
