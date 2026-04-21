@@ -42,7 +42,13 @@ import { initLogging } from "./logging"
 import { parseMarkdown } from "./markdown"
 import { createMenu } from "./menu"
 import { getDefaultServerUrl, getWslConfig, setDefaultServerUrl, setWslConfig, spawnLocalServer } from "./server"
-import { createLoadingWindow, createMainWindow, registerRendererProtocol, setBackgroundColor, setDockIcon } from "./windows"
+import {
+  createLoadingWindow,
+  createMainWindow,
+  registerRendererProtocol,
+  setBackgroundColor,
+  setDockIcon,
+} from "./windows"
 import { drizzle } from "drizzle-orm/node-sqlite/driver"
 import type { Server } from "virtual:opencode-server"
 
