@@ -358,7 +358,10 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
     return { handled, matched, byFile }
   }
 
-  async function requestWorkspaceDiagnosticReport(filePath: string, identifier?: string): Promise<DiagnosticRequestResult> {
+  async function requestWorkspaceDiagnosticReport(
+    filePath: string,
+    identifier?: string,
+  ): Promise<DiagnosticRequestResult> {
     const report = await withTimeout(
       connection.sendRequest<WorkspaceDiagnosticReport | null>("workspace/diagnostic", {
         ...(identifier ? { identifier } : {}),
@@ -386,7 +389,9 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
       (registration) => registration.registerOptions?.workspaceDiagnostics !== true,
     )
     return {
-      documentIdentifiers: [...new Set(documentRegistrations.flatMap((registration) => registration.registerOptions?.identifier ?? []))],
+      documentIdentifiers: [
+        ...new Set(documentRegistrations.flatMap((registration) => registration.registerOptions?.identifier ?? [])),
+      ],
       supported: hasStaticPullDiagnostics || documentRegistrations.length > 0,
     }
   }
@@ -396,7 +401,9 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
       (registration) => registration.registerOptions?.workspaceDiagnostics === true,
     )
     return {
-      workspaceIdentifiers: [...new Set(workspaceRegistrations.flatMap((registration) => registration.registerOptions?.identifier ?? []))],
+      workspaceIdentifiers: [
+        ...new Set(workspaceRegistrations.flatMap((registration) => registration.registerOptions?.identifier ?? [])),
+      ],
       supported: workspaceRegistrations.length > 0,
     }
   }
@@ -461,7 +468,9 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
         ...(documentState.supported ? [requestDiagnosticReport(filePath)] : []),
         ...documentState.documentIdentifiers.map((identifier) => requestDiagnosticReport(filePath, identifier)),
         ...(workspaceState.supported ? [requestWorkspaceDiagnosticReport(filePath)] : []),
-        ...workspaceState.workspaceIdentifiers.map((identifier) => requestWorkspaceDiagnosticReport(filePath, identifier)),
+        ...workspaceState.workspaceIdentifiers.map((identifier) =>
+          requestWorkspaceDiagnosticReport(filePath, identifier),
+        ),
       ]),
     )
   }
@@ -532,8 +541,8 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
       const remaining = DIAGNOSTICS_DOCUMENT_WAIT_TIMEOUT_MS - (Date.now() - startedAt)
       if (remaining <= 0) return
       const next = await Promise.race([
-        pushWait.then((ready) => (ready ? "push" : "timeout" as const)),
-        waitForRegistrationChange(remaining).then((changed) => (changed ? "registration" : "timeout" as const)),
+        pushWait.then((ready) => (ready ? "push" : ("timeout" as const))),
+        waitForRegistrationChange(remaining).then((changed) => (changed ? "registration" : ("timeout" as const))),
       ])
       if (next !== "registration") return
     }
@@ -554,8 +563,8 @@ export async function create(input: { serverID: string; server: LSPServer.Handle
       const remaining = DIAGNOSTICS_FULL_WAIT_TIMEOUT_MS - (Date.now() - startedAt)
       if (remaining <= 0) return
       const next = await Promise.race([
-        pushWait.then((ready) => (ready ? "push" : "timeout" as const)),
-        waitForRegistrationChange(remaining).then((changed) => (changed ? "registration" : "timeout" as const)),
+        pushWait.then((ready) => (ready ? "push" : ("timeout" as const))),
+        waitForRegistrationChange(remaining).then((changed) => (changed ? "registration" : ("timeout" as const))),
       ])
       if (next !== "registration") return
     }
