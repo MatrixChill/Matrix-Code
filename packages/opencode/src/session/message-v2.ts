@@ -18,6 +18,7 @@ import { ModelID, ProviderID } from "@/provider/schema"
 import { Effect, Schema, Types } from "effect"
 import { zod, ZodOverride } from "@/util/effect-zod"
 import { withStatics } from "@/util/schema"
+import { namedSchemaError } from "@/util/named-schema-error"
 import { EffectLogger } from "@/effect"
 
 /** Error shape thrown by Bun's fetch() when gzip/br decompression fails mid-stream */
@@ -30,38 +31,29 @@ interface FetchDecompressionError extends Error {
 export const SYNTHETIC_ATTACHMENT_PROMPT = "Attached image(s) from tool result:"
 export { isMedia }
 
-export const OutputLengthError = NamedError.create("MessageOutputLengthError", z.object({}))
-export const AbortedError = NamedError.create("MessageAbortedError", z.object({ message: z.string() }))
-export const StructuredOutputError = NamedError.create(
-  "StructuredOutputError",
-  z.object({
-    message: z.string(),
-    retries: z.number(),
-  }),
-)
-export const AuthError = NamedError.create(
-  "ProviderAuthError",
-  z.object({
-    providerID: z.string(),
-    message: z.string(),
-  }),
-)
-export const APIError = NamedError.create(
-  "APIError",
-  z.object({
-    message: z.string(),
-    statusCode: z.number().optional(),
-    isRetryable: z.boolean(),
-    responseHeaders: z.record(z.string(), z.string()).optional(),
-    responseBody: z.string().optional(),
-    metadata: z.record(z.string(), z.string()).optional(),
-  }),
-)
+export const OutputLengthError = namedSchemaError("MessageOutputLengthError", {})
+export const AbortedError = namedSchemaError("MessageAbortedError", { message: Schema.String })
+export const StructuredOutputError = namedSchemaError("StructuredOutputError", {
+  message: Schema.String,
+  retries: Schema.Number,
+})
+export const AuthError = namedSchemaError("ProviderAuthError", {
+  providerID: Schema.String,
+  message: Schema.String,
+})
+export const APIError = namedSchemaError("APIError", {
+  message: Schema.String,
+  statusCode: Schema.optional(Schema.Number),
+  isRetryable: Schema.Boolean,
+  responseHeaders: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+  responseBody: Schema.optional(Schema.String),
+  metadata: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+})
 export type APIError = z.infer<typeof APIError.Schema>
-export const ContextOverflowError = NamedError.create(
-  "ContextOverflowError",
-  z.object({ message: z.string(), responseBody: z.string().optional() }),
-)
+export const ContextOverflowError = namedSchemaError("ContextOverflowError", {
+  message: Schema.String,
+  responseBody: Schema.optional(Schema.String),
+})
 
 export class OutputFormatText extends Schema.Class<OutputFormatText>("OutputFormatText")({
   type: Schema.Literal("text"),
