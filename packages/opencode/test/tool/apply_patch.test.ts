@@ -206,7 +206,8 @@ describe("tool.apply_patch freeform", () => {
         const target = path.join(fixture.path, "example.cs")
         await fs.writeFile(target, `${bom}using System;\n\nclass Test {}\n`, "utf-8")
 
-        const patchText = "*** Begin Patch\n*** Update File: example.cs\n@@\n class Test {}\n+class Next {}\n*** End Patch"
+        const patchText =
+          "*** Begin Patch\n*** Update File: example.cs\n@@\n class Test {}\n+class Next {}\n*** End Patch"
 
         await execute({ patchText }, ctx)
 

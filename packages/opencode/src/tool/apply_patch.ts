@@ -151,17 +151,15 @@ export const ApplyPatchTool = Tool.define(
           }
 
           case "delete": {
-            const source = yield* Bom
-              .readFile(afs, filePath)
-              .pipe(
-                Effect.catch((error) =>
-                  Effect.fail(
-                    new Error(
-                      `apply_patch verification failed: ${error instanceof Error ? error.message : String(error)}`,
-                    ),
+            const source = yield* Bom.readFile(afs, filePath).pipe(
+              Effect.catch((error) =>
+                Effect.fail(
+                  new Error(
+                    `apply_patch verification failed: ${error instanceof Error ? error.message : String(error)}`,
                   ),
                 ),
-              )
+              ),
+            )
             const contentToDelete = source.text
             const deleteDiff = trimDiff(createTwoFilesPatch(filePath, filePath, contentToDelete, ""))
 
