@@ -59,7 +59,6 @@ export function toJsonSchema<S extends Schema.Top>(schema: S) {
   return z.toJSONSchema(zod(schema), { io: "input" })
 }
 
-
 function walk(ast: SchemaAST.AST): z.ZodTypeAny {
   const cached = walkCache.get(ast)
   if (cached) return cached

@@ -31,19 +31,25 @@ export interface ExecuteResult<M extends Metadata = Metadata> {
   attachments?: Omit<MessageV2.FilePart, "id" | "sessionID" | "messageID">[]
 }
 
-export interface Def<Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>, M extends Metadata = Metadata> {
+export interface Def<
+  Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
+  M extends Metadata = Metadata,
+> {
   id: string
   description: string
   parameters: Parameters
   execute(args: Schema.Schema.Type<Parameters>, ctx: Context): Effect.Effect<ExecuteResult<M>>
   formatValidationError?(error: unknown): string
 }
-export type DefWithoutID<Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>, M extends Metadata = Metadata> = Omit<
-  Def<Parameters, M>,
-  "id"
->
+export type DefWithoutID<
+  Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
+  M extends Metadata = Metadata,
+> = Omit<Def<Parameters, M>, "id">
 
-export interface Info<Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>, M extends Metadata = Metadata> {
+export interface Info<
+  Parameters extends Schema.Decoder<unknown> = Schema.Decoder<unknown>,
+  M extends Metadata = Metadata,
+> {
   id: string
   init: () => Effect.Effect<DefWithoutID<Parameters, M>>
 }
@@ -121,7 +127,12 @@ function wrap<Parameters extends Schema.Decoder<unknown>, Result extends Metadat
     })
 }
 
-export function define<Parameters extends Schema.Decoder<unknown>, Result extends Metadata, R, ID extends string = string>(
+export function define<
+  Parameters extends Schema.Decoder<unknown>,
+  Result extends Metadata,
+  R,
+  ID extends string = string,
+>(
   id: ID,
   init: Effect.Effect<Init<Parameters, Result>, never, R>,
 ): Effect.Effect<Info<Parameters, Result>, never, R | Truncate.Service | Agent.Service> & { id: ID } {
@@ -136,7 +147,9 @@ export function define<Parameters extends Schema.Decoder<unknown>, Result extend
   )
 }
 
-export function init<P extends Schema.Decoder<unknown>, M extends Metadata>(info: Info<P, M>): Effect.Effect<Def<P, M>> {
+export function init<P extends Schema.Decoder<unknown>, M extends Metadata>(
+  info: Info<P, M>,
+): Effect.Effect<Def<P, M>> {
   return Effect.gen(function* () {
     const init = yield* info.init()
     return {

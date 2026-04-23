@@ -8,7 +8,9 @@ import { Todo } from "../session/todo"
 // identical, and it removes the last zod dependency from this tool.
 const TodoItem = Schema.Struct({
   content: Schema.String.annotate({ description: "Brief description of the task" }),
-  status: Schema.String.annotate({ description: "Current status of the task: pending, in_progress, completed, cancelled" }),
+  status: Schema.String.annotate({
+    description: "Current status of the task: pending, in_progress, completed, cancelled",
+  }),
   priority: Schema.String.annotate({ description: "Priority level of the task: high, medium, low" }),
 })
 

@@ -27,7 +27,10 @@ export const ApplyPatchTool = Tool.define(
     const format = yield* Format.Service
     const bus = yield* Bus.Service
 
-    const run = Effect.fn("ApplyPatchTool.execute")(function* (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) {
+    const run = Effect.fn("ApplyPatchTool.execute")(function* (
+      params: Schema.Schema.Type<typeof Parameters>,
+      ctx: Tool.Context,
+    ) {
       if (!params.patchText) {
         return yield* Effect.fail(new Error("patchText is required"))
       }
@@ -297,7 +300,8 @@ export const ApplyPatchTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) => run(params, ctx).pipe(Effect.orDie),
+      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
+        run(params, ctx).pipe(Effect.orDie),
     }
   }),
 )
