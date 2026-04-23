@@ -12,7 +12,10 @@ import { Schema as EffectSchema, Types } from "effect"
 import { zodObject } from "@/util/effect-zod"
 import { isRecord } from "@/util/record"
 
-export type Definition<Schema extends EffectSchema.Top = EffectSchema.Top, BusSchema extends EffectSchema.Top = Schema> = {
+export type Definition<
+  Schema extends EffectSchema.Top = EffectSchema.Top,
+  BusSchema extends EffectSchema.Top = Schema,
+> = {
   type: string
   version: number
   aggregate: string
@@ -87,10 +90,13 @@ export function define<
   Agg extends string,
   Schema extends EffectSchema.Top,
   BusSchema extends EffectSchema.Top = Schema,
->(input: { type: Type; version: number; aggregate: Agg; schema: Schema; busSchema?: BusSchema }): Definition<
-  Schema,
-  BusSchema
-> {
+>(input: {
+  type: Type
+  version: number
+  aggregate: Agg
+  schema: Schema
+  busSchema?: BusSchema
+}): Definition<Schema, BusSchema> {
   if (frozen) {
     throw new Error("Error defining sync event: sync system has been frozen")
   }
