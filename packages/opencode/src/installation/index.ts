@@ -136,7 +136,9 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         const args = method === "bun" ? ["pm", "view", spec, "version", "--json"] : ["view", spec, "version", "--json"]
         const result = yield* run([method, ...args])
         if (result.code !== 0 || !result.stdout.trim()) {
-          return yield* new UpgradeFailedError({ stderr: result.stderr || result.stdout || `Failed to resolve ${spec}` })
+          return yield* new UpgradeFailedError({
+            stderr: result.stderr || result.stdout || `Failed to resolve ${spec}`,
+          })
         }
         return yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.String))(result.stdout)
       })

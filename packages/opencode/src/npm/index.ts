@@ -110,25 +110,22 @@ export const layer = Layer.effect(
     const flock = yield* EffectFlock.Service
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
     const directory = (pkg: string) => path.join(global.cache, "packages", sanitize(pkg))
-    const runView = Effect.fnUntraced(
-      function* (cmd: string[]) {
-        const handle = yield* spawner.spawn(
-          ChildProcess.make(cmd[0], cmd.slice(1), {
-            extendEnv: true,
-          }),
-        )
-        const [stdout, stderr] = yield* Effect.all(
-          [Stream.mkString(Stream.decodeText(handle.stdout)), Stream.mkString(Stream.decodeText(handle.stderr))],
-          { concurrency: 2 },
-        )
-        const code = yield* handle.exitCode
-        if (code !== 0 || !stdout.trim()) {
-          return yield* Effect.fail(stderr || stdout || `Failed to run ${cmd.join(" ")}`)
-        }
-        return yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.String))(stdout)
-      },
-      Effect.scoped,
-    )
+    const runView = Effect.fnUntraced(function* (cmd: string[]) {
+      const handle = yield* spawner.spawn(
+        ChildProcess.make(cmd[0], cmd.slice(1), {
+          extendEnv: true,
+        }),
+      )
+      const [stdout, stderr] = yield* Effect.all(
+        [Stream.mkString(Stream.decodeText(handle.stdout)), Stream.mkString(Stream.decodeText(handle.stderr))],
+        { concurrency: 2 },
+      )
+      const code = yield* handle.exitCode
+      if (code !== 0 || !stdout.trim()) {
+        return yield* Effect.fail(stderr || stdout || `Failed to run ${cmd.join(" ")}`)
+      }
+      return yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.String))(stdout)
+    }, Effect.scoped)
     const viewLatestVersion = Effect.fnUntraced(function* (pkg: string) {
       return yield* runView(["npm", "view", pkg, "dist-tags.latest", "--json"]).pipe(
         Effect.catch(() =>

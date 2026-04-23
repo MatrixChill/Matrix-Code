@@ -103,7 +103,9 @@ describe("Npm.outdated", () => {
       return ""
     })
 
-    const result = await Effect.runPromise(Npm.Service.use((svc) => svc.outdated("example", "1.0.0")).pipe(Effect.provide(layer)))
+    const result = await Effect.runPromise(
+      Npm.Service.use((svc) => svc.outdated("example", "1.0.0")).pipe(Effect.provide(layer)),
+    )
 
     expect(result).toBe(true)
     expect(calls).toContainEqual(["npm", "view", "example", "dist-tags.latest", "--json"])
@@ -130,7 +132,9 @@ describe("Npm.outdated", () => {
       return ""
     })
 
-    const result = await Effect.runPromise(Npm.Service.use((svc) => svc.outdated("example", "1.0.0")).pipe(Effect.provide(layer)))
+    const result = await Effect.runPromise(
+      Npm.Service.use((svc) => svc.outdated("example", "1.0.0")).pipe(Effect.provide(layer)),
+    )
 
     expect(result).toBe(true)
     expect(calls).toContainEqual(["npm", "view", "example", "dist-tags.latest", "--json"])
