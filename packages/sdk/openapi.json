@@ -6804,7 +6804,6 @@
                   },
                   "duration": {
                     "description": "Duration in milliseconds",
-                    "default": 5000,
                     "type": "number"
                   }
                 },
@@ -7638,20 +7637,8 @@
                 "type": "string"
               },
               "event": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "const": "add"
-                  },
-                  {
-                    "type": "string",
-                    "const": "change"
-                  },
-                  {
-                    "type": "string",
-                    "const": "unlink"
-                  }
-                ]
+                "type": "string",
+                "enum": ["add", "change", "unlink"]
               }
             },
             "required": ["file", "event"]
@@ -8507,7 +8494,6 @@
               },
               "duration": {
                 "description": "Duration in milliseconds",
-                "default": 5000,
                 "type": "number"
               }
             },

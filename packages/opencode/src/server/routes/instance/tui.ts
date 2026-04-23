@@ -310,7 +310,10 @@ export const TuiRoutes = lazy(() =>
       }),
       validator("json", zodObject(TuiEvent.ToastShow.properties)),
       async (c) => {
-        await Bus.publish(TuiEvent.ToastShow, c.req.valid("json") as Schema.Schema.Type<typeof TuiEvent.ToastShow.properties>)
+        await Bus.publish(
+          TuiEvent.ToastShow,
+          c.req.valid("json") as Schema.Schema.Type<typeof TuiEvent.ToastShow.properties>,
+        )
         return c.json(true)
       },
     )
