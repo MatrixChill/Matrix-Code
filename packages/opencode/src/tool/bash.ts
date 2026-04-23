@@ -416,9 +416,8 @@ export const BashTool = Tool.define(
       },
       ctx: Tool.Context,
     ) {
-      const bytes = Truncate.MAX_BYTES
-      const lines = Truncate.MAX_LINES
-      const keep = bytes * 2
+      const limits = yield* trunc.limits()
+      const keep = limits.maxBytes * 2
       let full = ""
       let last = ""
       const list: Chunk[] = []
@@ -458,7 +457,7 @@ export const BashTool = Tool.define(
                 sink?.write(chunk)
               } else {
                 full += chunk
-                if (Buffer.byteLength(full, "utf-8") > bytes) {
+                if (Buffer.byteLength(full, "utf-8") > limits.maxBytes) {
                   return trunc.write(full).pipe(
                     Effect.andThen((next) =>
                       Effect.sync(() => {
@@ -525,7 +524,7 @@ export const BashTool = Tool.define(
       }
       if (aborted) meta.push("User aborted the command")
       const raw = list.map((item) => item.text).join("")
-      const end = tail(raw, lines, bytes)
+      const end = tail(raw, limits.maxLines, limits.maxBytes)
       if (end.cut) cut = true
       if (!file && end.cut) {
         file = yield* trunc.write(raw)
@@ -566,7 +565,7 @@ export const BashTool = Tool.define(
     })
 
     return () =>
-      Effect.sync(() => {
+      Effect.gen(function* () {
         const shell = Shell.acceptable()
         const name = Shell.name(shell)
         const chain =
@@ -575,13 +574,15 @@ export const BashTool = Tool.define(
             : "If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like mkdir before cp, Write before Bash for git operations, or git add before git commit), run these operations sequentially instead."
         log.info("bash tool using shell", { shell })
 
+        const limits = yield* trunc.limits()
+
         return {
           description: DESCRIPTION.replaceAll("${directory}", Instance.directory)
             .replaceAll("${os}", process.platform)
             .replaceAll("${shell}", name)
             .replaceAll("${chaining}", chain)
-            .replaceAll("${maxLines}", String(Truncate.MAX_LINES))
-            .replaceAll("${maxBytes}", String(Truncate.MAX_BYTES)),
+            .replaceAll("${maxLines}", String(limits.maxLines))
+            .replaceAll("${maxBytes}", String(limits.maxBytes)),
           parameters: Parameters,
           execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
             Effect.gen(function* () {
