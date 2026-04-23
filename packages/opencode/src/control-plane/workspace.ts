@@ -1,4 +1,3 @@
-import z from "zod"
 import { Schema } from "effect"
 import { setTimeout as sleep } from "node:timers/promises"
 import { fn } from "@/util/fn"
@@ -16,7 +15,7 @@ import { ProjectID } from "@/project/schema"
 import { Slug } from "@opencode-ai/shared/util/slug"
 import { WorkspaceTable } from "./workspace.sql"
 import { getAdaptor } from "./adaptors"
-import { WorkspaceInfo } from "./types"
+import { type WorkspaceInfo, WorkspaceInfo as WorkspaceInfoSchema } from "./types"
 import { WorkspaceID } from "./schema"
 import { parseSSE } from "./sse"
 import { Session } from "@/session"
@@ -26,12 +25,11 @@ import { errorData } from "@/util/error"
 import { AppRuntime } from "@/effect/app-runtime"
 import { waitEvent } from "./util"
 import { WorkspaceContext } from "./workspace-context"
-import { NonNegativeInt } from "@/util/schema"
+import { NonNegativeInt, withStatics } from "@/util/schema"
+import { zod as effectZod, zodObject } from "@/util/effect-zod"
 
-export const Info = WorkspaceInfo.meta({
-  ref: "Workspace",
-})
-export type Info = z.infer<typeof Info>
+export const Info = WorkspaceInfoSchema
+export type Info = WorkspaceInfo
 
 export const ConnectionStatus = Schema.Struct({
   workspaceID: WorkspaceID,
@@ -75,15 +73,16 @@ function fromRow(row: typeof WorkspaceTable.$inferSelect): Info {
   }
 }
 
-const CreateInput = z.object({
-  id: WorkspaceID.zod.optional(),
-  type: Info.shape.type,
-  branch: Info.shape.branch,
-  projectID: ProjectID.zod,
-  extra: Info.shape.extra,
-})
+export const CreateInput = Schema.Struct({
+  id: Schema.optional(WorkspaceID),
+  type: Info.fields.type,
+  branch: Info.fields.branch,
+  projectID: ProjectID,
+  extra: Info.fields.extra,
+}).pipe(withStatics((s) => ({ zod: effectZod(s), zodObject: zodObject(s) })))
+export type CreateInput = Schema.Schema.Type<typeof CreateInput>
 
-export const create = fn(CreateInput, async (input) => {
+export const create = fn(CreateInput.zod, async (input) => {
   const id = WorkspaceID.ascending(input.id)
   const adaptor = await getAdaptor(input.projectID, input.type)
 
@@ -139,12 +138,13 @@ export const create = fn(CreateInput, async (input) => {
   return info
 })
 
-const SessionRestoreInput = z.object({
-  workspaceID: WorkspaceID.zod,
-  sessionID: SessionID.zod,
-})
+export const SessionRestoreInput = Schema.Struct({
+  workspaceID: WorkspaceID,
+  sessionID: SessionID,
+}).pipe(withStatics((s) => ({ zod: effectZod(s), zodObject: zodObject(s) })))
+export type SessionRestoreInput = Schema.Schema.Type<typeof SessionRestoreInput>
 
-export const sessionRestore = fn(SessionRestoreInput, async (input) => {
+export const sessionRestore = fn(SessionRestoreInput.zod, async (input) => {
   log.info("session restore requested", {
     workspaceID: input.workspaceID,
     sessionID: input.sessionID,
