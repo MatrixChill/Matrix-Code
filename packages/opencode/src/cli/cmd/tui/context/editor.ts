@@ -142,7 +142,8 @@ export const { use: useEditorContext, provider: EditorContextProvider } = create
           const message = parseMessage(event.data)
           if (!message) return
 
-          const selection = message.method === "selection_changed" ? EditorSelectionSchema.safeParse(message.params) : undefined
+          const selection =
+            message.method === "selection_changed" ? EditorSelectionSchema.safeParse(message.params) : undefined
           if (selection?.success) {
             setStore("selection", selection.data)
             return
