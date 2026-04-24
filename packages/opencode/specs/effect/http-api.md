@@ -130,23 +130,23 @@ Use raw Effect HTTP routes where `HttpApi` does not fit. The goal is deleting Ho
 
 ## Current Route Status
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| `question` | `bridged` | `GET /question`, reply, reject |
-| `permission` | `bridged` | list and reply |
-| `provider` | `bridged` | list, auth, OAuth authorize/callback |
-| `config` | `bridged` partial | reads only; mutation remains Hono |
-| `project` | `bridged` partial | reads only; git-init remains Hono |
-| `file` | `bridged` partial | list/content/status only |
-| `mcp` | `bridged` partial | status only |
-| `workspace` | `implemented` | `HttpApi` group exists, but bridge mounting needs verification |
-| top-level instance reads | `next` | path, vcs, command, agent, skill, lsp, formatter |
-| experimental JSON routes | `next/later` | console, tool, worktree, resource, global session list |
-| `session` | `later/special` | large stateful surface plus streaming |
-| `sync` | `later` | process/control side effects |
-| `event` | `special` | SSE |
-| `pty` | `special` | websocket |
-| `tui` | `special` | UI bridge |
+| Area                     | Status            | Notes                                                          |
+| ------------------------ | ----------------- | -------------------------------------------------------------- |
+| `question`               | `bridged`         | `GET /question`, reply, reject                                 |
+| `permission`             | `bridged`         | list and reply                                                 |
+| `provider`               | `bridged`         | list, auth, OAuth authorize/callback                           |
+| `config`                 | `bridged` partial | reads only; mutation remains Hono                              |
+| `project`                | `bridged` partial | reads only; git-init remains Hono                              |
+| `file`                   | `bridged` partial | list/content/status only                                       |
+| `mcp`                    | `bridged` partial | status only                                                    |
+| `workspace`              | `implemented`     | `HttpApi` group exists, but bridge mounting needs verification |
+| top-level instance reads | `next`            | path, vcs, command, agent, skill, lsp, formatter               |
+| experimental JSON routes | `next/later`      | console, tool, worktree, resource, global session list         |
+| `session`                | `later/special`   | large stateful surface plus streaming                          |
+| `sync`                   | `later`           | process/control side effects                                   |
+| `event`                  | `special`         | SSE                                                            |
+| `pty`                    | `special`         | websocket                                                      |
+| `tui`                    | `special`         | UI bridge                                                      |
 
 ## Next PRs
 
