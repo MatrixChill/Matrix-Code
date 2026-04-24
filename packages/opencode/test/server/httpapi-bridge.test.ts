@@ -104,11 +104,14 @@ describe("HttpApi Hono bridge", () => {
     await using tmp = await tmpdir({ git: true })
     await Bun.write(`${tmp.path}/hello.txt`, "hello")
 
-    const response = await app({ password: "secret" }).request(fileUrl({ token: Buffer.from("opencode:secret").toString("base64") }), {
-      headers: {
-        "x-opencode-directory": tmp.path,
+    const response = await app({ password: "secret" }).request(
+      fileUrl({ token: Buffer.from("opencode:secret").toString("base64") }),
+      {
+        headers: {
+          "x-opencode-directory": tmp.path,
+        },
       },
-    })
+    )
 
     expect(response.status).toBe(200)
   })
