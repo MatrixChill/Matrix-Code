@@ -8,13 +8,16 @@ class Unauthorized extends Schema.TaggedErrorClass<Unauthorized>()(
   { httpApiStatus: 401 },
 ) {}
 
-export class Authorization extends HttpApiMiddleware.Service<Authorization>()("@opencode/ExperimentalHttpApiAuthorization", {
-  error: Unauthorized,
-  security: {
-    basic: HttpApiSecurity.basic,
-    authToken: HttpApiSecurity.apiKey({ in: "query", key: "auth_token" }),
+export class Authorization extends HttpApiMiddleware.Service<Authorization>()(
+  "@opencode/ExperimentalHttpApiAuthorization",
+  {
+    error: Unauthorized,
+    security: {
+      basic: HttpApiSecurity.basic,
+      authToken: HttpApiSecurity.apiKey({ in: "query", key: "auth_token" }),
+    },
   },
-}) {}
+) {}
 
 const emptyCredential = {
   username: "",
@@ -39,19 +42,21 @@ function validateCredential<A, E, R>(
 }
 
 function decodeCredential(input: string) {
-  return Encoding.decodeBase64String(input).asEffect().pipe(
-    Effect.match({
-      onFailure: () => emptyCredential,
-      onSuccess: (header) => {
-        const parts = header.split(":")
-        if (parts.length !== 2) return emptyCredential
-        return {
-          username: parts[0],
-          password: Redacted.make(parts[1]),
-        }
-      },
-    }),
-  )
+  return Encoding.decodeBase64String(input)
+    .asEffect()
+    .pipe(
+      Effect.match({
+        onFailure: () => emptyCredential,
+        onSuccess: (header) => {
+          const parts = header.split(":")
+          if (parts.length !== 2) return emptyCredential
+          return {
+            username: parts[0],
+            password: Redacted.make(parts[1]),
+          }
+        },
+      }),
+    )
 }
 
 export const authorizationLayer = Layer.succeed(
