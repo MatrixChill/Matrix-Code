@@ -53,17 +53,34 @@ const InputSchema = Schema.Union([Action, InputObject])
 const normalizeInput = (input: Schema.Schema.Type<typeof InputSchema>): Schema.Schema.Type<typeof InputObject> =>
   typeof input === "string" ? { "*": input } : input
 
-const ACTION_ONLY = new Set(["todowrite", "question", "webfetch", "websearch", "codesearch", "doom_loop"])
-
 const InfoZod = z
-  .union([zod(Action), z.record(z.string(), z.union([zod(Action), z.record(z.string(), zod(Action))]))])
+  .union([
+    zod(Action),
+    z.intersection(
+      z.record(z.string(), zod(Rule)),
+      z
+        .object({
+          read: zod(Rule).optional(),
+          edit: zod(Rule).optional(),
+          glob: zod(Rule).optional(),
+          grep: zod(Rule).optional(),
+          list: zod(Rule).optional(),
+          bash: zod(Rule).optional(),
+          task: zod(Rule).optional(),
+          external_directory: zod(Rule).optional(),
+          todowrite: zod(Action).optional(),
+          question: zod(Action).optional(),
+          webfetch: zod(Action).optional(),
+          websearch: zod(Action).optional(),
+          codesearch: zod(Action).optional(),
+          lsp: zod(Rule).optional(),
+          doom_loop: zod(Action).optional(),
+          skill: zod(Rule).optional(),
+        })
+        .catchall(zod(Rule)),
+    ),
+  ])
   .transform(normalizeInput)
-  .superRefine((input, ctx) => {
-    for (const [key, value] of globalThis.Object.entries(input)) {
-      if (!ACTION_ONLY.has(key) || typeof value === "string") continue
-      ctx.addIssue({ code: "custom", message: `${key} must be a permission action`, path: [key] })
-    }
-  })
 
 export const Info = InputSchema.pipe(
   Schema.decodeTo(InputObject, {
