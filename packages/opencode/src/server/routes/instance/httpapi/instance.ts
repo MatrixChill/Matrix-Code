@@ -33,7 +33,8 @@ export const InstanceApi = HttpApi.make("instance")
           OpenApi.annotations({
             identifier: "path.get",
             summary: "Get paths",
-            description: "Retrieve the current working directory and related path information for the OpenCode instance.",
+            description:
+              "Retrieve the current working directory and related path information for the OpenCode instance.",
           }),
         ),
         HttpApiEndpoint.get("vcs", InstancePaths.vcs, {
@@ -42,7 +43,8 @@ export const InstanceApi = HttpApi.make("instance")
           OpenApi.annotations({
             identifier: "vcs.get",
             summary: "Get VCS info",
-            description: "Retrieve version control system (VCS) information for the current project, such as git branch.",
+            description:
+              "Retrieve version control system (VCS) information for the current project, such as git branch.",
           }),
         ),
         HttpApiEndpoint.get("vcsDiff", InstancePaths.vcsDiff, {

@@ -139,8 +139,8 @@ Use raw Effect HTTP routes where `HttpApi` does not fit. The goal is deleting Ho
 | `project`                | `bridged` partial | reads only; git-init remains Hono                              |
 | `file`                   | `bridged` partial | list/content/status only                                       |
 | `mcp`                    | `bridged` partial | status only                                                    |
-| `workspace`              | `bridged`         | list, get, enter                                                |
-| top-level instance reads | `bridged` partial | path and vcs reads; command, agent, skill, lsp, formatter next  |
+| `workspace`              | `bridged`         | list, get, enter                                               |
+| top-level instance reads | `bridged` partial | path and vcs reads; command, agent, skill, lsp, formatter next |
 | experimental JSON routes | `next/later`      | console, tool, worktree, resource, global session list         |
 | `session`                | `later/special`   | large stateful surface plus streaming                          |
 | `sync`                   | `later`           | process/control side effects                                   |
