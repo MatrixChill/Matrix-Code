@@ -3,10 +3,7 @@ import { Effect } from "effect"
 import { HttpEffect, HttpMiddleware, HttpServerRequest } from "effect/unstable/http"
 
 const disposeAfterResponse = new WeakMap<object, InstanceContext>()
-const reloadAfterResponse = new WeakMap<
-  object,
-  InstanceContext & { next: Parameters<typeof Instance.reload>[0] }
->()
+const reloadAfterResponse = new WeakMap<object, InstanceContext & { next: Parameters<typeof Instance.reload>[0] }>()
 
 export const markInstanceForDisposal = (ctx: InstanceContext) =>
   HttpEffect.appendPreResponseHandler((request, response) =>

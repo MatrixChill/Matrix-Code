@@ -72,7 +72,8 @@ export const projectHandlers = Layer.unwrap(
     const initGit = Effect.fn("ProjectHttpApi.initGit")(function* () {
       const ctx = yield* InstanceState.context
       const next = yield* svc.initGit({ directory: ctx.directory, project: ctx.project })
-      if (next.id === ctx.project.id && next.vcs === ctx.project.vcs && next.worktree === ctx.project.worktree) return next
+      if (next.id === ctx.project.id && next.vcs === ctx.project.vcs && next.worktree === ctx.project.worktree)
+        return next
       yield* markInstanceForReload(ctx, {
         directory: ctx.directory,
         worktree: ctx.directory,
