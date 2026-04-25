@@ -1,4 +1,4 @@
-import { Global } from "@/global"
+import { Global } from "@opencode-ai/core/global"
 import { Vcs } from "@/project"
 import * as InstanceState from "@/effect/instance-state"
 import { Effect, Layer, Schema } from "effect"

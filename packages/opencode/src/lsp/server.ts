@@ -1,7 +1,7 @@
 import type { ChildProcessWithoutNullStreams } from "child_process"
 import path from "path"
 import os from "os"
-import { Global } from "../global"
+import { Global } from "@opencode-ai/core/global"
 import { Log } from "../util"
 import { text } from "node:stream/consumers"
 import fs from "fs/promises"

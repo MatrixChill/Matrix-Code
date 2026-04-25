@@ -23,7 +23,7 @@ const infra = CrossSpawnSpawner.defaultLayer.pipe(
 import path from "path"
 import fs from "fs/promises"
 import { pathToFileURL } from "url"
-import { Global } from "../../src/global"
+import { Global } from "@opencode-ai/core/global"
 import { ProjectID } from "../../src/project/schema"
 import { Filesystem } from "../../src/util"
 import { ConfigPlugin } from "@/config/plugin"
