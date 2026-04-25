@@ -179,7 +179,7 @@ Use raw Effect HTTP routes where `HttpApi` does not fit. The goal is deleting Ho
 | `project`                 | `bridged`         | list, current, git init, update                                                                    |
 | `file`                    | `bridged` partial | find text/file/symbol, list/content/status                                                         |
 | `mcp`                     | `bridged`         | status, add, OAuth, connect/disconnect                                                             |
-| `workspace`               | `bridged` partial | adaptor/list/status; create/remove/session-restore remain                                           |
+| `workspace`               | `bridged` partial | adaptor/list/status; create/remove/session-restore remain                                          |
 | top-level instance routes | `bridged`         | path, vcs, command, agent, skill, lsp, formatter, dispose                                          |
 | experimental JSON routes  | `bridged` partial | console reads, tool ids, worktree list/mutations, resource list; global session list remains later |
 | `session`                 | `later/special`   | large stateful surface plus streaming                                                              |
