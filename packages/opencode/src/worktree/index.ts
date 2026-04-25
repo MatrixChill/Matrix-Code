@@ -18,7 +18,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { NodePath } from "@effect/platform-node"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { BootstrapRuntime } from "@/effect/bootstrap-runtime"
-import { CrossSpawnSpawner } from "@opencode-ai/core/effect/cross-spawn-spawner"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { InstanceState } from "@/effect"
 
 const log = Log.create({ service: "worktree" })

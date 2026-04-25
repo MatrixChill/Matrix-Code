@@ -13,7 +13,7 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Env } from "../../src/env"
 import { provideTmpdirInstance } from "../fixture/fixture"
 import { tmpdir } from "../fixture/fixture"
-import { CrossSpawnSpawner } from "@opencode-ai/core/effect/cross-spawn-spawner"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { testEffect } from "../lib/effect"
 
 /** Infra layer that provides FileSystem, Path, ChildProcessSpawner for test fixtures */

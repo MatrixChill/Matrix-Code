@@ -14,7 +14,7 @@ import { EffectFlock } from "@opencode-ai/core/util/effect-flock"
 import { makeRuntime } from "@opencode-ai/core/effect/runtime"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 
-import { CrossSpawnSpawner } from "@opencode-ai/core/effect/cross-spawn-spawner"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 
 export class InstallFailedError extends Schema.TaggedErrorClass<InstallFailedError>()("NpmInstallFailedError", {
   add: Schema.Array(Schema.String).pipe(Schema.optional),

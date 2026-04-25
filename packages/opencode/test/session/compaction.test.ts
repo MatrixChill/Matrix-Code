@@ -25,7 +25,7 @@ import * as SessionProcessorModule from "../../src/session/processor"
 import { Snapshot } from "../../src/snapshot"
 import { ProviderTest } from "../fake/provider"
 import { testEffect } from "../lib/effect"
-import { CrossSpawnSpawner } from "@opencode-ai/core/effect/cross-spawn-spawner"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 
 void Log.init({ print: false })
 

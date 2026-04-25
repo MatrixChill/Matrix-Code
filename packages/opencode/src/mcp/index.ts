@@ -29,7 +29,7 @@ import { Effect, Exit, Layer, Option, Context, Schema, Stream } from "effect"
 import { EffectBridge } from "@/effect"
 import { InstanceState } from "@/effect"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
-import { CrossSpawnSpawner } from "@opencode-ai/core/effect/cross-spawn-spawner"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { zod as effectZod } from "@/util/effect-zod"
 import { withStatics } from "@/util/schema"
 
