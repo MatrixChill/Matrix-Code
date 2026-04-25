@@ -326,7 +326,9 @@ async function main() {
   const matchIdxAfterSmoke = remoteTreesAfterSmoke.indexOf(validatedTree)
   if (matchIdxAfterSmoke !== -1) {
     if (matchIdxAfterSmoke !== 0) {
-      console.log(`Beta branch contains this validated sync, but additional commits exist after it. Leaving beta branch as is.`)
+      console.log(
+        `Beta branch contains this validated sync, but additional commits exist after it. Leaving beta branch as is.`,
+      )
     } else {
       console.log("Validated beta branch now matches remote contents, no push needed")
     }
