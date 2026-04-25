@@ -30,8 +30,7 @@ export const Info = Schema.Struct({
   description: Schema.String,
   location: Schema.String,
   content: Schema.String,
-})
-  .pipe(withStatics((s) => ({ zod: zod(s) })))
+}).pipe(withStatics((s) => ({ zod: zod(s) })))
 export type Info = Schema.Schema.Type<typeof Info>
 
 export const InvalidError = NamedError.create(
