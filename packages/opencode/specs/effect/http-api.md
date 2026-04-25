@@ -153,23 +153,23 @@ Use raw Effect HTTP routes where `HttpApi` does not fit. The goal is deleting Ho
 
 ## Current Route Status
 
-| Area                     | Status            | Notes                                                                                 |
-| ------------------------ | ----------------- | ------------------------------------------------------------------------------------- |
-| `question`               | `bridged`         | `GET /question`, reply, reject                                                        |
-| `permission`             | `bridged`         | list and reply                                                                        |
-| `provider`               | `bridged`         | list, auth, OAuth authorize/callback                                                  |
-| `config`                 | `bridged` partial | reads only; mutation remains Hono                                                     |
-| `project`                | `bridged` partial | reads only; git-init remains Hono                                                     |
-| `file`                   | `bridged` partial | find text/file/symbol, list/content/status                                            |
-| `mcp`                    | `bridged` partial | status only                                                                           |
-| `workspace`              | `bridged`         | list, get, enter                                                                      |
-| top-level instance reads | `bridged`         | path, vcs, command, agent, skill, lsp, formatter                                      |
+| Area                     | Status            | Notes                                                                                    |
+| ------------------------ | ----------------- | ---------------------------------------------------------------------------------------- |
+| `question`               | `bridged`         | `GET /question`, reply, reject                                                           |
+| `permission`             | `bridged`         | list and reply                                                                           |
+| `provider`               | `bridged`         | list, auth, OAuth authorize/callback                                                     |
+| `config`                 | `bridged` partial | reads only; mutation remains Hono                                                        |
+| `project`                | `bridged` partial | reads only; git-init remains Hono                                                        |
+| `file`                   | `bridged` partial | find text/file/symbol, list/content/status                                               |
+| `mcp`                    | `bridged` partial | status only                                                                              |
+| `workspace`              | `bridged`         | list, get, enter                                                                         |
+| top-level instance reads | `bridged`         | path, vcs, command, agent, skill, lsp, formatter                                         |
 | experimental JSON routes | `bridged` partial | console reads, tool ids, worktree list, resource list; global session list remains later |
-| `session`                | `later/special`   | large stateful surface plus streaming                                                 |
-| `sync`                   | `later`           | process/control side effects                                                          |
-| `event`                  | `special`         | SSE                                                                                   |
-| `pty`                    | `special`         | websocket                                                                             |
-| `tui`                    | `special`         | UI bridge                                                                             |
+| `session`                | `later/special`   | large stateful surface plus streaming                                                    |
+| `sync`                   | `later`           | process/control side effects                                                             |
+| `event`                  | `special`         | SSE                                                                                      |
+| `pty`                    | `special`         | websocket                                                                                |
+| `tui`                    | `special`         | UI bridge                                                                                |
 
 ## Next PRs
 
