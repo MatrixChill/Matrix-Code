@@ -299,7 +299,9 @@ export const sessionHandlers = Layer.unwrap(
       const instance = yield* InstanceState.context
       return yield* Effect.promise(() =>
         Instance.restore(instance, () =>
-          AppRuntime.runPromise(SessionShare.Service.use((svc) => svc.create(ctx.payload)).pipe(Effect.provide(SessionShare.defaultLayer))),
+          AppRuntime.runPromise(
+            SessionShare.Service.use((svc) => svc.create(ctx.payload)).pipe(Effect.provide(SessionShare.defaultLayer)),
+          ),
         ),
       )
     })
@@ -308,7 +310,9 @@ export const sessionHandlers = Layer.unwrap(
       const instance = yield* InstanceState.context
       yield* Effect.promise(() =>
         Instance.restore(instance, () =>
-          AppRuntime.runPromise(Session.Service.use((svc) => svc.remove(ctx.params.sessionID)).pipe(Effect.provide(Session.defaultLayer))),
+          AppRuntime.runPromise(
+            Session.Service.use((svc) => svc.remove(ctx.params.sessionID)).pipe(Effect.provide(Session.defaultLayer)),
+          ),
         ),
       )
       return true
@@ -353,9 +357,9 @@ export const sessionHandlers = Layer.unwrap(
       return yield* Effect.promise(() =>
         Instance.restore(instance, () =>
           AppRuntime.runPromise(
-            Session.Service.use((svc) => svc.fork({ sessionID: ctx.params.sessionID, messageID: ctx.payload.messageID })).pipe(
-              Effect.provide(Session.defaultLayer),
-            ),
+            Session.Service.use((svc) =>
+              svc.fork({ sessionID: ctx.params.sessionID, messageID: ctx.payload.messageID }),
+            ).pipe(Effect.provide(Session.defaultLayer)),
           ),
         ),
       )
