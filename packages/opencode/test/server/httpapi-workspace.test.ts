@@ -96,7 +96,8 @@ describe("workspace HttpApi", () => {
     await using tmp = await tmpdir({ git: true })
     await Instance.provide({
       directory: tmp.path,
-      fn: async () => registerAdaptor(Instance.project.id, "local-test", localAdaptor(path.join(tmp.path, ".workspace"))),
+      fn: async () =>
+        registerAdaptor(Instance.project.id, "local-test", localAdaptor(path.join(tmp.path, ".workspace"))),
     })
 
     const created = await request(WorkspacePaths.list, tmp.path, {

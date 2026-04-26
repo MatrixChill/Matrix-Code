@@ -11,7 +11,9 @@ const root = "/experimental/workspace"
 const CreatePayload = Schema.Struct(Struct.omit(Workspace.CreateInput.fields, ["projectID"])).annotate({
   identifier: "WorkspaceCreateInput",
 })
-const SessionRestorePayload = Schema.Struct(Struct.omit(Workspace.SessionRestoreInput.fields, ["workspaceID"])).annotate({
+const SessionRestorePayload = Schema.Struct(
+  Struct.omit(Workspace.SessionRestoreInput.fields, ["workspaceID"]),
+).annotate({
   identifier: "WorkspaceSessionRestoreInput",
 })
 const SessionRestoreResponse = Schema.Struct({
