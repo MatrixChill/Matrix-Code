@@ -350,7 +350,8 @@ export const SessionApi = HttpApi.make("session")
           OpenApi.annotations({
             identifier: "session.revert",
             summary: "Revert message",
-            description: "Revert a specific message in a session, undoing its effects and restoring the previous state.",
+            description:
+              "Revert a specific message in a session, undoing its effects and restoring the previous state.",
           }),
         ),
         HttpApiEndpoint.post("unrevert", SessionPaths.unrevert, {
@@ -669,7 +670,8 @@ export const sessionHandlers = Layer.unwrap(
               yield* revert.cleanup(yield* session.get(ctx.params.sessionID))
               const messages = yield* session.messages({ sessionID: ctx.params.sessionID })
               const defaultAgent = yield* agent.defaultAgent()
-              const currentAgent = messages.findLast((message) => message.info.role === "user")?.info.agent ?? defaultAgent
+              const currentAgent =
+                messages.findLast((message) => message.info.role === "user")?.info.agent ?? defaultAgent
 
               yield* compact.create({
                 sessionID: ctx.params.sessionID,
@@ -705,12 +707,18 @@ export const sessionHandlers = Layer.unwrap(
             Instance.restore(instance, () =>
               AppRuntime.runPromise(
                 SessionPrompt.Service.use((svc) =>
-                  svc.prompt({ ...ctx.payload, sessionID: ctx.params.sessionID } as unknown as SessionPrompt.PromptInput),
+                  svc.prompt({
+                    ...ctx.payload,
+                    sessionID: ctx.params.sessionID,
+                  } as unknown as SessionPrompt.PromptInput),
                 ).pipe(Effect.provide(SessionPrompt.defaultLayer)),
               ),
             ),
           ),
-        ).pipe(Stream.map((message) => JSON.stringify(message)), Stream.encodeText),
+        ).pipe(
+          Stream.map((message) => JSON.stringify(message)),
+          Stream.encodeText,
+        ),
         { contentType: "application/json" },
       )
     })
@@ -781,9 +789,9 @@ export const sessionHandlers = Layer.unwrap(
       return yield* Effect.promise(() =>
         Instance.restore(instance, () =>
           AppRuntime.runPromise(
-            SessionRevert.Service.use((svc) =>
-              svc.revert({ sessionID: ctx.params.sessionID, ...ctx.payload }),
-            ).pipe(Effect.provide(SessionRevert.defaultLayer)),
+            SessionRevert.Service.use((svc) => svc.revert({ sessionID: ctx.params.sessionID, ...ctx.payload })).pipe(
+              Effect.provide(SessionRevert.defaultLayer),
+            ),
           ),
         ),
       )
