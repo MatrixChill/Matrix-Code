@@ -86,23 +86,47 @@ describe("session HttpApi", () => {
     const message = await createTextMessage(tmp.path, parent.id, "hello")
     await createTextMessage(tmp.path, parent.id, "world")
 
-    expect((await json<Session.Info[]>(await app().request(`${SessionPaths.list}?roots=true`, { headers }))).map((item) => item.id)).toContain(parent.id)
+    expect(
+      (await json<Session.Info[]>(await app().request(`${SessionPaths.list}?roots=true`, { headers }))).map(
+        (item) => item.id,
+      ),
+    ).toContain(parent.id)
 
     expect(await json<Record<string, unknown>>(await app().request(SessionPaths.status, { headers }))).toEqual({})
 
-    expect(await json<Session.Info>(await app().request(pathFor(SessionPaths.get, { sessionID: parent.id }), { headers }))).toMatchObject({ id: parent.id, title: "parent" })
+    expect(
+      await json<Session.Info>(await app().request(pathFor(SessionPaths.get, { sessionID: parent.id }), { headers })),
+    ).toMatchObject({ id: parent.id, title: "parent" })
 
-    expect((await json<Session.Info[]>(await app().request(pathFor(SessionPaths.children, { sessionID: parent.id }), { headers }))).map((item) => item.id)).toEqual([child.id])
+    expect(
+      (
+        await json<Session.Info[]>(
+          await app().request(pathFor(SessionPaths.children, { sessionID: parent.id }), { headers }),
+        )
+      ).map((item) => item.id),
+    ).toEqual([child.id])
 
-    expect(await json<unknown[]>(await app().request(pathFor(SessionPaths.todo, { sessionID: parent.id }), { headers }))).toEqual([])
+    expect(
+      await json<unknown[]>(await app().request(pathFor(SessionPaths.todo, { sessionID: parent.id }), { headers })),
+    ).toEqual([])
 
-    expect(await json<unknown[]>(await app().request(pathFor(SessionPaths.diff, { sessionID: parent.id }), { headers }))).toEqual([])
+    expect(
+      await json<unknown[]>(await app().request(pathFor(SessionPaths.diff, { sessionID: parent.id }), { headers })),
+    ).toEqual([])
 
-    const messages = await app().request(`${pathFor(SessionPaths.messages, { sessionID: parent.id })}?limit=1`, { headers })
+    const messages = await app().request(`${pathFor(SessionPaths.messages, { sessionID: parent.id })}?limit=1`, {
+      headers,
+    })
     const messagePage = await json<MessageV2.WithParts[]>(messages)
     expect(messages.headers.get("x-next-cursor")).toBeTruthy()
     expect(messagePage[0]?.parts[0]).toMatchObject({ type: "text" })
 
-    expect(await json<MessageV2.WithParts>(await app().request(pathFor(SessionPaths.message, { sessionID: parent.id, messageID: message.id }), { headers }))).toMatchObject({ info: { id: message.id } })
+    expect(
+      await json<MessageV2.WithParts>(
+        await app().request(pathFor(SessionPaths.message, { sessionID: parent.id, messageID: message.id }), {
+          headers,
+        }),
+      ),
+    ).toMatchObject({ info: { id: message.id } })
   })
 })
