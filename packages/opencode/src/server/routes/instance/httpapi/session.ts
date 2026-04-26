@@ -491,7 +491,9 @@ export const sessionHandlers = Layer.unwrap(
       const instance = yield* InstanceState.context
       yield* Effect.promise(() =>
         Instance.restore(instance, () =>
-          AppRuntime.runPromise(Session.Service.use((svc) => svc.removePart(ctx.params)).pipe(Effect.provide(Session.defaultLayer))),
+          AppRuntime.runPromise(
+            Session.Service.use((svc) => svc.removePart(ctx.params)).pipe(Effect.provide(Session.defaultLayer)),
+          ),
         ),
       )
       return true
@@ -514,7 +516,9 @@ export const sessionHandlers = Layer.unwrap(
       const instance = yield* InstanceState.context
       return yield* Effect.promise(() =>
         Instance.restore(instance, () =>
-          AppRuntime.runPromise(Session.Service.use((svc) => svc.updatePart(payload)).pipe(Effect.provide(Session.defaultLayer))),
+          AppRuntime.runPromise(
+            Session.Service.use((svc) => svc.updatePart(payload)).pipe(Effect.provide(Session.defaultLayer)),
+          ),
         ),
       )
     })
