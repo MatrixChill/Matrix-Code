@@ -99,6 +99,7 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
     app.post(SyncPaths.start, (c) => handler(c.req.raw, context))
     app.post(SyncPaths.replay, (c) => handler(c.req.raw, context))
     app.post(SyncPaths.history, (c) => handler(c.req.raw, context))
+    app.get(PtyPaths.shells, (c) => handler(c.req.raw, context))
     app.get(PtyPaths.list, (c) => handler(c.req.raw, context))
     app.post(PtyPaths.create, (c) => handler(c.req.raw, context))
     app.get(PtyPaths.get, (c) => handler(c.req.raw, context))

@@ -3,6 +3,7 @@ import type { UpgradeWebSocket } from "hono/ws"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Instance } from "../../src/project/instance"
 import { InstanceRoutes } from "../../src/server/routes/instance"
+import { WorkspaceRoutes } from "../../src/server/routes/control/workspace"
 import { FilePaths } from "../../src/server/routes/instance/httpapi/file"
 import * as Log from "@opencode-ai/core/util/log"
 import { resetDatabase } from "../fixture/db"
@@ -23,6 +24,10 @@ function app(input?: { password?: string; username?: string }) {
   Flag.OPENCODE_SERVER_PASSWORD = input?.password
   Flag.OPENCODE_SERVER_USERNAME = input?.username
   return InstanceRoutes(websocket)
+}
+
+function routeKey(route: ReturnType<typeof InstanceRoutes>["routes"][number]) {
+  return `${route.method} ${route.path}`
 }
 
 function authorization(username: string, password: string) {
@@ -46,6 +51,24 @@ afterEach(async () => {
 })
 
 describe("HttpApi Hono bridge", () => {
+  test("mounts experimental handlers for every legacy instance route", () => {
+    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = false
+    const legacy = InstanceRoutes(websocket)
+    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+    const experimental = InstanceRoutes(websocket)
+
+    const bridge = experimental.routes.slice(0, experimental.routes.length - legacy.routes.length)
+    const workspaceRoutes = WorkspaceRoutes().routes.map((route) => ({
+      ...route,
+      path: `/experimental/workspace${route.path === "/" ? "" : route.path}`,
+    }))
+    const legacyRoutes = [...new Set([...legacy.routes, ...workspaceRoutes].map(routeKey))]
+    const bridgeRoutes = new Set(bridge.map(routeKey))
+
+    expect(legacyRoutes.filter((route) => !bridgeRoutes.has(route))).toEqual([])
+    expect([...bridgeRoutes].filter((route) => !legacyRoutes.includes(route)).sort()).toEqual([])
+  })
+
   test("allows requests when auth is disabled", async () => {
     await using tmp = await tmpdir({ git: true })
     await Bun.write(`${tmp.path}/hello.txt`, "hello")

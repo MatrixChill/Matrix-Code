@@ -27,6 +27,22 @@ afterEach(async () => {
 })
 
 describe("pty HttpApi bridge", () => {
+  test("serves available shell list through experimental Effect routes", async () => {
+    await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
+    const response = await app().request(PtyPaths.shells, { headers: { "x-opencode-directory": tmp.path } })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: expect.any(String),
+          name: expect.any(String),
+          acceptable: expect.any(Boolean),
+        }),
+      ]),
+    )
+  })
+
   testPty("serves PTY JSON routes through experimental Effect routes", async () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
     const headers = { "x-opencode-directory": tmp.path }
