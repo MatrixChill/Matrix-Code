@@ -252,7 +252,9 @@ export const tuiHandlers = Layer.unwrap(
       payload: typeof TuiEvent.SessionSelect.properties.Type
     }) {
       const row = yield* Effect.sync(() =>
-        Database.use((db) => db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, ctx.payload.sessionID)).get()),
+        Database.use((db) =>
+          db.select({ id: SessionTable.id }).from(SessionTable).where(eq(SessionTable.id, ctx.payload.sessionID)).get(),
+        ),
       )
       if (!row) return yield* new HttpApiError.NotFound({})
       yield* bus.publish(TuiEvent.SessionSelect, ctx.payload)
