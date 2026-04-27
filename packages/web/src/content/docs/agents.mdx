@@ -421,24 +421,24 @@ You can configure permissions to manage what actions an agent can take. Each per
 
 The available permission keys are:
 
-| Key                  | Tools it gates                                                                |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `read`               | `read`                                                                        |
-| `edit`               | `write`, `edit`, `apply_patch`                                                |
-| `glob`               | `glob`                                                                        |
-| `grep`               | `grep`                                                                        |
-| `list`               | `list`                                                                        |
-| `bash`               | `bash`                                                                        |
-| `task`               | `task`                                                                        |
-| `external_directory` | Any tool that reads or writes files outside the project worktree              |
-| `todowrite`          | `todowrite`, `todoread`                                                       |
-| `webfetch`           | `webfetch`                                                                    |
-| `websearch`          | `websearch`                                                                   |
-| `codesearch`         | `codesearch`                                                                  |
-| `lsp`                | `lsp`                                                                         |
-| `skill`              | `skill`                                                                       |
-| `question`           | `question`                                                                    |
-| `doom_loop`          | Recovery prompts when an agent appears stuck                                  |
+| Key                  | Tools it gates                                                   |
+| -------------------- | ---------------------------------------------------------------- |
+| `read`               | `read`                                                           |
+| `edit`               | `write`, `edit`, `apply_patch`                                   |
+| `glob`               | `glob`                                                           |
+| `grep`               | `grep`                                                           |
+| `list`               | `list`                                                           |
+| `bash`               | `bash`                                                           |
+| `task`               | `task`                                                           |
+| `external_directory` | Any tool that reads or writes files outside the project worktree |
+| `todowrite`          | `todowrite`, `todoread`                                          |
+| `webfetch`           | `webfetch`                                                       |
+| `websearch`          | `websearch`                                                      |
+| `codesearch`         | `codesearch`                                                     |
+| `lsp`                | `lsp`                                                            |
+| `skill`              | `skill`                                                          |
+| `question`           | `question`                                                       |
+| `doom_loop`          | Recovery prompts when an agent appears stuck                     |
 
 `read`, `edit`, `glob`, `grep`, `list`, `bash`, `task`, `external_directory`, `lsp`, and `skill` accept either a shorthand action (`"allow" | "ask" | "deny"`) or an object of glob/pattern → action for fine-grained control. The remaining keys accept the shorthand action only.
 
