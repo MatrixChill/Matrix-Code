@@ -38,7 +38,9 @@ export async function resolveZedSelection(dbPath: string, cwd = process.cwd()): 
   const text =
     contents.type === "contents" && contents.contents != null
       ? contents.contents
-      : await Bun.file(row.buffer_path).text().catch(() => undefined)
+      : await Bun.file(row.buffer_path)
+          .text()
+          .catch(() => undefined)
   if (text == null) return { type: "unavailable" }
 
   const startOffset = Math.min(row.selection_start, row.selection_end)
@@ -79,11 +81,10 @@ function queryZedActiveEditor(dbPath: string, cwd: string) {
       )
       .all()
 
-    const rows = raw
-      .flatMap((row) => {
-        const parsed = ZedEditorRowSchema.safeParse(row)
-        return parsed.success ? [parsed.data] : []
-      })
+    const rows = raw.flatMap((row) => {
+      const parsed = ZedEditorRowSchema.safeParse(row)
+      return parsed.success ? [parsed.data] : []
+    })
 
     if (raw.length > 0 && rows.length === 0) return { type: "unavailable" as const }
 

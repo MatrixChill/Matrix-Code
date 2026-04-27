@@ -25,13 +25,10 @@ async function writeZedFixture(dir: string, options: ZedFixtureOptions = {}) {
   db.run("insert into panes values (1, 1, 1)")
   db.run("insert into items values (1, 1, 1, 1, 'Editor')")
   db.run("insert into editors values (1, 1, ?, ?)", [filePath, "one\ntwo\nthree"])
-  db.run(
-    "insert into editor_selections values (1, 1, ?, ?)",
-    [
-      options.selectionStart === undefined ? 4 : options.selectionStart,
-      options.selectionEnd === undefined ? 7 : options.selectionEnd,
-    ],
-  )
+  db.run("insert into editor_selections values (1, 1, ?, ?)", [
+    options.selectionStart === undefined ? 4 : options.selectionStart,
+    options.selectionEnd === undefined ? 7 : options.selectionEnd,
+  ])
   db.close()
 
   return { dbPath, filePath }
