@@ -31,42 +31,41 @@ export const ControlPaths = {
   log: "/log",
 } as const
 
-export const ControlApi = HttpApi.make("control")
-  .add(
-    HttpApiGroup.make("control")
-      .add(
-        HttpApiEndpoint.put("authSet", ControlPaths.auth, {
-          params: AuthParams,
-          payload: Auth.Info,
-          success: Schema.Boolean,
-        }).annotateMerge(
-          OpenApi.annotations({
-            identifier: "auth.set",
-            summary: "Set auth credentials",
-            description: "Set authentication credentials",
-          }),
-        ),
-        HttpApiEndpoint.delete("authRemove", ControlPaths.auth, {
-          params: AuthParams,
-          success: Schema.Boolean,
-        }).annotateMerge(
-          OpenApi.annotations({
-            identifier: "auth.remove",
-            summary: "Remove auth credentials",
-            description: "Remove authentication credentials",
-          }),
-        ),
-        HttpApiEndpoint.post("log", ControlPaths.log, {
-          query: LogQuery,
-          payload: LogInput,
-          success: Schema.Boolean,
-        }).annotateMerge(
-          OpenApi.annotations({
-            identifier: "app.log",
-            summary: "Write log",
-            description: "Write a log entry to the server logs with specified level and metadata.",
-          }),
-        ),
-      )
-      .annotateMerge(OpenApi.annotations({ title: "control", description: "Control plane routes." })),
-  )
+export const ControlApi = HttpApi.make("control").add(
+  HttpApiGroup.make("control")
+    .add(
+      HttpApiEndpoint.put("authSet", ControlPaths.auth, {
+        params: AuthParams,
+        payload: Auth.Info,
+        success: Schema.Boolean,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "auth.set",
+          summary: "Set auth credentials",
+          description: "Set authentication credentials",
+        }),
+      ),
+      HttpApiEndpoint.delete("authRemove", ControlPaths.auth, {
+        params: AuthParams,
+        success: Schema.Boolean,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "auth.remove",
+          summary: "Remove auth credentials",
+          description: "Remove authentication credentials",
+        }),
+      ),
+      HttpApiEndpoint.post("log", ControlPaths.log, {
+        query: LogQuery,
+        payload: LogInput,
+        success: Schema.Boolean,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "app.log",
+          summary: "Write log",
+          description: "Write a log entry to the server logs with specified level and metadata.",
+        }),
+      ),
+    )
+    .annotateMerge(OpenApi.annotations({ title: "control", description: "Control plane routes." })),
+)

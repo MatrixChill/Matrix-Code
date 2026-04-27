@@ -80,7 +80,9 @@ function reflectedHttpApiRoutes() {
 
 function openApiRouteKeys(spec: { paths: Record<string, Partial<Record<(typeof methods)[number], unknown>>> }) {
   return Object.entries(spec.paths)
-    .flatMap(([path, item]) => methods.filter((method) => item[method]).map((method) => `${method.toUpperCase()} ${path}`))
+    .flatMap(([path, item]) =>
+      methods.filter((method) => item[method]).map((method) => `${method.toUpperCase()} ${path}`),
+    )
     .sort()
 }
 

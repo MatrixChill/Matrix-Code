@@ -11,22 +11,21 @@ export const EventPaths = {
   event: "/event",
 } as const
 
-export const EventApi = HttpApi.make("event")
-  .add(
-    HttpApiGroup.make("event")
-      .add(
-        HttpApiEndpoint.get("subscribe", EventPaths.event, {
-          success: Schema.Unknown,
-        }).annotateMerge(
-          OpenApi.annotations({
-            identifier: "event.subscribe",
-            summary: "Subscribe to events",
-            description: "Get events",
-          }),
-        ),
-      )
-      .annotateMerge(OpenApi.annotations({ title: "event", description: "Instance event stream route." })),
-  )
+export const EventApi = HttpApi.make("event").add(
+  HttpApiGroup.make("event")
+    .add(
+      HttpApiEndpoint.get("subscribe", EventPaths.event, {
+        success: Schema.Unknown,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "event.subscribe",
+          summary: "Subscribe to events",
+          description: "Get events",
+        }),
+      ),
+    )
+    .annotateMerge(OpenApi.annotations({ title: "event", description: "Instance event stream route." })),
+)
 
 function eventData(data: unknown) {
   return `data: ${JSON.stringify(data)}\n\n`
