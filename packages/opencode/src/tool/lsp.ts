@@ -42,10 +42,7 @@ export const LspTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (
-        args: Schema.Schema.Type<typeof Parameters>,
-        ctx: Tool.Context,
-      ) =>
+      execute: (args: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
         Effect.gen(function* () {
           const file = path.isAbsolute(args.filePath) ? args.filePath : path.join(Instance.directory, args.filePath)
           yield* assertExternalDirectoryEffect(ctx, file)
