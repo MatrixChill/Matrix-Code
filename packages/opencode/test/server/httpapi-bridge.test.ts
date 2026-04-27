@@ -46,10 +46,7 @@ function routeKey(route: ReturnType<typeof InstanceRoutes>["routes"][number]) {
 }
 
 function reflectedHttpApiRoutes() {
-  const routes = [
-    `GET ${EventPaths.event}`,
-    `GET ${PtyPaths.connect}`,
-  ]
+  const routes = [`GET ${EventPaths.event}`, `GET ${PtyPaths.connect}`]
 
   function addRoutes<Id extends string, Groups extends HttpApiGroup.Any>(api: HttpApi.HttpApi<Id, Groups>) {
     HttpApi.reflect(api, {
