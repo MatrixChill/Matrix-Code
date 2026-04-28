@@ -3285,7 +3285,7 @@ export type SessionListData = {
   path?: never
   query?: {
     /**
-     * Filter sessions by project directory
+     * Filter sessions by directory
      */
     directory?: string
     workspace?: string
