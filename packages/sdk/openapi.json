@@ -6113,11 +6113,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "MCP server does not support OAuth",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/McpUnsupportedOAuthError"
                 }
               }
             }
@@ -6331,11 +6331,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "MCP server does not support OAuth",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/McpUnsupportedOAuthError"
                 }
               }
             }
@@ -13275,6 +13275,15 @@
             "$ref": "#/components/schemas/MCPStatusNeedsClientRegistration"
           }
         ]
+      },
+      "McpUnsupportedOAuthError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
       },
       "Path": {
         "type": "object",
