@@ -188,7 +188,9 @@ describe("HttpApi server", () => {
       minimum: 1,
       maximum: 200,
     })
-    expect(parameterSchema({ spec: effect, path: "/session/{sessionID}/message", method: "get", name: "limit" })).toEqual({
+    expect(
+      parameterSchema({ spec: effect, path: "/session/{sessionID}/message", method: "get", name: "limit" }),
+    ).toEqual({
       type: "integer",
       minimum: 0,
       maximum: Number.MAX_SAFE_INTEGER,
