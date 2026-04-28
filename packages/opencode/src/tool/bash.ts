@@ -598,9 +598,8 @@ export const BashTool = Tool.define(
               const ps = Shell.ps(shell)
               yield* Effect.scoped(
                 Effect.gen(function* () {
-                  const tree = yield* Effect.acquireRelease(
-                    parse(params.command, ps),
-                    (tree) => Effect.sync(() => tree.delete()),
+                  const tree = yield* Effect.acquireRelease(parse(params.command, ps), (tree) =>
+                    Effect.sync(() => tree.delete()),
                   )
                   const scan = yield* collect(tree.rootNode, cwd, ps, shell)
                   if (!Instance.containsPath(cwd)) scan.dirs.add(cwd)
