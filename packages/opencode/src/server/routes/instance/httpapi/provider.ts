@@ -147,7 +147,11 @@ export const providerHandlers = Layer.unwrap(
     })
 
     return HttpApiBuilder.group(ProviderApi, "provider", (handlers) =>
-      handlers.handle("list", list).handle("auth", auth).handleRaw("authorize", authorizeRaw).handle("callback", callback),
+      handlers
+        .handle("list", list)
+        .handle("auth", auth)
+        .handleRaw("authorize", authorizeRaw)
+        .handle("callback", callback),
     )
   }),
 ).pipe(
