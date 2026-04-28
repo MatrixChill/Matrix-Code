@@ -18,6 +18,11 @@ const original = {
 }
 
 const methods = ["get", "post", "put", "delete", "patch"] as const
+let effectSpec: ReturnType<typeof OpenApi.fromApi> | undefined
+
+function effectOpenApi() {
+  return (effectSpec ??= OpenApi.fromApi(PublicApi))
+}
 
 function app(input?: { password?: string; username?: string }) {
   Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
@@ -62,6 +67,7 @@ function openApiRequestBodies(spec: { paths: Record<string, Partial<Record<(type
 
 type Operation = {
   parameters?: unknown[]
+  responses?: unknown
   requestBody?: unknown
 }
 
@@ -76,6 +82,19 @@ function parameterKey(param: unknown) {
   return `${param.in}:${param.name}:${"required" in param && param.required === true}`
 }
 
+function parameterSchema(input: {
+  spec: { paths: Record<string, Partial<Record<(typeof methods)[number], Operation>>> }
+  path: string
+  method: (typeof methods)[number]
+  name: string
+}) {
+  const param = input.spec.paths[input.path]?.[input.method]?.parameters?.find(
+    (param) => !!param && typeof param === "object" && "name" in param && param.name === input.name,
+  )
+  if (!param || typeof param !== "object" || !("schema" in param)) return
+  return param.schema
+}
+
 function requestBodyKey(body: unknown) {
   if (!body || typeof body !== "object" || !("content" in body)) return ""
   const requestBody = body as RequestBody
@@ -85,6 +104,23 @@ function requestBodyKey(body: unknown) {
       .map(([type, value]) => [type, value.schema?.$ref ?? value.schema?.type ?? "inline"])
       .sort(),
   })
+}
+
+function responseContentTypes(input: {
+  spec: { paths: Record<string, Partial<Record<(typeof methods)[number], Operation>>> }
+  path: string
+  method: (typeof methods)[number]
+  status: string
+}) {
+  const responses = input.spec.paths[input.path]?.[input.method]?.responses
+  if (!responses || typeof responses !== "object" || !(input.status in responses)) return []
+  const response = (responses as Record<string, unknown>)[input.status]
+  if (!response || typeof response !== "object" || !("content" in response)) return []
+  const content = (response as { content?: unknown }).content
+  if (!content || typeof content !== "object") {
+    return []
+  }
+  return Object.keys(content).sort()
 }
 
 function authorization(username: string, password: string) {
@@ -110,7 +146,7 @@ afterEach(async () => {
 describe("HttpApi server", () => {
   test("covers every generated OpenAPI route with Effect HttpApi contracts", async () => {
     const honoRoutes = openApiRouteKeys(await Server.openapi())
-    const effectRoutes = openApiRouteKeys(OpenApi.fromApi(PublicApi))
+    const effectRoutes = openApiRouteKeys(effectOpenApi())
 
     expect(honoRoutes.filter((route) => !effectRoutes.includes(route))).toEqual([])
     expect(effectRoutes.filter((route) => !honoRoutes.includes(route))).toEqual([])
@@ -118,7 +154,7 @@ describe("HttpApi server", () => {
 
   test("matches generated OpenAPI route parameters", async () => {
     const hono = openApiParameters(await Server.openapi())
-    const effect = openApiParameters(OpenApi.fromApi(PublicApi))
+    const effect = openApiParameters(effectOpenApi())
 
     expect(
       Object.keys(hono)
@@ -129,13 +165,45 @@ describe("HttpApi server", () => {
 
   test("matches generated OpenAPI request body shape", async () => {
     const hono = openApiRequestBodies(await Server.openapi())
-    const effect = openApiRequestBodies(OpenApi.fromApi(PublicApi))
+    const effect = openApiRequestBodies(effectOpenApi())
 
     expect(
       Object.keys(hono)
         .filter((route) => hono[route] !== effect[route])
         .map((route) => ({ route, hono: hono[route], effect: effect[route] })),
     ).toEqual([])
+  })
+
+  test("matches SDK-affecting query parameter schemas", async () => {
+    const effect = effectOpenApi()
+
+    expect(parameterSchema({ spec: effect, path: "/session", method: "get", name: "roots" })).toEqual({
+      anyOf: [{ type: "boolean" }, { type: "string", enum: ["true", "false"] }],
+    })
+    expect(parameterSchema({ spec: effect, path: "/session", method: "get", name: "start" })).toEqual({
+      type: "number",
+    })
+    expect(parameterSchema({ spec: effect, path: "/find/file", method: "get", name: "limit" })).toEqual({
+      type: "integer",
+      minimum: 1,
+      maximum: 200,
+    })
+    expect(parameterSchema({ spec: effect, path: "/session/{sessionID}/message", method: "get", name: "limit" })).toEqual({
+      type: "integer",
+      minimum: 0,
+      maximum: Number.MAX_SAFE_INTEGER,
+    })
+  })
+
+  test("documents event routes as server-sent events", () => {
+    const effect = effectOpenApi()
+
+    expect(responseContentTypes({ spec: effect, path: "/event", method: "get", status: "200" })).toEqual([
+      "text/event-stream",
+    ])
+    expect(responseContentTypes({ spec: effect, path: "/global/event", method: "get", status: "200" })).toEqual([
+      "text/event-stream",
+    ])
   })
 
   test("allows requests when auth is disabled", async () => {
