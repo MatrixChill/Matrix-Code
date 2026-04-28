@@ -64,11 +64,7 @@ function withMcpProject<A, E, R>(self: (dir: string) => Effect.Effect<A, E, R>) 
   })
 }
 
-const readResponse = Effect.fnUntraced(function* (input: {
-  app: TestApp
-  path: string
-  headers: HeadersInit
-}) {
+const readResponse = Effect.fnUntraced(function* (input: { app: TestApp; path: string; headers: HeadersInit }) {
   const response = yield* Effect.promise(() =>
     Promise.resolve(input.app.request(input.path, { method: "POST", headers: input.headers })),
   )
