@@ -123,38 +123,40 @@ const instanceRoutes = Layer.mergeAll(eventRoute, ptyConnectRoute, instanceApiRo
   Layer.provide(instance),
 )
 
-export const routes = Layer.mergeAll(controlRoutes, globalRoutes, instanceRoutes).pipe(
-  Layer.provide(Account.defaultLayer),
-  Layer.provide(Agent.defaultLayer),
-  Layer.provide(Auth.defaultLayer),
-  Layer.provide(Command.defaultLayer),
-  Layer.provide(Config.defaultLayer),
-  Layer.provide(File.defaultLayer),
-  Layer.provide(Format.defaultLayer),
-  Layer.provide(LSP.defaultLayer),
-  Layer.provide(Installation.defaultLayer),
-  Layer.provide(MCP.defaultLayer),
-  Layer.provide(Permission.defaultLayer),
-  Layer.provide(Project.defaultLayer),
-  Layer.provide(ProviderAuth.defaultLayer),
-  Layer.provide(Provider.defaultLayer),
-  Layer.provide(Pty.defaultLayer),
-  Layer.provide(Question.defaultLayer),
-  Layer.provide(Ripgrep.defaultLayer),
-  Layer.provide(Session.defaultLayer),
-).pipe(
-  Layer.provide(SessionRunState.defaultLayer),
-  Layer.provide(SessionStatus.defaultLayer),
-  Layer.provide(SessionSummary.defaultLayer),
-  Layer.provide(Skill.defaultLayer),
-  Layer.provide(Todo.defaultLayer),
-  Layer.provide(ToolRegistry.defaultLayer),
-  Layer.provide(Vcs.defaultLayer),
-  Layer.provide(Worktree.defaultLayer),
-  Layer.provide(Bus.layer),
-  Layer.provide(HttpServer.layerServices),
-  Layer.provideMerge(Observability.layer),
-)
+export const routes = Layer.mergeAll(controlRoutes, globalRoutes, instanceRoutes)
+  .pipe(
+    Layer.provide(Account.defaultLayer),
+    Layer.provide(Agent.defaultLayer),
+    Layer.provide(Auth.defaultLayer),
+    Layer.provide(Command.defaultLayer),
+    Layer.provide(Config.defaultLayer),
+    Layer.provide(File.defaultLayer),
+    Layer.provide(Format.defaultLayer),
+    Layer.provide(LSP.defaultLayer),
+    Layer.provide(Installation.defaultLayer),
+    Layer.provide(MCP.defaultLayer),
+    Layer.provide(Permission.defaultLayer),
+    Layer.provide(Project.defaultLayer),
+    Layer.provide(ProviderAuth.defaultLayer),
+    Layer.provide(Provider.defaultLayer),
+    Layer.provide(Pty.defaultLayer),
+    Layer.provide(Question.defaultLayer),
+    Layer.provide(Ripgrep.defaultLayer),
+    Layer.provide(Session.defaultLayer),
+  )
+  .pipe(
+    Layer.provide(SessionRunState.defaultLayer),
+    Layer.provide(SessionStatus.defaultLayer),
+    Layer.provide(SessionSummary.defaultLayer),
+    Layer.provide(Skill.defaultLayer),
+    Layer.provide(Todo.defaultLayer),
+    Layer.provide(ToolRegistry.defaultLayer),
+    Layer.provide(Vcs.defaultLayer),
+    Layer.provide(Worktree.defaultLayer),
+    Layer.provide(Bus.layer),
+    Layer.provide(HttpServer.layerServices),
+    Layer.provideMerge(Observability.layer),
+  )
 
 export const webHandler = lazy(() =>
   HttpRouter.toWebHandler(routes, {
