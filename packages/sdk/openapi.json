@@ -2168,7 +2168,8 @@
             "in": "query",
             "name": "roots",
             "schema": {
-              "type": "boolean"
+              "type": "string",
+              "enum": ["true", "false"]
             },
             "description": "Only return root sessions (no parentID)"
           },
@@ -2208,7 +2209,8 @@
             "in": "query",
             "name": "archived",
             "schema": {
-              "type": "boolean"
+              "type": "string",
+              "enum": ["true", "false"]
             },
             "description": "Include archived sessions (default false)"
           }
@@ -2308,7 +2310,8 @@
             "in": "query",
             "name": "roots",
             "schema": {
-              "type": "boolean"
+              "type": "string",
+              "enum": ["true", "false"]
             },
             "description": "Only return root sessions (no parentID)"
           },

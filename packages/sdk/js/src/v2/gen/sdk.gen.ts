@@ -848,12 +848,12 @@ export class Session extends HeyApiClient {
     parameters?: {
       directory?: string
       workspace?: string
-      roots?: boolean
+      roots?: "true" | "false"
       start?: number
       cursor?: number
       search?: string
       limit?: number
-      archived?: boolean
+      archived?: "true" | "false"
     },
     options?: Options<never, ThrowOnError>,
   ) {
@@ -1647,7 +1647,7 @@ export class Session2 extends HeyApiClient {
     parameters?: {
       directory?: string
       workspace?: string
-      roots?: boolean
+      roots?: "true" | "false"
       start?: number
       search?: string
       limit?: number
