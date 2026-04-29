@@ -114,9 +114,8 @@ function expectStatus(request: () => Promise<{ response: Response }>, status: nu
 }
 
 function firstEvent(open: () => Promise<{ stream: AsyncIterator<unknown> }>) {
-  return Effect.acquireRelease(
-    call(open),
-    (events) => call(async () => void (await events.stream.return?.(undefined))).pipe(Effect.ignore),
+  return Effect.acquireRelease(call(open), (events) =>
+    call(async () => void (await events.stream.return?.(undefined))).pipe(Effect.ignore),
   ).pipe(
     Effect.flatMap((events) => call(() => events.stream.next())),
     Effect.map((result) => result.value),
@@ -203,34 +202,35 @@ function writeStandardFiles(dir: string) {
 
 function seedMessage(directory: string, sessionID: string) {
   const id = SessionID.make(sessionID)
-  return call(async () =>
-    await Instance.provide({
-      directory,
-      fn: () =>
-        Effect.runPromise(
-          SessionNs.Service.use((svc) =>
-            Effect.gen(function* () {
-              const message = yield* svc.updateMessage({
-                id: MessageID.ascending(),
-                sessionID: id,
-                role: "user",
-                time: { created: Date.now() },
-                agent: "test",
-                model: { providerID: ProviderID.make("test"), modelID: ModelID.make("test") },
-                tools: {},
-              } satisfies MessageV2.User)
-              const part = yield* svc.updatePart({
-                id: PartID.ascending(),
-                sessionID: id,
-                messageID: message.id,
-                type: "text",
-                text: "seeded message",
-              })
-              return { message, part }
-            }),
-          ).pipe(Effect.provide(SessionNs.defaultLayer)),
-        ),
-    }),
+  return call(
+    async () =>
+      await Instance.provide({
+        directory,
+        fn: () =>
+          Effect.runPromise(
+            SessionNs.Service.use((svc) =>
+              Effect.gen(function* () {
+                const message = yield* svc.updateMessage({
+                  id: MessageID.ascending(),
+                  sessionID: id,
+                  role: "user",
+                  time: { created: Date.now() },
+                  agent: "test",
+                  model: { providerID: ProviderID.make("test"), modelID: ModelID.make("test") },
+                  tools: {},
+                } satisfies MessageV2.User)
+                const part = yield* svc.updatePart({
+                  id: PartID.ascending(),
+                  sessionID: id,
+                  messageID: message.id,
+                  type: "text",
+                  text: "seeded message",
+                })
+                return { message, part }
+              }),
+            ).pipe(Effect.provide(SessionNs.defaultLayer)),
+          ),
+      }),
   )
 }
 
@@ -410,7 +410,9 @@ describe("HttpApi SDK", () => {
         const messages = yield* capture(() => sdk.session.messages({ sessionID: parentID }))
         const missingGet = yield* capture(() => sdk.session.get({ sessionID: "ses_missing" }))
         const missingMessages = yield* capture(() => sdk.session.messages({ sessionID: "ses_missing", limit: 2 }))
-        const invalidCursor = yield* capture(() => sdk.session.messages({ sessionID: parentID, limit: 2, before: "bad" }))
+        const invalidCursor = yield* capture(() =>
+          sdk.session.messages({ sessionID: parentID, limit: 2, before: "bad" }),
+        )
         const deleted = yield* capture(() => sdk.session.delete({ sessionID: childID }))
         const getDeleted = yield* capture(() => sdk.session.get({ sessionID: childID }))
 
@@ -458,7 +460,9 @@ describe("HttpApi SDK", () => {
             sessionID,
             messageID: seeded.message.id,
             partID: seeded.part.id,
-            part: { ...seeded.part, text: "updated message" } as NonNullable<Parameters<Sdk["part"]["update"]>[0]["part"]>,
+            part: { ...seeded.part, text: "updated message" } as NonNullable<
+              Parameters<Sdk["part"]["update"]>[0]["part"]
+            >,
           }),
         )
         const updated = yield* capture(() => sdk.session.message({ sessionID, messageID: seeded.message.id }))
@@ -466,7 +470,9 @@ describe("HttpApi SDK", () => {
           sdk.part.delete({ sessionID, messageID: seeded.message.id, partID: seeded.part.id }),
         )
         const withoutPart = yield* capture(() => sdk.session.message({ sessionID, messageID: seeded.message.id }))
-        const deleteMessage = yield* capture(() => sdk.session.deleteMessage({ sessionID, messageID: seeded.message.id }))
+        const deleteMessage = yield* capture(() =>
+          sdk.session.deleteMessage({ sessionID, messageID: seeded.message.id }),
+        )
         const missingMessage = yield* capture(() => sdk.session.message({ sessionID, messageID: seeded.message.id }))
 
         return {
