@@ -38,8 +38,6 @@ opencode.agent.add({
   },
 })
 
-import { anthropic } from "@opencode-ai/core/models"
-
 const sessionID = await opencode.session.create({
   agent: "build",
 })
