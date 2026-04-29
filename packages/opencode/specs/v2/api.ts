@@ -53,8 +53,13 @@ await opencode.session.prompt({
 
 await opencode.session.prompt({
   sessionID,
-  text: "hey what is up",
-  role: "assistant",
+  text: "what is up with this",
+  files: [
+    {
+      mime: "image/png",
+      uri: "data:image/png;base64,xxxx",
+    },
+  ],
 })
 
 await opencode.session.wait()
