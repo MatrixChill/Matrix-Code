@@ -9,9 +9,7 @@ import { described } from "./metadata"
 
 const root = "/experimental/workspace"
 export const CreatePayload = Schema.Struct(Struct.omit(Workspace.CreateInput.fields, ["projectID"]))
-export const SessionRestorePayload = Schema.Struct(
-  Struct.omit(Workspace.SessionRestoreInput.fields, ["workspaceID"]),
-)
+export const SessionRestorePayload = Schema.Struct(Struct.omit(Workspace.SessionRestoreInput.fields, ["workspaceID"]))
 export const SessionRestoreResponse = Schema.Struct({
   total: NonNegativeInt,
 })

@@ -88,7 +88,9 @@ export const ptyConnectRoute = HttpRouter.add(
       },
       send: (data: string | Uint8Array | ArrayBuffer) => {
         if (closed) return
-        Effect.runFork(write(data instanceof ArrayBuffer ? new Uint8Array(data) : data).pipe(Effect.catch(() => Effect.void)))
+        Effect.runFork(
+          write(data instanceof ArrayBuffer ? new Uint8Array(data) : data).pipe(Effect.catch(() => Effect.void)),
+        )
       },
       close: (code?: number, reason?: string) => {
         if (closed) return

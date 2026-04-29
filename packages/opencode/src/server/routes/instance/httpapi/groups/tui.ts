@@ -11,11 +11,28 @@ export const TuiRequestPayload = Schema.Struct({
   path: Schema.String,
   body: Schema.Unknown,
 })
-const EventTuiPromptAppend = Schema.Struct({ type: Schema.Literal(TuiEvent.PromptAppend.type), properties: TuiEvent.PromptAppend.properties }).annotate({ identifier: "EventTuiPromptAppend" })
-const EventTuiCommandExecute = Schema.Struct({ type: Schema.Literal(TuiEvent.CommandExecute.type), properties: TuiEvent.CommandExecute.properties }).annotate({ identifier: "EventTuiCommandExecute" })
-const EventTuiToastShow = Schema.Struct({ type: Schema.Literal(TuiEvent.ToastShow.type), properties: TuiEvent.ToastShow.properties }).annotate({ identifier: "EventTuiToastShow" })
-const EventTuiSessionSelect = Schema.Struct({ type: Schema.Literal(TuiEvent.SessionSelect.type), properties: TuiEvent.SessionSelect.properties }).annotate({ identifier: "EventTuiSessionSelect" })
-export const TuiPublishPayload = Schema.Union([EventTuiPromptAppend, EventTuiCommandExecute, EventTuiToastShow, EventTuiSessionSelect])
+const EventTuiPromptAppend = Schema.Struct({
+  type: Schema.Literal(TuiEvent.PromptAppend.type),
+  properties: TuiEvent.PromptAppend.properties,
+}).annotate({ identifier: "EventTuiPromptAppend" })
+const EventTuiCommandExecute = Schema.Struct({
+  type: Schema.Literal(TuiEvent.CommandExecute.type),
+  properties: TuiEvent.CommandExecute.properties,
+}).annotate({ identifier: "EventTuiCommandExecute" })
+const EventTuiToastShow = Schema.Struct({
+  type: Schema.Literal(TuiEvent.ToastShow.type),
+  properties: TuiEvent.ToastShow.properties,
+}).annotate({ identifier: "EventTuiToastShow" })
+const EventTuiSessionSelect = Schema.Struct({
+  type: Schema.Literal(TuiEvent.SessionSelect.type),
+  properties: TuiEvent.SessionSelect.properties,
+}).annotate({ identifier: "EventTuiSessionSelect" })
+export const TuiPublishPayload = Schema.Union([
+  EventTuiPromptAppend,
+  EventTuiCommandExecute,
+  EventTuiToastShow,
+  EventTuiSessionSelect,
+])
 
 export const TuiPaths = {
   appendPrompt: `${root}/append-prompt`,
@@ -48,42 +65,54 @@ export const TuiApi = HttpApi.make("tui")
             description: "Append prompt to the TUI.",
           }),
         ),
-        HttpApiEndpoint.post("openHelp", TuiPaths.openHelp, { success: described(Schema.Boolean, "Help dialog opened successfully") }).annotateMerge(
+        HttpApiEndpoint.post("openHelp", TuiPaths.openHelp, {
+          success: described(Schema.Boolean, "Help dialog opened successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.openHelp",
             summary: "Open help dialog",
             description: "Open the help dialog in the TUI to display user assistance information.",
           }),
         ),
-        HttpApiEndpoint.post("openSessions", TuiPaths.openSessions, { success: described(Schema.Boolean, "Session dialog opened successfully") }).annotateMerge(
+        HttpApiEndpoint.post("openSessions", TuiPaths.openSessions, {
+          success: described(Schema.Boolean, "Session dialog opened successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.openSessions",
             summary: "Open sessions dialog",
             description: "Open the session dialog.",
           }),
         ),
-        HttpApiEndpoint.post("openThemes", TuiPaths.openThemes, { success: described(Schema.Boolean, "Theme dialog opened successfully") }).annotateMerge(
+        HttpApiEndpoint.post("openThemes", TuiPaths.openThemes, {
+          success: described(Schema.Boolean, "Theme dialog opened successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.openThemes",
             summary: "Open themes dialog",
             description: "Open the theme dialog.",
           }),
         ),
-        HttpApiEndpoint.post("openModels", TuiPaths.openModels, { success: described(Schema.Boolean, "Model dialog opened successfully") }).annotateMerge(
+        HttpApiEndpoint.post("openModels", TuiPaths.openModels, {
+          success: described(Schema.Boolean, "Model dialog opened successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.openModels",
             summary: "Open models dialog",
             description: "Open the model dialog.",
           }),
         ),
-        HttpApiEndpoint.post("submitPrompt", TuiPaths.submitPrompt, { success: described(Schema.Boolean, "Prompt submitted successfully") }).annotateMerge(
+        HttpApiEndpoint.post("submitPrompt", TuiPaths.submitPrompt, {
+          success: described(Schema.Boolean, "Prompt submitted successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.submitPrompt",
             summary: "Submit TUI prompt",
             description: "Submit the prompt.",
           }),
         ),
-        HttpApiEndpoint.post("clearPrompt", TuiPaths.clearPrompt, { success: described(Schema.Boolean, "Prompt cleared successfully") }).annotateMerge(
+        HttpApiEndpoint.post("clearPrompt", TuiPaths.clearPrompt, {
+          success: described(Schema.Boolean, "Prompt cleared successfully"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.clearPrompt",
             summary: "Clear TUI prompt",
@@ -133,7 +162,9 @@ export const TuiApi = HttpApi.make("tui")
             description: "Navigate the TUI to display the specified session.",
           }),
         ),
-        HttpApiEndpoint.get("controlNext", TuiPaths.controlNext, { success: described(TuiRequestPayload, "Next TUI request") }).annotateMerge(
+        HttpApiEndpoint.get("controlNext", TuiPaths.controlNext, {
+          success: described(TuiRequestPayload, "Next TUI request"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "tui.control.next",
             summary: "Get next TUI request",

@@ -38,7 +38,9 @@ type ServerApp = {
   request(input: string | URL | Request, init?: RequestInit): Response | Promise<Response>
 }
 
-const DefaultHono = lazy(() => withBackend({ backend: "hono", reason: "stable" }, createHono({}, { backend: "hono", reason: "stable" })))
+const DefaultHono = lazy(() =>
+  withBackend({ backend: "hono", reason: "stable" }, createHono({}, { backend: "hono", reason: "stable" })),
+)
 const DefaultHttpApi = lazy(() => createDefaultHttpApi())
 
 function select() {
@@ -86,7 +88,10 @@ function createHttpApi() {
   }
 }
 
-function createHono(opts: { cors?: string[] }, selection: ServerBackend.Selection = ServerBackend.force(select(), "hono")) {
+function createHono(
+  opts: { cors?: string[] },
+  selection: ServerBackend.Selection = ServerBackend.force(select(), "hono"),
+) {
   const backendAttributes = ServerBackend.attributes(selection)
   const app = new Hono()
     .onError(ErrorMiddleware)

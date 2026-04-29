@@ -29,14 +29,18 @@ export const PtyApi = HttpApi.make("pty")
   .add(
     HttpApiGroup.make("pty")
       .add(
-        HttpApiEndpoint.get("shells", PtyPaths.shells, { success: described(Schema.Array(ShellItem), "List of shells") }).annotateMerge(
+        HttpApiEndpoint.get("shells", PtyPaths.shells, {
+          success: described(Schema.Array(ShellItem), "List of shells"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "pty.shells",
             summary: "List available shells",
             description: "Get a list of available shells on the system.",
           }),
         ),
-        HttpApiEndpoint.get("list", PtyPaths.list, { success: described(Schema.Array(Pty.Info), "List of sessions") }).annotateMerge(
+        HttpApiEndpoint.get("list", PtyPaths.list, {
+          success: described(Schema.Array(Pty.Info), "List of sessions"),
+        }).annotateMerge(
           OpenApi.annotations({
             identifier: "pty.list",
             summary: "List PTY sessions",

@@ -461,7 +461,9 @@ type AssistantError = z.infer<typeof AssistantErrorZod>
 // Effect Schema for the same union — used by HttpApi OpenAPI generation.
 const AssistantErrorSchema = Schema.Union([
   AuthError.EffectSchema,
-  Schema.Struct({ name: Schema.Literal("UnknownError"), data: Schema.Struct({ message: Schema.String }) }).annotate({ identifier: "UnknownError" }),
+  Schema.Struct({ name: Schema.Literal("UnknownError"), data: Schema.Struct({ message: Schema.String }) }).annotate({
+    identifier: "UnknownError",
+  }),
   OutputLengthError.EffectSchema,
   AbortedError.EffectSchema,
   StructuredOutputError.EffectSchema,

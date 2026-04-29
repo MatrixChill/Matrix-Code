@@ -126,9 +126,9 @@ function requestBodyKey(spec: OpenApiSpec, body: unknown) {
 
 function requestBodySchemaKind(spec: OpenApiSpec, schema: OpenApiSchema | undefined) {
   if (!schema) return ""
-  const resolved = (schema.$ref ? spec.components?.schemas?.[schema.$ref.replace("#/components/schemas/", "")] : schema) as
-    | OpenApiSchema
-    | undefined
+  const resolved = (
+    schema.$ref ? spec.components?.schemas?.[schema.$ref.replace("#/components/schemas/", "")] : schema
+  ) as OpenApiSchema | undefined
   if (resolved?.properties) return "object"
   if (resolved?.anyOf ?? resolved?.oneOf ?? resolved?.allOf) return "object"
   return resolved?.type ?? schema.type ?? "inline"

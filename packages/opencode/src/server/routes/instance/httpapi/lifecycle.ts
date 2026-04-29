@@ -14,7 +14,10 @@ export const markInstanceForDisposal = (ctx: InstanceContext) =>
 
 export const markInstanceForReload = (ctx: InstanceContext, next: Parameters<typeof Instance.reload>[0]) =>
   HttpEffect.appendPreResponseHandler((_request, response) =>
-    Effect.as(Effect.uninterruptible(Effect.promise(() => Instance.restore(ctx, () => Instance.reload(next)))), response),
+    Effect.as(
+      Effect.uninterruptible(Effect.promise(() => Instance.restore(ctx, () => Instance.reload(next)))),
+      response,
+    ),
   )
 
 export const disposeMiddleware: HttpMiddleware.HttpMiddleware = (effect) =>

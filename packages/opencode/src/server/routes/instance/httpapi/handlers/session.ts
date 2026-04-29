@@ -25,7 +25,20 @@ import * as Stream from "effect/Stream"
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
 import { HttpApiBuilder, HttpApiError, HttpApiSchema } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { CommandPayload, DiffQuery, ForkPayload, InitPayload, ListQuery, MessagesQuery, PermissionResponsePayload, PromptPayload, RevertPayload, ShellPayload, SummarizePayload, UpdatePayload } from "../groups/session"
+import {
+  CommandPayload,
+  DiffQuery,
+  ForkPayload,
+  InitPayload,
+  ListQuery,
+  MessagesQuery,
+  PermissionResponsePayload,
+  PromptPayload,
+  RevertPayload,
+  ShellPayload,
+  SummarizePayload,
+  UpdatePayload,
+} from "../groups/session"
 
 const log = Log.create({ service: "server" })
 
@@ -88,40 +101,42 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       params: { sessionID: SessionID }
       query: typeof MessagesQuery.Type
     }) {
-      return yield* mapNotFound(Effect.gen(function* () {
-        if (ctx.query.before && ctx.query.limit === undefined) return yield* new HttpApiError.BadRequest({})
-        if (ctx.query.before) {
-          const before = ctx.query.before
-          yield* Effect.try({
-            try: () => MessageV2.cursor.decode(before),
-            catch: () => new HttpApiError.BadRequest({}),
-          })
-        }
-        if (ctx.query.limit === undefined || ctx.query.limit === 0) {
+      return yield* mapNotFound(
+        Effect.gen(function* () {
+          if (ctx.query.before && ctx.query.limit === undefined) return yield* new HttpApiError.BadRequest({})
+          if (ctx.query.before) {
+            const before = ctx.query.before
+            yield* Effect.try({
+              try: () => MessageV2.cursor.decode(before),
+              catch: () => new HttpApiError.BadRequest({}),
+            })
+          }
+          if (ctx.query.limit === undefined || ctx.query.limit === 0) {
+            yield* session.get(ctx.params.sessionID)
+            return yield* session.messages({ sessionID: ctx.params.sessionID })
+          }
+
           yield* session.get(ctx.params.sessionID)
-          return yield* session.messages({ sessionID: ctx.params.sessionID })
-        }
+          const page = MessageV2.page({
+            sessionID: ctx.params.sessionID,
+            limit: ctx.query.limit,
+            before: ctx.query.before,
+          })
+          if (!page.cursor) return page.items
 
-        yield* session.get(ctx.params.sessionID)
-        const page = MessageV2.page({
-          sessionID: ctx.params.sessionID,
-          limit: ctx.query.limit,
-          before: ctx.query.before,
-        })
-        if (!page.cursor) return page.items
-
-        const request = yield* HttpServerRequest.HttpServerRequest
-        const url = new URL(request.url, "http://localhost")
-        url.searchParams.set("limit", ctx.query.limit.toString())
-        url.searchParams.set("before", page.cursor)
-        return HttpServerResponse.jsonUnsafe(page.items, {
-          headers: {
-            "Access-Control-Expose-Headers": "Link, X-Next-Cursor",
-            Link: `<${url.toString()}>; rel="next"`,
-            "X-Next-Cursor": page.cursor,
-          },
-        })
-      }))
+          const request = yield* HttpServerRequest.HttpServerRequest
+          const url = new URL(request.url, "http://localhost")
+          url.searchParams.set("limit", ctx.query.limit.toString())
+          url.searchParams.set("before", page.cursor)
+          return HttpServerResponse.jsonUnsafe(page.items, {
+            headers: {
+              "Access-Control-Expose-Headers": "Link, X-Next-Cursor",
+              Link: `<${url.toString()}>; rel="next"`,
+              "X-Next-Cursor": page.cursor,
+            },
+          })
+        }),
+      )
     })
 
     const message = Effect.fn("SessionHttpApi.message")(function* (ctx: {

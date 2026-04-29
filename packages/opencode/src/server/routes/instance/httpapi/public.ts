@@ -126,8 +126,13 @@ function matchLegacyOpenApi(input: Record<string, unknown>) {
           // Workspace creation fields `branch` and `extra` are Schema.NullOr —
           // genuinely nullable, not just optional. Re-add the null that the
           // component-level strip above removed.
-          const ref = operation.requestBody.content?.["application/json"]?.schema?.$ref?.replace("#/components/schemas/", "")
-          const properties = ref ? spec.components?.schemas?.[ref]?.properties : operation.requestBody.content?.["application/json"]?.schema?.properties
+          const ref = operation.requestBody.content?.["application/json"]?.schema?.$ref?.replace(
+            "#/components/schemas/",
+            "",
+          )
+          const properties = ref
+            ? spec.components?.schemas?.[ref]?.properties
+            : operation.requestBody.content?.["application/json"]?.schema?.properties
           if (properties?.branch) properties.branch = { anyOf: [properties.branch, { type: "null" }] }
           if (properties?.extra) properties.extra = { anyOf: [properties.extra, { type: "null" }] }
         }
@@ -150,7 +155,10 @@ function matchLegacyOpenApi(input: Record<string, unknown>) {
           description: "Event stream",
           content: {
             "text/event-stream": {
-              schema: path === "/event" ? { $ref: "#/components/schemas/Event" } : { $ref: "#/components/schemas/GlobalEvent" },
+              schema:
+                path === "/event"
+                  ? { $ref: "#/components/schemas/Event" }
+                  : { $ref: "#/components/schemas/GlobalEvent" },
             },
           },
         }
@@ -251,7 +259,8 @@ function applyLegacySchemaOverrides(spec: OpenApiSpec) {
     schemas.Workspace.properties.directory = nullable(schemas.Workspace.properties.directory)
     schemas.Workspace.properties.extra = nullable(schemas.Workspace.properties.extra)
   }
-  if (schemas.GlobalSession?.properties?.project) schemas.GlobalSession.properties.project = nullable(schemas.GlobalSession.properties.project)
+  if (schemas.GlobalSession?.properties?.project)
+    schemas.GlobalSession.properties.project = nullable(schemas.GlobalSession.properties.project)
   const providerOptions = schemas.ProviderConfig?.properties?.options
   if (providerOptions) providerOptions.additionalProperties = {}
   const model = schemas.ProviderConfig?.properties?.models?.additionalProperties
@@ -486,12 +495,11 @@ function normalizeParameter(param: OpenApiParameter, route: string) {
   param.schema = stripOptionalNull(param.schema)
 }
 
-export const PublicApi = OpenCodeHttpApi
-  .annotateMerge(
-    OpenApi.annotations({
-      title: "opencode",
-      version: "1.0.0",
-      description: "opencode api",
-      transform: matchLegacyOpenApi,
-    }),
-  )
+export const PublicApi = OpenCodeHttpApi.annotateMerge(
+  OpenApi.annotations({
+    title: "opencode",
+    version: "1.0.0",
+    description: "opencode api",
+    transform: matchLegacyOpenApi,
+  }),
+)

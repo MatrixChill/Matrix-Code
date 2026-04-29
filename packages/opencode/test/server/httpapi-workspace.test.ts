@@ -214,7 +214,11 @@ describe("workspace HttpApi", () => {
     const workspace = await Instance.provide({
       directory: tmp.path,
       fn: async () => {
-        registerAdaptor(Instance.project.id, "remote-target", remoteAdaptor(path.join(tmp.path, ".remote"), "https://remote.test/base"))
+        registerAdaptor(
+          Instance.project.id,
+          "remote-target",
+          remoteAdaptor(path.join(tmp.path, ".remote"), "https://remote.test/base"),
+        )
         return Workspace.create({
           type: "remote-target",
           branch: null,

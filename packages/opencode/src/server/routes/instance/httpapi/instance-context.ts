@@ -19,11 +19,12 @@ import * as Socket from "effect/unstable/socket/Socket"
 
 type HandlerEffect = Effect.Effect<HttpServerResponse.HttpServerResponse, unhandled, never>
 
-export class InstanceContextMiddleware extends HttpApiMiddleware.Service<InstanceContextMiddleware, {
-  requires: Session.Service
-}>()(
-  "@opencode/ExperimentalHttpApiInstanceContext",
-) {}
+export class InstanceContextMiddleware extends HttpApiMiddleware.Service<
+  InstanceContextMiddleware,
+  {
+    requires: Session.Service
+  }
+>()("@opencode/ExperimentalHttpApiInstanceContext") {}
 
 function decode(input: string) {
   try {
@@ -53,9 +54,14 @@ function requestHeaders(request: HttpServerRequest.HttpServerRequest) {
   return sourceRequest(request).headers
 }
 
-function writeSocket(write: (data: string | Uint8Array | Socket.CloseEvent) => Effect.Effect<void, unknown>, data: unknown) {
+function writeSocket(
+  write: (data: string | Uint8Array | Socket.CloseEvent) => Effect.Effect<void, unknown>,
+  data: unknown,
+) {
   if (data instanceof Blob) {
-    void data.arrayBuffer().then((buffer) => Effect.runFork(write(new Uint8Array(buffer)).pipe(Effect.catch(() => Effect.void))))
+    void data
+      .arrayBuffer()
+      .then((buffer) => Effect.runFork(write(new Uint8Array(buffer)).pipe(Effect.catch(() => Effect.void))))
     return
   }
   if (typeof data === "string" || data instanceof Uint8Array) {
@@ -78,7 +84,8 @@ function proxyWebSocket(request: HttpServerRequest.HttpServerRequest, target: st
       queue.length = 0
     }
     remote.onmessage = (event) => writeSocket(write, event.data)
-    remote.onerror = () => Effect.runFork(write(new Socket.CloseEvent(1011, "proxy error")).pipe(Effect.catch(() => Effect.void)))
+    remote.onerror = () =>
+      Effect.runFork(write(new Socket.CloseEvent(1011, "proxy error")).pipe(Effect.catch(() => Effect.void)))
     remote.onclose = (event) =>
       Effect.runFork(write(new Socket.CloseEvent(event.code, event.reason)).pipe(Effect.catch(() => Effect.void)))
 
@@ -109,7 +116,9 @@ function proxyRemote(
   const url = workspaceProxyURL(target.url, requestURL)
   const source = sourceRequest(request)
   if (source.headers.get("upgrade")?.toLowerCase() === "websocket") return proxyWebSocket(request, url)
-  return Effect.promise(() => ServerProxy.http(url, target.headers, source, workspace.id)).pipe(Effect.map(HttpServerResponse.raw))
+  return Effect.promise(() => ServerProxy.http(url, target.headers, source, workspace.id)).pipe(
+    Effect.map(HttpServerResponse.raw),
+  )
 }
 
 function requestContext() {
@@ -118,14 +127,19 @@ function requestContext() {
   )
 }
 
-function provideRequestContext(effect: HandlerEffect, request: HttpServerRequest.HttpServerRequest, sessionWorkspaceID?: WorkspaceID) {
+function provideRequestContext(
+  effect: HandlerEffect,
+  request: HttpServerRequest.HttpServerRequest,
+  sessionWorkspaceID?: WorkspaceID,
+) {
   return Effect.gen(function* () {
     const url = new URL(request.url, "http://localhost")
     const headers = requestHeaders(request)
     const envWorkspaceID = Flag.OPENCODE_WORKSPACE_ID ? WorkspaceID.make(Flag.OPENCODE_WORKSPACE_ID) : undefined
     const workspaceParam = url.searchParams.get("workspace")
     const workspaceID = sessionWorkspaceID ?? (workspaceParam ? WorkspaceID.make(workspaceParam) : undefined)
-    const workspace = workspaceID && !envWorkspaceID ? yield* Effect.promise(() => Workspace.get(workspaceID)) : undefined
+    const workspace =
+      workspaceID && !envWorkspaceID ? yield* Effect.promise(() => Workspace.get(workspaceID)) : undefined
 
     if (workspaceID && !workspace && !envWorkspaceID) {
       return HttpServerResponse.text(`Workspace not found: ${workspaceID}`, {
@@ -134,7 +148,12 @@ function provideRequestContext(effect: HandlerEffect, request: HttpServerRequest
       })
     }
 
-    if (workspace && !isLocalWorkspaceRoute(request.method, url.pathname) && !url.pathname.startsWith("/console") && !envWorkspaceID) {
+    if (
+      workspace &&
+      !isLocalWorkspaceRoute(request.method, url.pathname) &&
+      !url.pathname.startsWith("/console") &&
+      !envWorkspaceID
+    ) {
       const adaptor = yield* Effect.promise(() => getAdaptor(workspace.projectID, workspace.type))
       const target = yield* Effect.promise(() => Promise.resolve(adaptor.target(workspace)))
       if (target.type === "remote") return yield* proxyRemote(request, workspace, target, url)
@@ -186,6 +205,8 @@ export const instanceContextLayer = Layer.succeed(
   InstanceContextMiddleware.of((effect) => provideInstanceContext(effect)),
 )
 
-export const instanceRouterLayer = HttpRouter.middleware()(Effect.succeed((effect) =>
-  requestContext().pipe(Effect.flatMap((request) => provideRequestContext(effect, request))),
-)).layer
+export const instanceRouterLayer = HttpRouter.middleware()(
+  Effect.succeed((effect) =>
+    requestContext().pipe(Effect.flatMap((request) => provideRequestContext(effect, request))),
+  ),
+).layer
