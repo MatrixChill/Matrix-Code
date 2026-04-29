@@ -30,9 +30,7 @@ export function headers(input: Request | HeadersInit | Record<string, string>, e
 }
 
 export function websocketProtocols(input: Request | Record<string, string | undefined>) {
-  const value = input instanceof Request
-    ? input.headers.get("sec-websocket-protocol")
-    : input["sec-websocket-protocol"]
+  const value = input instanceof Request ? input.headers.get("sec-websocket-protocol") : input["sec-websocket-protocol"]
   if (!value) return []
   return value
     .split(",")

@@ -1,6 +1,13 @@
 import { ProxyUtil } from "@/server/proxy-util"
 import { Effect, Stream } from "effect"
-import { FetchHttpClient, HttpBody, HttpClient, HttpClientRequest, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
+import {
+  FetchHttpClient,
+  HttpBody,
+  HttpClient,
+  HttpClientRequest,
+  HttpServerRequest,
+  HttpServerResponse,
+} from "effect/unstable/http"
 import * as Socket from "effect/unstable/socket/Socket"
 
 function webSource(request: HttpServerRequest.HttpServerRequest): Request | undefined {
@@ -35,7 +42,9 @@ export function websocket(
           Effect.catchReason("SocketError", "SocketCloseError", (reason) =>
             writeInbound(new Socket.CloseEvent(reason.code, reason.closeReason)).pipe(Effect.catch(() => Effect.void)),
           ),
-          Effect.catch(() => writeInbound(new Socket.CloseEvent(1011, "proxy error")).pipe(Effect.catch(() => Effect.void))),
+          Effect.catch(() =>
+            writeInbound(new Socket.CloseEvent(1011, "proxy error")).pipe(Effect.catch(() => Effect.void)),
+          ),
           Effect.forkScoped,
         )
 

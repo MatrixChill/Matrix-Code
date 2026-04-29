@@ -22,14 +22,17 @@ describe("HttpApi workspace proxy", () => {
         Effect.gen(function* () {
           const req = yield* HttpServerRequest.HttpServerRequest
           const body = yield* req.text
-          return yield* HttpServerResponse.json({ path: req.url, method: req.method, body }, {
-            status: 201,
-            headers: {
-              "content-encoding": "identity",
-              "content-length": "999",
-              "x-remote": "yes",
+          return yield* HttpServerResponse.json(
+            { path: req.url, method: req.method, body },
+            {
+              status: 201,
+              headers: {
+                "content-encoding": "identity",
+                "content-length": "999",
+                "x-remote": "yes",
+              },
             },
-          })
+          )
         }),
       )
       const url = yield* serverUrl()

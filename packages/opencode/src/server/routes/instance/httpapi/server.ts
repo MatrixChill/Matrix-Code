@@ -90,9 +90,9 @@ const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
 
 const rawInstanceRoutes = Layer.mergeAll(eventRoute, ptyConnectRoute).pipe(
   Layer.provide(
-    instanceRouterMiddleware.combine(workspaceRouterMiddleware).layer.pipe(
-      Layer.provide(Socket.layerWebSocketConstructorGlobal),
-    ),
+    instanceRouterMiddleware
+      .combine(workspaceRouterMiddleware)
+      .layer.pipe(Layer.provide(Socket.layerWebSocketConstructorGlobal)),
   ),
 )
 const instanceRoutes = Layer.mergeAll(rawInstanceRoutes, instanceApiRoutes).pipe(

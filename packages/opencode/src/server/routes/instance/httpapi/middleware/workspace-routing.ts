@@ -27,10 +27,13 @@ type RequestPlan = Data.TaggedEnum<{
 }>
 const RequestPlan = Data.taggedEnum<RequestPlan>()
 
-export class WorkspaceRouteContext extends Context.Service<WorkspaceRouteContext, {
-  readonly directory: string
-  readonly workspaceID?: WorkspaceID
-}>()("@opencode/ExperimentalHttpApiWorkspaceRouteContext") {}
+export class WorkspaceRouteContext extends Context.Service<
+  WorkspaceRouteContext,
+  {
+    readonly directory: string
+    readonly workspaceID?: WorkspaceID
+  }
+>()("@opencode/ExperimentalHttpApiWorkspaceRouteContext") {}
 
 export class WorkspaceRoutingMiddleware extends HttpApiMiddleware.Service<
   WorkspaceRoutingMiddleware,
@@ -110,7 +113,10 @@ function proxyRemote(
     if (headers["upgrade"]?.toLowerCase() === "websocket") return yield* HttpApiProxy.websocket(request, proxyURL)
     const response = yield* HttpApiProxy.http(proxyURL, target.headers, request)
     const sync = Fence.parse(new Headers(response.headers))
-    if (sync) yield* Effect.promise(() => Fence.wait(workspace.id, sync, request.source instanceof Request ? request.source.signal : undefined))
+    if (sync)
+      yield* Effect.promise(() =>
+        Fence.wait(workspace.id, sync, request.source instanceof Request ? request.source.signal : undefined),
+      )
     return response
   })
 }
@@ -157,9 +163,7 @@ function routeWorkspace<E>(
     MissingWorkspace: ({ workspaceID }) => Effect.succeed(missingWorkspaceResponse(workspaceID)),
     Remote: ({ request, workspace, target, url }) => proxyRemote(request, workspace, target, url),
     Local: ({ directory, workspaceID }) =>
-      effect.pipe(
-        Effect.provideService(WorkspaceRouteContext, WorkspaceRouteContext.of({ directory, workspaceID })),
-      ),
+      effect.pipe(Effect.provideService(WorkspaceRouteContext, WorkspaceRouteContext.of({ directory, workspaceID }))),
   })
 }
 
