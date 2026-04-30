@@ -82,7 +82,12 @@ describe("HttpApi workspace proxy", () => {
         new Request("http://localhost/session/abc", { method: "POST", body: "request-body" }),
       )
       const httpClient = yield* HttpClient.HttpClient
-      const response = yield* HttpApiProxy.http(httpClient, `${url}/session/abc?keep=yes`, { "x-extra": "injected" }, request)
+      const response = yield* HttpApiProxy.http(
+        httpClient,
+        `${url}/session/abc?keep=yes`,
+        { "x-extra": "injected" },
+        request,
+      )
 
       expect(response.status).toBe(201)
       const client = HttpServerResponse.toClientResponse(response)
