@@ -147,7 +147,10 @@ describe("HttpApi UI fallback", () => {
       Effect.gen(function* () {
         const fs = yield* AppFileSystem.Service
         const client = yield* HttpClient.HttpClient
-        return yield* serveUIEffect(HttpServerRequest.fromWeb(new Request("http://localhost/assets/app.js")), { fs, client })
+        return yield* serveUIEffect(HttpServerRequest.fromWeb(new Request("http://localhost/assets/app.js")), {
+          fs,
+          client,
+        })
       }).pipe(
         Effect.provide(
           Layer.mergeAll(

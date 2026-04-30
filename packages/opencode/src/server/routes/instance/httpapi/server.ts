@@ -128,9 +128,7 @@ const uiRoute = Layer.effectDiscard(
     const router = yield* HttpRouter.HttpRouter
     yield* router.add("*", "/*", (request) => serveUIEffect(request, { fs, client }))
   }),
-).pipe(
-  Layer.provide(authorizationRouterMiddleware.layer.pipe(Layer.provide(ServerAuthConfig.defaultLayer))),
-)
+).pipe(Layer.provide(authorizationRouterMiddleware.layer.pipe(Layer.provide(ServerAuthConfig.defaultLayer))))
 
 export const routes = Layer.mergeAll(rootApiRoutes, instanceRoutes, uiRoute).pipe(
   Layer.provide([
