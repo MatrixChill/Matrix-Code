@@ -287,19 +287,17 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       const bridge = yield* EffectBridge.make()
       yield* Effect.sync(() => {
         bridge.fork(
-          promptSvc
-            .prompt({ ...ctx.payload, sessionID: ctx.params.sessionID })
-            .pipe(
-              Effect.catchCause((error) =>
-                Effect.sync(() => {
-                  log.error("prompt_async failed", { sessionID: ctx.params.sessionID, error })
-                  void Bus.publish(Session.Event.Error, {
-                    sessionID: ctx.params.sessionID,
-                    error: new NamedError.Unknown({ message: String(error) }).toObject(),
-                  })
-                }),
-              ),
+          promptSvc.prompt({ ...ctx.payload, sessionID: ctx.params.sessionID }).pipe(
+            Effect.catchCause((error) =>
+              Effect.sync(() => {
+                log.error("prompt_async failed", { sessionID: ctx.params.sessionID, error })
+                void Bus.publish(Session.Event.Error, {
+                  sessionID: ctx.params.sessionID,
+                  error: new NamedError.Unknown({ message: String(error) }).toObject(),
+                })
+              }),
             ),
+          ),
         )
       })
       return HttpApiSchema.NoContent.make()
