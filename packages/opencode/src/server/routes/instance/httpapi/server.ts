@@ -1,7 +1,8 @@
 import { Context, Effect, Layer } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
-import { HttpMiddleware, HttpRouter, HttpServer, HttpServerResponse } from "effect/unstable/http"
+import { FetchHttpClient, HttpMiddleware, HttpRouter, HttpServer } from "effect/unstable/http"
 import * as Socket from "effect/unstable/socket/Socket"
+import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Account } from "@/account/account"
 import { Agent } from "@/agent/agent"
 import { Auth } from "@/auth"
@@ -38,7 +39,7 @@ import { Vcs } from "@/project/vcs"
 import { Worktree } from "@/worktree"
 import { Workspace } from "@/control-plane/workspace"
 import { isAllowedCorsOrigin } from "@/server/cors"
-import { UIRoutes } from "@/server/routes/ui"
+import { serveUIEffect } from "@/server/routes/ui"
 import { InstanceHttpApi, RootHttpApi } from "./api"
 import { ServerAuthConfig, authorizationLayer, authorizationRouterMiddleware } from "./middleware/authorization"
 import { eventRoute } from "./event"
@@ -120,18 +121,10 @@ const instanceRoutes = Layer.mergeAll(rawInstanceRoutes, instanceApiRoutes).pipe
   ]),
 )
 
-const uiRoutes = lazy(() => UIRoutes())
 const uiRoute = HttpRouter.add("*", "/*", (request) =>
-  Effect.promise(async () =>
-    uiRoutes().fetch(
-      request.source instanceof Request
-        ? request.source
-        : new Request(new URL(request.originalUrl, "http://localhost"), {
-            method: request.method,
-            headers: request.headers,
-          }),
-    ),
-  ).pipe(Effect.map(HttpServerResponse.fromWeb)),
+  serveUIEffect(request).pipe(Effect.provide(AppFileSystem.defaultLayer), Effect.provide(FetchHttpClient.layer)),
+).pipe(
+  Layer.provide(authorizationRouterMiddleware.layer.pipe(Layer.provide(ServerAuthConfig.defaultLayer))),
 )
 
 export const routes = Layer.mergeAll(rootApiRoutes, instanceRoutes, uiRoute).pipe(
