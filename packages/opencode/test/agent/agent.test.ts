@@ -94,9 +94,9 @@ test("explore agent asks for external directories and allows whitelisted externa
       expect(explore).toBeDefined()
       expect(Permission.evaluate("external_directory", "/some/other/path", explore!.permission).action).toBe("ask")
       expect(Permission.evaluate("external_directory", Truncate.GLOB, explore!.permission).action).toBe("allow")
-      expect(Permission.evaluate("external_directory", path.join(Global.Path.tmp, "agent-work"), explore!.permission).action).toBe(
-        "allow",
-      )
+      expect(
+        Permission.evaluate("external_directory", path.join(Global.Path.tmp, "agent-work"), explore!.permission).action,
+      ).toBe("allow")
     },
   })
 })
@@ -525,9 +525,9 @@ test("global tmp directory children are allowed for external_directory", async (
     directory: tmp.path,
     fn: async () => {
       const build = await load(tmp.path, (svc) => svc.get("build"))
-      expect(Permission.evaluate("external_directory", path.join(Global.Path.tmp, "scratch"), build!.permission).action).toBe(
-        "allow",
-      )
+      expect(
+        Permission.evaluate("external_directory", path.join(Global.Path.tmp, "scratch"), build!.permission).action,
+      ).toBe("allow")
       expect(Permission.evaluate("external_directory", "/some/other/path", build!.permission).action).toBe("ask")
     },
   })
