@@ -67,8 +67,11 @@ function eventResponse(bus: Bus.Interface) {
 export const eventHandlers = HttpApiBuilder.group(EventApi, "event", (handlers) =>
   Effect.gen(function* () {
     const bus = yield* Bus.Service
-    return handlers.handleRaw("subscribe", Effect.fn("EventHttpApi.subscribe")(function* () {
-      return eventResponse(bus)
-    }))
+    return handlers.handleRaw(
+      "subscribe",
+      Effect.fn("EventHttpApi.subscribe")(function* () {
+        return eventResponse(bus)
+      }),
+    )
   }),
 )
