@@ -96,10 +96,7 @@ function createHttpApi(corsOptions?: CorsOptions) {
   }
 }
 
-function createHono(
-  opts: CorsOptions,
-  selection: ServerBackend.Selection = ServerBackend.force(select(), "hono"),
-) {
+function createHono(opts: CorsOptions, selection: ServerBackend.Selection = ServerBackend.force(select(), "hono")) {
   const backendAttributes = ServerBackend.attributes(selection)
   const app = new Hono()
     .onError(ErrorMiddleware)
