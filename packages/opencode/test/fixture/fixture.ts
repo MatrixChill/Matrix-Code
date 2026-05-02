@@ -155,7 +155,9 @@ export const provideInstance =
     Effect.contextWith((services: Context.Context<R>) =>
       Effect.promise<A>(async () => {
         const ctx = await runTestInstanceStore((store) => store.load({ directory }))
-        return Instance.restore(ctx, () => Effect.runPromiseWith(services)(self.pipe(Effect.provideService(InstanceRef, ctx))))
+        return Instance.restore(ctx, () =>
+          Effect.runPromiseWith(services)(self.pipe(Effect.provideService(InstanceRef, ctx))),
+        )
       }),
     )
 
@@ -170,7 +172,9 @@ export function provideTmpdirInstance<A, E, R>(
     yield* Effect.addFinalizer(() =>
       provided
         ? Effect.promise(() =>
-            runTestInstanceStore((store) => store.load({ directory: path }).pipe(Effect.flatMap((ctx) => store.dispose(ctx)))),
+            runTestInstanceStore((store) =>
+              store.load({ directory: path }).pipe(Effect.flatMap((ctx) => store.dispose(ctx))),
+            ),
           ).pipe(Effect.ignore)
         : Effect.void,
     )

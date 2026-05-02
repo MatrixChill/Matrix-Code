@@ -17,11 +17,7 @@ const ROOT = path.resolve(import.meta.dir, "..", "..")
 const it = testEffect(Layer.mergeAll(Truncate.defaultLayer, NodeFileSystem.layer))
 
 const configuredLayer = (cfg: Config.Info) =>
-  Layer.mergeAll(
-    Truncate.defaultLayer,
-    NodeFileSystem.layer,
-    TestConfig.layer({ get: () => Effect.succeed(cfg) }),
-  )
+  Layer.mergeAll(Truncate.defaultLayer, NodeFileSystem.layer, TestConfig.layer({ get: () => Effect.succeed(cfg) }))
 const configuredIt = (cfg: Config.Info) => testEffect(configuredLayer(cfg))
 
 describe("Truncate", () => {
