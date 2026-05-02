@@ -37,7 +37,14 @@ export const PrCommand = effectCmd({
 
     const prInfoResult = yield* Effect.promise(() =>
       Process.text(
-        ["gh", "pr", "view", `${prNumber}`, "--json", "headRepository,headRepositoryOwner,isCrossRepository,headRefName,body"],
+        [
+          "gh",
+          "pr",
+          "view",
+          `${prNumber}`,
+          "--json",
+          "headRepository,headRepositoryOwner,isCrossRepository,headRefName,body",
+        ],
         { nothrow: true },
       ),
     )
@@ -54,14 +61,15 @@ export const PrCommand = effectCmd({
 
         const remotes = (yield* git.run(["remote"], { cwd: worktree })).text().trim()
         if (!remotes.split("\n").includes(remoteName)) {
-          yield* git.run(["remote", "add", remoteName, `https://github.com/${forkOwner}/${forkName}.git`], { cwd: worktree })
+          yield* git.run(["remote", "add", remoteName, `https://github.com/${forkOwner}/${forkName}.git`], {
+            cwd: worktree,
+          })
           UI.println(`Added fork remote: ${remoteName}`)
         }
 
-        yield* git.run(
-          ["branch", `--set-upstream-to=${remoteName}/${prInfo.headRefName}`, localBranchName],
-          { cwd: worktree },
-        )
+        yield* git.run(["branch", `--set-upstream-to=${remoteName}/${prInfo.headRefName}`, localBranchName], {
+          cwd: worktree,
+        })
       }
 
       if (prInfo?.body) {
@@ -71,7 +79,9 @@ export const PrCommand = effectCmd({
           UI.println(`Found opencode session: ${sessionUrl}`)
           UI.println(`Importing session...`)
 
-          const importResult = yield* Effect.promise(() => Process.text(["opencode", "import", sessionUrl], { nothrow: true }))
+          const importResult = yield* Effect.promise(() =>
+            Process.text(["opencode", "import", sessionUrl], { nothrow: true }),
+          )
           if (importResult.code === 0) {
             const sessionIdMatch = importResult.text.trim().match(/Imported session: ([a-zA-Z0-9_-]+)/)
             if (sessionIdMatch) {
@@ -89,13 +99,14 @@ export const PrCommand = effectCmd({
     UI.println()
 
     const opencodeArgs = sessionId ? ["-s", sessionId] : []
-    const code = yield* Effect.promise(() =>
-      Process.spawn(["opencode", ...opencodeArgs], {
-        stdin: "inherit",
-        stdout: "inherit",
-        stderr: "inherit",
-        cwd: process.cwd(),
-      }).exited,
+    const code = yield* Effect.promise(
+      () =>
+        Process.spawn(["opencode", ...opencodeArgs], {
+          stdin: "inherit",
+          stdout: "inherit",
+          stderr: "inherit",
+          cwd: process.cwd(),
+        }).exited,
     )
     // Match legacy throw semantics — propagate as a defect so the top-level
     // index.ts catch handles it identically (exit 1, "Unexpected error" banner).
