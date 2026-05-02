@@ -45,8 +45,6 @@ export const effectCmd = <Args, A>(opts: {
       // yargs typing wraps Args in ArgumentsCamelCase<WithDoubleDash<...>>; cast at the boundary.
       const args = rawArgs as unknown as Args
       const directory = opts.directory?.(args) ?? process.cwd()
-      await AppRuntime.runPromise(
-        InstanceStore.Service.use((s) => s.provide({ directory }, opts.handler(args))),
-      )
+      await AppRuntime.runPromise(InstanceStore.Service.use((s) => s.provide({ directory }, opts.handler(args))))
     },
   })
