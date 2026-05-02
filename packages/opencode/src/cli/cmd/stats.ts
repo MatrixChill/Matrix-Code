@@ -75,7 +75,10 @@ export const StatsCommand = effectCmd({
   }),
 })
 
-const run = (args: { days?: number; tools?: number; models?: unknown; project?: string }, currentProject: Project.Info) =>
+const run = (
+  args: { days?: number; tools?: number; models?: unknown; project?: string },
+  currentProject: Project.Info,
+) =>
   Effect.promise(async () => {
     const stats = await aggregateSessionStats(args.days, args.project, currentProject)
 
