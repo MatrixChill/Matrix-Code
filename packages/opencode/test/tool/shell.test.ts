@@ -757,9 +757,7 @@ describe("tool.shell permissions", () => {
             )
             const extDirReq = requests.find((r) => r.permission === "external_directory")
             expect(extDirReq).toBeDefined()
-            expect(extDirReq!.patterns).toContain(
-              Filesystem.normalizePathPattern(path.join(process.env.WINDIR!, "*")),
-            )
+            expect(extDirReq!.patterns).toContain(Filesystem.normalizePathPattern(path.join(process.env.WINDIR!, "*")))
           },
         })
       }),
