@@ -10,9 +10,8 @@ export const Instance = {
     return InstanceStore.runtime.runPromise((store) => store.load(input))
   },
   async provide<R>(input: { directory: string; init?: Effect.Effect<void>; fn: () => R }): Promise<R> {
-    return context.provide(
-      await Instance.load({ directory: input.directory, init: input.init }),
-      async () => input.fn(),
+    return context.provide(await Instance.load({ directory: input.directory, init: input.init }), async () =>
+      input.fn(),
     )
   },
   get current() {
