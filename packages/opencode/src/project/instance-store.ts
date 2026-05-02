@@ -178,10 +178,7 @@ export const layer: Layer.Layer<Service, never, Project.Service> = Layer.effect(
       return yield* cachedDisposeAll
     })
 
-    const provide = <A, E, R, R2>(
-      input: LoadInput<R2>,
-      effect: Effect.Effect<A, E, R>,
-    ): Effect.Effect<A, E, R | R2> =>
+    const provide = <A, E, R, R2>(input: LoadInput<R2>, effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R | R2> =>
       load(input).pipe(Effect.flatMap((ctx) => effect.pipe(Effect.provideService(InstanceRef, ctx))))
 
     yield* Effect.addFinalizer(() => disposeAll().pipe(Effect.ignore))
