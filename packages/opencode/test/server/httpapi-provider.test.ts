@@ -90,7 +90,9 @@ function withProviderProject<A, E, R>(self: (dir: string) => Effect.Effect<A, E,
     )
     yield* writeProviderAuthPlugin(dir)
     yield* Effect.addFinalizer(() =>
-      Effect.promise(() => Instance.provide({ directory: dir, fn: () => InstanceStore.disposeInstance(Instance.current) })).pipe(Effect.ignore),
+      Effect.promise(() =>
+        Instance.provide({ directory: dir, fn: () => InstanceStore.disposeInstance(Instance.current) }),
+      ).pipe(Effect.ignore),
     )
 
     return yield* self(dir).pipe(provideInstance(dir))

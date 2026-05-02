@@ -137,7 +137,11 @@ describe("Worktree", () => {
             expect(props.name).toBe(info.name)
             expect(props.branch).toBe(info.branch)
 
-            yield* Effect.promise(() => InstanceStore.runtime.runPromise((s) => s.load({ directory: info.directory }).pipe(Effect.flatMap(s.dispose))))
+            yield* Effect.promise(() =>
+              InstanceStore.runtime.runPromise((s) =>
+                s.load({ directory: info.directory }).pipe(Effect.flatMap(s.dispose)),
+              ),
+            )
             yield* Effect.promise(() => Bun.sleep(100))
             yield* svc.remove({ directory: info.directory })
           }),
@@ -157,7 +161,11 @@ describe("Worktree", () => {
             expect(info.branch).toBe("opencode/test-workspace")
 
             yield* Effect.promise(() => ready)
-            yield* Effect.promise(() => InstanceStore.runtime.runPromise((s) => s.load({ directory: info.directory }).pipe(Effect.flatMap(s.dispose))))
+            yield* Effect.promise(() =>
+              InstanceStore.runtime.runPromise((s) =>
+                s.load({ directory: info.directory }).pipe(Effect.flatMap(s.dispose)),
+              ),
+            )
             yield* Effect.promise(() => Bun.sleep(100))
             yield* svc.remove({ directory: info.directory })
           }),
