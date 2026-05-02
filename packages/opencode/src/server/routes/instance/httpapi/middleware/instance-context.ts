@@ -23,10 +23,7 @@ function decode(input: string): string {
   }
 }
 
-function makeInstanceContext(
-  store: InstanceStore.Interface,
-  directory: string,
-): Effect.Effect<InstanceContext> {
+function makeInstanceContext(store: InstanceStore.Interface, directory: string): Effect.Effect<InstanceContext> {
   return store.load({
     directory: decode(directory),
     init: () => AppRuntime.runPromise(InstanceBootstrap),
