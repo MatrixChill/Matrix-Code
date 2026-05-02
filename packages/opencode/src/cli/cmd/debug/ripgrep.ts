@@ -25,7 +25,9 @@ const TreeCommand = effectCmd({
     if (!ctx) return
     const store = yield* InstanceStore.Service
     return yield* Effect.gen(function* () {
-      const tree = yield* Effect.orDie(Ripgrep.Service.use((svc) => svc.tree({ cwd: ctx.directory, limit: args.limit })))
+      const tree = yield* Effect.orDie(
+        Ripgrep.Service.use((svc) => svc.tree({ cwd: ctx.directory, limit: args.limit })),
+      )
       process.stdout.write(tree + EOL)
     }).pipe(Effect.ensuring(store.dispose(ctx)))
   }),
