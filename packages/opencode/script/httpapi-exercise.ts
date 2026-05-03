@@ -32,7 +32,9 @@ import type { Project } from "../src/project/project"
 import path from "path"
 
 const preserveExerciseGlobalRoot = !!process.env.OPENCODE_HTTPAPI_EXERCISE_GLOBAL
-const exerciseGlobalRoot = process.env.OPENCODE_HTTPAPI_EXERCISE_GLOBAL ?? path.join(process.env.TMPDIR ?? "/tmp", `opencode-httpapi-global-${process.pid}`)
+const exerciseGlobalRoot =
+  process.env.OPENCODE_HTTPAPI_EXERCISE_GLOBAL ??
+  path.join(process.env.TMPDIR ?? "/tmp", `opencode-httpapi-global-${process.pid}`)
 process.env.XDG_DATA_HOME = path.join(exerciseGlobalRoot, "data")
 process.env.XDG_CONFIG_HOME = path.join(exerciseGlobalRoot, "config")
 process.env.XDG_STATE_HOME = path.join(exerciseGlobalRoot, "state")
@@ -42,7 +44,9 @@ const exerciseConfigDirectory = path.join(exerciseGlobalRoot, "config", "opencod
 const exerciseDataDirectory = path.join(exerciseGlobalRoot, "data", "opencode")
 
 const preserveExerciseDatabase = !!process.env.OPENCODE_HTTPAPI_EXERCISE_DB
-const exerciseDatabasePath = process.env.OPENCODE_HTTPAPI_EXERCISE_DB ?? path.join(process.env.TMPDIR ?? "/tmp", `opencode-httpapi-exercise-${process.pid}.db`)
+const exerciseDatabasePath =
+  process.env.OPENCODE_HTTPAPI_EXERCISE_DB ??
+  path.join(process.env.TMPDIR ?? "/tmp", `opencode-httpapi-exercise-${process.pid}.db`)
 process.env.OPENCODE_DB = exerciseDatabasePath
 Flag.OPENCODE_DB = exerciseDatabasePath
 
@@ -167,21 +171,21 @@ const original = {
 }
 
 type Runtime = {
-  PublicApi: typeof import("../src/server/routes/instance/httpapi/public")["PublicApi"]
-  ExperimentalHttpApiServer: typeof import("../src/server/routes/instance/httpapi/server")["ExperimentalHttpApiServer"]
-  Server: typeof import("../src/server/server")["Server"]
-  AppLayer: typeof import("../src/effect/app-runtime")["AppLayer"]
-  InstanceRef: typeof import("../src/effect/instance-ref")["InstanceRef"]
-  Instance: typeof import("../src/project/instance")["Instance"]
-  InstanceStore: typeof import("../src/project/instance-store")["InstanceStore"]
-  Session: typeof import("../src/session/session")["Session"]
-  Todo: typeof import("../src/session/todo")["Todo"]
-  Worktree: typeof import("../src/worktree")["Worktree"]
-  Project: typeof import("../src/project/project")["Project"]
+  PublicApi: (typeof import("../src/server/routes/instance/httpapi/public"))["PublicApi"]
+  ExperimentalHttpApiServer: (typeof import("../src/server/routes/instance/httpapi/server"))["ExperimentalHttpApiServer"]
+  Server: (typeof import("../src/server/server"))["Server"]
+  AppLayer: (typeof import("../src/effect/app-runtime"))["AppLayer"]
+  InstanceRef: (typeof import("../src/effect/instance-ref"))["InstanceRef"]
+  Instance: (typeof import("../src/project/instance"))["Instance"]
+  InstanceStore: (typeof import("../src/project/instance-store"))["InstanceStore"]
+  Session: (typeof import("../src/session/session"))["Session"]
+  Todo: (typeof import("../src/session/todo"))["Todo"]
+  Worktree: (typeof import("../src/worktree"))["Worktree"]
+  Project: (typeof import("../src/project/project"))["Project"]
   Tui: typeof import("../src/server/routes/instance/tui")
-  disposeAllInstances: typeof import("../test/fixture/fixture")["disposeAllInstances"]
-  tmpdir: typeof import("../test/fixture/fixture")["tmpdir"]
-  resetDatabase: typeof import("../test/fixture/db")["resetDatabase"]
+  disposeAllInstances: (typeof import("../test/fixture/fixture"))["disposeAllInstances"]
+  tmpdir: (typeof import("../test/fixture/fixture"))["tmpdir"]
+  resetDatabase: (typeof import("../test/fixture/db"))["resetDatabase"]
 }
 
 let runtimePromise: Promise<Runtime> | undefined
@@ -276,7 +280,11 @@ class ScenarioBuilder<S = undefined> {
     )
   }
 
-  status(status = 200, inspect?: (ctx: SeededContext<S>, result: CallResult) => Effect.Effect<void>, compare: Comparison = "status") {
+  status(
+    status = 200,
+    inspect?: (ctx: SeededContext<S>, result: CallResult) => Effect.Effect<void>,
+    compare: Comparison = "status",
+  ) {
     return this.done(compare, (ctx, result) =>
       Effect.gen(function* () {
         if (result.status !== status) throw new Error(`expected ${status}, got ${result.status}: ${result.text}`)
@@ -287,19 +295,20 @@ class ScenarioBuilder<S = undefined> {
 
   /** Assert JSON status/content-type plus an optional synchronous body check. */
   json(status = 200, inspect?: (body: unknown, ctx: SeededContext<S>) => void, compare: Comparison = "json") {
-    return this.jsonEffect(
-      status,
-      inspect ? (body, ctx) => Effect.sync(() => inspect(body, ctx)) : undefined,
-      compare,
-    )
+    return this.jsonEffect(status, inspect ? (body, ctx) => Effect.sync(() => inspect(body, ctx)) : undefined, compare)
   }
 
   /** Assert JSON status/content-type plus optional Effect assertions, e.g. DB side effects. */
-  jsonEffect(status = 200, inspect?: (body: unknown, ctx: SeededContext<S>) => Effect.Effect<void>, compare: Comparison = "json") {
+  jsonEffect(
+    status = 200,
+    inspect?: (body: unknown, ctx: SeededContext<S>) => Effect.Effect<void>,
+    compare: Comparison = "json",
+  ) {
     return this.done(compare, (ctx, result) =>
       Effect.gen(function* () {
         if (result.status !== status) throw new Error(`expected ${status}, got ${result.status}: ${result.text}`)
-        if (!looksJson(result)) throw new Error(`expected JSON response, got ${result.contentType || "no content-type"}`)
+        if (!looksJson(result))
+          throw new Error(`expected JSON response, got ${result.contentType || "no content-type"}`)
         if (inspect) yield* inspect(result.body, ctx)
       }),
     )
@@ -321,7 +330,10 @@ class ScenarioBuilder<S = undefined> {
     return builder
   }
 
-  private done(compare: Comparison, expect: (ctx: SeededContext<S>, result: CallResult) => Effect.Effect<void>): ActiveScenario {
+  private done(
+    compare: Comparison,
+    expect: (ctx: SeededContext<S>, result: CallResult) => Effect.Effect<void>,
+  ): ActiveScenario {
     const state = this.state
     return {
       kind: "active",
@@ -357,52 +369,80 @@ const pending = (method: Method, path: string, name: string, reason: string): To
 })
 
 function route(template: string, params: Record<string, string>) {
-  return Object.entries(params).reduce((next, [key, value]) => next.replaceAll(`{${key}}`, value).replaceAll(`:${key}`, value), template)
+  return Object.entries(params).reduce(
+    (next, [key, value]) => next.replaceAll(`{${key}}`, value).replaceAll(`:${key}`, value),
+    template,
+  )
 }
 
 const scenarios: Scenario[] = [
-  http.get("/global/health", "global.health").global().json(200, (body) => {
-    object(body)
-    check(body.healthy === true, "server should report healthy")
-  }),
+  http
+    .get("/global/health", "global.health")
+    .global()
+    .json(200, (body) => {
+      object(body)
+      check(body.healthy === true, "server should report healthy")
+    }),
   http
     .get("/global/event", "global.event")
     .global()
     .stream()
-    .status(200, (_ctx, result) =>
-      Effect.sync(() => {
-        check(result.contentType.includes("text/event-stream"), "global event should be an SSE stream")
-        check(result.text.includes("server.connected"), "global event should emit initial connection event")
-      }),
-    "status"),
+    .status(
+      200,
+      (_ctx, result) =>
+        Effect.sync(() => {
+          check(result.contentType.includes("text/event-stream"), "global event should be an SSE stream")
+          check(result.text.includes("server.connected"), "global event should emit initial connection event")
+        }),
+      "status",
+    ),
   http.get("/global/config", "global.config.get").global().json(),
   http
     .patch("/global/config", "global.config.update")
     .global()
     .seeded(() =>
       Effect.promise(() =>
-        Bun.write(path.join(exerciseConfigDirectory, "opencode.jsonc"), JSON.stringify({ username: "httpapi-global" }, null, 2)),
+        Bun.write(
+          path.join(exerciseConfigDirectory, "opencode.jsonc"),
+          JSON.stringify({ username: "httpapi-global" }, null, 2),
+        ),
       ),
     )
     .at(() => ({ path: "/global/config", body: { username: "httpapi-global" } }))
-    .jsonEffect(200, (body) =>
-      Effect.gen(function* () {
-        object(body)
-        check(body.username === "httpapi-global", "global config update should return patched config")
-        const text = yield* Effect.promise(() => Bun.file(path.join(exerciseConfigDirectory, "opencode.jsonc")).text())
-        check(text.includes('"username": "httpapi-global"'), "global config update should write isolated config file")
-      }),
-    "status"),
-  http.post("/global/dispose", "global.dispose").global().mutating().json(200, (body) => {
-    check(body === true, "global dispose should return true")
-  }, "status"),
+    .jsonEffect(
+      200,
+      (body) =>
+        Effect.gen(function* () {
+          object(body)
+          check(body.username === "httpapi-global", "global config update should return patched config")
+          const text = yield* Effect.promise(() =>
+            Bun.file(path.join(exerciseConfigDirectory, "opencode.jsonc")).text(),
+          )
+          check(text.includes('"username": "httpapi-global"'), "global config update should write isolated config file")
+        }),
+      "status",
+    ),
+  http
+    .post("/global/dispose", "global.dispose")
+    .global()
+    .mutating()
+    .json(
+      200,
+      (body) => {
+        check(body === true, "global dispose should return true")
+      },
+      "status",
+    ),
   http.get("/path", "path.get").json(200, (body, ctx) => {
     object(body)
     check(body.directory === ctx.directory, "directory should resolve from x-opencode-directory")
     check(body.worktree === ctx.directory, "worktree should resolve from x-opencode-directory")
   }),
   http.get("/vcs", "vcs.get").json(),
-  http.get("/vcs/diff", "vcs.diff").at((ctx) => ({ path: "/vcs/diff?mode=git", headers: ctx.headers() })).json(200, array),
+  http
+    .get("/vcs/diff", "vcs.diff")
+    .at((ctx) => ({ path: "/vcs/diff?mode=git", headers: ctx.headers() }))
+    .json(200, array),
   http.get("/command", "command.list").json(200, array, "status"),
   http.get("/agent", "app.agents").json(200, array, "status"),
   http.get("/skill", "app.skills").json(200, array, "status"),
@@ -413,20 +453,28 @@ const scenarios: Scenario[] = [
     .patch("/config", "config.update")
     .mutating()
     .at((ctx) => ({ path: "/config", headers: ctx.headers(), body: { username: "httpapi-local" } }))
-    .json(200, (body) => {
-      object(body)
-      check(body.username === "httpapi-local", "local config update should return patched config")
-    }, "status"),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(body.username === "httpapi-local", "local config update should return patched config")
+      },
+      "status",
+    ),
   http
     .patch("/config", "config.update.invalid")
     .at((ctx) => ({ path: "/config", headers: ctx.headers(), body: { username: 1 } }))
     .status(400),
   http.get("/config/providers", "config.providers").json(),
   http.get("/project", "project.list").json(200, array, "status"),
-  http.get("/project/current", "project.current").json(200, (body, ctx) => {
-    object(body)
-    check(body.worktree === ctx.directory, "current project should resolve from scenario directory")
-  }, "status"),
+  http.get("/project/current", "project.current").json(
+    200,
+    (body, ctx) => {
+      object(body)
+      check(body.worktree === ctx.directory, "current project should resolve from scenario directory")
+    },
+    "status",
+  ),
   http
     .patch("/project/{projectID}", "project.update")
     .mutating()
@@ -436,55 +484,93 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { name: "HTTP API Project", commands: { start: "bun --version" } },
     }))
-    .json(200, (body) => {
-      object(body)
-      check(body.name === "HTTP API Project", "project update should return patched name")
-      check(isRecord(body.commands) && body.commands.start === "bun --version", "project update should return patched command")
-    }, "status"),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(body.name === "HTTP API Project", "project update should return patched name")
+        check(
+          isRecord(body.commands) && body.commands.start === "bun --version",
+          "project update should return patched command",
+        )
+      },
+      "status",
+    ),
   http
     .post("/project/git/init", "project.initGit")
     .mutating()
     .inProject({ git: false })
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.worktree === ctx.directory, "git init should return current project")
-      check(body.vcs === "git", "git init should mark the project as git-backed")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.worktree === ctx.directory, "git init should return current project")
+        check(body.vcs === "git", "git init should mark the project as git-backed")
+      },
+      "status",
+    ),
   http.get("/provider", "provider.list").json(),
   http.get("/provider/auth", "provider.auth").json(),
   http
     .post("/provider/{providerID}/oauth/authorize", "provider.oauth.authorize")
-    .at((ctx) => ({ path: route("/provider/{providerID}/oauth/authorize", { providerID: "httpapi" }), headers: ctx.headers(), body: { method: "bad" } }))
+    .at((ctx) => ({
+      path: route("/provider/{providerID}/oauth/authorize", { providerID: "httpapi" }),
+      headers: ctx.headers(),
+      body: { method: "bad" },
+    }))
     .status(400),
   http
     .post("/provider/{providerID}/oauth/callback", "provider.oauth.callback")
-    .at((ctx) => ({ path: route("/provider/{providerID}/oauth/callback", { providerID: "httpapi" }), headers: ctx.headers(), body: { method: "bad" } }))
+    .at((ctx) => ({
+      path: route("/provider/{providerID}/oauth/callback", { providerID: "httpapi" }),
+      headers: ctx.headers(),
+      body: { method: "bad" },
+    }))
     .status(400),
   http.get("/permission", "permission.list").json(200, array),
   http
     .post("/permission/{requestID}/reply", "permission.reply.invalid")
-    .at((ctx) => ({ path: route("/permission/{requestID}/reply", { requestID: "per_httpapi" }), headers: ctx.headers(), body: { reply: "bad" } }))
+    .at((ctx) => ({
+      path: route("/permission/{requestID}/reply", { requestID: "per_httpapi" }),
+      headers: ctx.headers(),
+      body: { reply: "bad" },
+    }))
     .status(400),
   http
     .post("/permission/{requestID}/reply", "permission.reply")
-    .at((ctx) => ({ path: route("/permission/{requestID}/reply", { requestID: "per_httpapi" }), headers: ctx.headers(), body: { reply: "once" } }))
+    .at((ctx) => ({
+      path: route("/permission/{requestID}/reply", { requestID: "per_httpapi" }),
+      headers: ctx.headers(),
+      body: { reply: "once" },
+    }))
     .json(200, (body) => {
       check(body === true, "permission reply should return true even when request is no longer pending")
     }),
   http.get("/question", "question.list").json(200, array),
   http
     .post("/question/{requestID}/reply", "question.reply.invalid")
-    .at((ctx) => ({ path: route("/question/{requestID}/reply", { requestID: "que_httpapi_reply" }), headers: ctx.headers(), body: { answers: "Yes" } }))
+    .at((ctx) => ({
+      path: route("/question/{requestID}/reply", { requestID: "que_httpapi_reply" }),
+      headers: ctx.headers(),
+      body: { answers: "Yes" },
+    }))
     .status(400),
   http
     .post("/question/{requestID}/reply", "question.reply")
-    .at((ctx) => ({ path: route("/question/{requestID}/reply", { requestID: "que_httpapi_reply" }), headers: ctx.headers(), body: { answers: [["Yes"]] } }))
+    .at((ctx) => ({
+      path: route("/question/{requestID}/reply", { requestID: "que_httpapi_reply" }),
+      headers: ctx.headers(),
+      body: { answers: [["Yes"]] },
+    }))
     .json(200, (body) => {
       check(body === true, "question reply should return true even when request is no longer pending")
     }),
   http
     .post("/question/{requestID}/reject", "question.reject")
-    .at((ctx) => ({ path: route("/question/{requestID}/reject", { requestID: "que_httpapi_reject" }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/question/{requestID}/reject", { requestID: "que_httpapi_reject" }),
+      headers: ctx.headers(),
+    }))
     .json(200, (body) => {
       check(body === true, "question reject should return true even when request is no longer pending")
     }),
@@ -517,7 +603,10 @@ const scenarios: Scenario[] = [
   http
     .get("/find/file", "find.files")
     .seeded((ctx) => ctx.file("hello.txt", "hello\n"))
-    .at((ctx) => ({ path: `/find/file?${new URLSearchParams({ query: "hello", dirs: "false" })}`, headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: `/find/file?${new URLSearchParams({ query: "hello", dirs: "false" })}`,
+      headers: ctx.headers(),
+    }))
     .json(200, array),
   http
     .get("/find/symbol", "find.symbols")
@@ -527,12 +616,15 @@ const scenarios: Scenario[] = [
   http
     .get("/event", "event.stream")
     .stream()
-    .status(200, (_ctx, result) =>
-      Effect.sync(() => {
-        check(result.contentType.includes("text/event-stream"), "event should be an SSE stream")
-        check(result.text.includes("server.connected"), "event should emit initial connection event")
-      }),
-    "status"),
+    .status(
+      200,
+      (_ctx, result) =>
+        Effect.sync(() => {
+          check(result.contentType.includes("text/event-stream"), "event should be an SSE stream")
+          check(result.text.includes("server.connected"), "event should emit initial connection event")
+        }),
+      "status",
+    ),
   http.get("/mcp", "mcp.status").json(),
   http
     .post("/mcp", "mcp.add")
@@ -542,22 +634,34 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { name: "httpapi-disabled", config: { type: "local", command: ["bun", "--version"], enabled: false } },
     }))
-    .json(200, (body) => {
-      object(body)
-      object(body["httpapi-disabled"])
-      check(body["httpapi-disabled"].status === "disabled", "disabled MCP server should be added without spawning")
-    }, "status"),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        object(body["httpapi-disabled"])
+        check(body["httpapi-disabled"].status === "disabled", "disabled MCP server should be added without spawning")
+      },
+      "status",
+    ),
   http
     .post("/mcp", "mcp.add.invalid")
-    .at((ctx) => ({ path: "/mcp", headers: ctx.headers(), body: { name: "httpapi-invalid", config: { type: "invalid" } } }))
+    .at((ctx) => ({
+      path: "/mcp",
+      headers: ctx.headers(),
+      body: { name: "httpapi-invalid", config: { type: "invalid" } },
+    }))
     .status(400),
   http
     .post("/mcp/{name}/auth", "mcp.auth.start")
     .at((ctx) => ({ path: route("/mcp/{name}/auth", { name: "httpapi-missing" }), headers: ctx.headers() }))
-    .json(400, (body) => {
-      object(body)
-      check(typeof body.error === "string", "unsupported MCP OAuth response should include error")
-    }, "status"),
+    .json(
+      400,
+      (body) => {
+        object(body)
+        check(typeof body.error === "string", "unsupported MCP OAuth response should include error")
+      },
+      "status",
+    ),
   http
     .delete("/mcp/{name}/auth", "mcp.auth.remove")
     .mutating()
@@ -568,14 +672,25 @@ const scenarios: Scenario[] = [
     }),
   http
     .post("/mcp/{name}/auth/authenticate", "mcp.auth.authenticate")
-    .at((ctx) => ({ path: route("/mcp/{name}/auth/authenticate", { name: "httpapi-missing" }), headers: ctx.headers() }))
-    .json(400, (body) => {
-      object(body)
-      check(typeof body.error === "string", "unsupported MCP OAuth authenticate response should include error")
-    }, "status"),
+    .at((ctx) => ({
+      path: route("/mcp/{name}/auth/authenticate", { name: "httpapi-missing" }),
+      headers: ctx.headers(),
+    }))
+    .json(
+      400,
+      (body) => {
+        object(body)
+        check(typeof body.error === "string", "unsupported MCP OAuth authenticate response should include error")
+      },
+      "status",
+    ),
   http
     .post("/mcp/{name}/auth/callback", "mcp.auth.callback")
-    .at((ctx) => ({ path: route("/mcp/{name}/auth/callback", { name: "httpapi-missing" }), headers: ctx.headers(), body: { code: 1 } }))
+    .at((ctx) => ({
+      path: route("/mcp/{name}/auth/callback", { name: "httpapi-missing" }),
+      headers: ctx.headers(),
+      body: { code: 1 },
+    }))
     .status(400),
   http
     .post("/mcp/{name}/connect", "mcp.connect")
@@ -597,12 +712,16 @@ const scenarios: Scenario[] = [
     .post("/pty", "pty.create")
     .mutating()
     .at((ctx) => ({ path: "/pty", headers: ctx.headers(), body: controlledPtyInput("HTTP API PTY") }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.title === "HTTP API PTY", "PTY create should return requested title")
-      check(body.command === "/bin/sh", "PTY create should use controlled shell command")
-      check(body.cwd === ctx.directory, "PTY create should default cwd to scenario directory")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.title === "HTTP API PTY", "PTY create should return requested title")
+        check(body.command === "/bin/sh", "PTY create should use controlled shell command")
+        check(body.cwd === ctx.directory, "PTY create should default cwd to scenario directory")
+      },
+      "status",
+    ),
   http
     .post("/pty", "pty.create.invalid")
     .at((ctx) => ({ path: "/pty", headers: ctx.headers(), body: { command: 1 } }))
@@ -635,7 +754,11 @@ const scenarios: Scenario[] = [
   http.get("/experimental/console/orgs", "experimental.console.listOrgs").json(),
   http
     .post("/experimental/console/switch", "experimental.console.switchOrg")
-    .at((ctx) => ({ path: "/experimental/console/switch", headers: ctx.headers(), body: { accountID: "httpapi-account", orgID: "httpapi-org" } }))
+    .at((ctx) => ({
+      path: "/experimental/console/switch",
+      headers: ctx.headers(),
+      body: { accountID: "httpapi-account", orgID: "httpapi-org" },
+    }))
     .status(400, undefined, "none"),
   http.get("/experimental/workspace/adapter", "experimental.workspace.adapter.list").json(200, array),
   http.get("/experimental/workspace", "experimental.workspace.list").json(200, array),
@@ -647,15 +770,25 @@ const scenarios: Scenario[] = [
   http
     .delete("/experimental/workspace/{id}", "experimental.workspace.remove")
     .mutating()
-    .at((ctx) => ({ path: route("/experimental/workspace/{id}", { id: "wrk_httpapi_missing" }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/experimental/workspace/{id}", { id: "wrk_httpapi_missing" }),
+      headers: ctx.headers(),
+    }))
     .status(200),
   http
     .post("/experimental/workspace/{id}/session-restore", "experimental.workspace.sessionRestore")
-    .at((ctx) => ({ path: route("/experimental/workspace/{id}/session-restore", { id: "wrk_httpapi_missing" }), headers: ctx.headers(), body: {} }))
+    .at((ctx) => ({
+      path: route("/experimental/workspace/{id}/session-restore", { id: "wrk_httpapi_missing" }),
+      headers: ctx.headers(),
+      body: {},
+    }))
     .status(400),
   http
     .get("/experimental/tool", "tool.list")
-    .at((ctx) => ({ path: `/experimental/tool?${new URLSearchParams({ provider: "opencode", model: "test" })}`, headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: `/experimental/tool?${new URLSearchParams({ provider: "opencode", model: "test" })}`,
+      headers: ctx.headers(),
+    }))
     .json(200, array, "status"),
   http.get("/experimental/tool/ids", "tool.ids").json(200, array),
   http.get("/experimental/worktree", "worktree.list").json(200, array),
@@ -663,13 +796,16 @@ const scenarios: Scenario[] = [
     .post("/experimental/worktree", "worktree.create")
     .mutating()
     .at((ctx) => ({ path: "/experimental/worktree", headers: ctx.headers(), body: { name: "api-dsl" } }))
-    .jsonEffect(200, (body, ctx) =>
-      Effect.gen(function* () {
-        object(body)
-        check(typeof body.directory === "string", "created worktree should include directory")
-        yield* ctx.worktreeRemove(body.directory)
-      }),
-    "status"),
+    .jsonEffect(
+      200,
+      (body, ctx) =>
+        Effect.gen(function* () {
+          object(body)
+          check(typeof body.directory === "string", "created worktree should include directory")
+          yield* ctx.worktreeRemove(body.directory)
+        }),
+      "status",
+    ),
   http
     .post("/experimental/worktree", "worktree.create.invalid")
     .at((ctx) => ({ path: "/experimental/worktree", headers: ctx.headers(), body: { name: 1 } }))
@@ -686,7 +822,11 @@ const scenarios: Scenario[] = [
     .post("/experimental/worktree/reset", "worktree.reset")
     .mutating()
     .seeded((ctx) => ctx.worktree({ name: "api-reset" }))
-    .at((ctx) => ({ path: "/experimental/worktree/reset", headers: ctx.headers(), body: { directory: ctx.state.directory } }))
+    .at((ctx) => ({
+      path: "/experimental/worktree/reset",
+      headers: ctx.headers(),
+      body: { directory: ctx.state.directory },
+    }))
     .jsonEffect(200, (body, ctx) =>
       Effect.gen(function* () {
         check(body === true, "worktree reset should return true")
@@ -695,17 +835,27 @@ const scenarios: Scenario[] = [
     ),
   http.get("/experimental/session", "experimental.session.list").json(200, array),
   http.get("/experimental/resource", "experimental.resource.list").json(),
-  http.post("/sync/history", "sync.history.list").at((ctx) => ({ path: "/sync/history", headers: ctx.headers(), body: {} })).json(200, array),
+  http
+    .post("/sync/history", "sync.history.list")
+    .at((ctx) => ({ path: "/sync/history", headers: ctx.headers(), body: {} }))
+    .json(200, array),
   http
     .post("/sync/replay", "sync.replay")
     .at((ctx) => ({ path: "/sync/replay", headers: ctx.headers(), body: { directory: ctx.directory, events: [] } }))
     .status(400),
-  http.post("/sync/start", "sync.start").mutating().preserveDatabase().json(200, (body) => {
-    check(body === true, "sync start should return true when no workspace sessions exist")
-  }),
-  http.post("/instance/dispose", "instance.dispose").mutating().json(200, (body) => {
-    check(body === true, "instance dispose should return true")
-  }),
+  http
+    .post("/sync/start", "sync.start")
+    .mutating()
+    .preserveDatabase()
+    .json(200, (body) => {
+      check(body === true, "sync start should return true when no workspace sessions exist")
+    }),
+  http
+    .post("/instance/dispose", "instance.dispose")
+    .mutating()
+    .json(200, (body) => {
+      check(body === true, "instance dispose should return true")
+    }),
   http
     .post("/log", "app.log")
     .global()
@@ -730,7 +880,10 @@ const scenarios: Scenario[] = [
     .global()
     .seeded(() =>
       Effect.promise(() =>
-        Bun.write(path.join(exerciseDataDirectory, "auth.json"), JSON.stringify({ test: { type: "api", key: "remove-me" } })),
+        Bun.write(
+          path.join(exerciseDataDirectory, "auth.json"),
+          JSON.stringify({ test: { type: "api", key: "remove-me" } }),
+        ),
       ),
     )
     .at(() => ({ path: route("/auth/{providerID}", { providerID: "test" }) }))
@@ -748,7 +901,10 @@ const scenarios: Scenario[] = [
     .at((ctx) => ({ path: "/session?roots=true", headers: ctx.headers() }))
     .json(200, (body, ctx) => {
       array(body)
-      check(body.some((item) => isRecord(item) && item.id === ctx.state.id && item.title === "List me"), "seeded session should be listed")
+      check(
+        body.some((item) => isRecord(item) && item.id === ctx.state.id && item.title === "List me"),
+        "seeded session should be listed",
+      )
     }),
   http
     .get("/session/status", "session.status")
@@ -758,11 +914,15 @@ const scenarios: Scenario[] = [
     .post("/session", "session.create")
     .mutating()
     .at((ctx) => ({ path: "/session", headers: ctx.headers(), body: { title: "Created session" } }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.title === "Created session", "created session should use requested title")
-      check(body.directory === ctx.directory, "created session should use scenario directory")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.title === "Created session", "created session should use requested title")
+        check(body.directory === ctx.directory, "created session should use scenario directory")
+      },
+      "status",
+    ),
   http
     .get("/session/{sessionID}", "session.get")
     .seeded((ctx) => ctx.session({ title: "Get me" }))
@@ -774,21 +934,36 @@ const scenarios: Scenario[] = [
     }),
   http
     .get("/session/{sessionID}", "session.get.missing")
-    .at((ctx) => ({ path: route("/session/{sessionID}", { sessionID: "ses_httpapi_missing" }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/session/{sessionID}", { sessionID: "ses_httpapi_missing" }),
+      headers: ctx.headers(),
+    }))
     .status(404),
   http
     .patch("/session/{sessionID}", "session.update")
     .mutating()
     .seeded((ctx) => ctx.session({ title: "Before rename" }))
-    .at((ctx) => ({ path: route("/session/{sessionID}", { sessionID: ctx.state.id }), headers: ctx.headers(), body: { title: "After rename" } }))
-    .json(200, (body) => {
-      object(body)
-      check(body.title === "After rename", "updated session should use new title")
-    }, "status"),
+    .at((ctx) => ({
+      path: route("/session/{sessionID}", { sessionID: ctx.state.id }),
+      headers: ctx.headers(),
+      body: { title: "After rename" },
+    }))
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(body.title === "After rename", "updated session should use new title")
+      },
+      "status",
+    ),
   http
     .patch("/session/{sessionID}", "session.update.invalid")
     .mutating()
-    .at((ctx) => ({ path: route("/session/{sessionID}", { sessionID: "ses_httpapi_missing" }), headers: ctx.headers(), body: { title: 1 } }))
+    .at((ctx) => ({
+      path: route("/session/{sessionID}", { sessionID: "ses_httpapi_missing" }),
+      headers: ctx.headers(),
+      body: { title: 1 },
+    }))
     .status(400),
   http
     .delete("/session/{sessionID}", "session.delete")
@@ -810,10 +985,16 @@ const scenarios: Scenario[] = [
         return { parent, child }
       }),
     )
-    .at((ctx) => ({ path: route("/session/{sessionID}/children", { sessionID: ctx.state.parent.id }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/session/{sessionID}/children", { sessionID: ctx.state.parent.id }),
+      headers: ctx.headers(),
+    }))
     .json(200, (body, ctx) => {
       array(body)
-      check(body.some((item) => isRecord(item) && item.id === ctx.state.child.id && item.parentID === ctx.state.parent.id), "children should include seeded child")
+      check(
+        body.some((item) => isRecord(item) && item.id === ctx.state.child.id && item.parentID === ctx.state.parent.id),
+        "children should include seeded child",
+      )
     }),
   http
     .get("/session/{sessionID}/todo", "session.todo")
@@ -825,7 +1006,10 @@ const scenarios: Scenario[] = [
         return { session, todos }
       }),
     )
-    .at((ctx) => ({ path: route("/session/{sessionID}/todo", { sessionID: ctx.state.session.id }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/session/{sessionID}/todo", { sessionID: ctx.state.session.id }),
+      headers: ctx.headers(),
+    }))
     .json(200, (body, ctx) => {
       check(stable(body) === stable(ctx.state.todos), "todos should match seeded state")
     }),
@@ -861,7 +1045,10 @@ const scenarios: Scenario[] = [
     .json(200, (body, ctx) => {
       object(body)
       check(isRecord(body.info) && body.info.id === ctx.state.message.info.id, "should return requested message")
-      check(Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.id === ctx.state.message.part.id), "message should include seeded part")
+      check(
+        Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.id === ctx.state.message.part.id),
+        "message should include seeded part",
+      )
     }),
   http
     .patch("/session/{sessionID}/message/{messageID}/part/{partID}", "part.update")
@@ -882,10 +1069,14 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { ...ctx.state.message.part, text: "after" },
     }))
-    .json(200, (body) => {
-      object(body)
-      check(body.type === "text" && body.text === "after", "updated part should be returned")
-    }, "status"),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(body.type === "text" && body.text === "after", "updated part should be returned")
+      },
+      "status",
+    ),
   http
     .delete("/session/{sessionID}/message/{messageID}/part/{partID}", "part.delete")
     .mutating()
@@ -938,11 +1129,19 @@ const scenarios: Scenario[] = [
     .post("/session/{sessionID}/fork", "session.fork")
     .mutating()
     .seeded((ctx) => ctx.session({ title: "Fork source" }))
-    .at((ctx) => ({ path: route("/session/{sessionID}/fork", { sessionID: ctx.state.id }), headers: ctx.headers(), body: {} }))
-    .json(200, (body) => {
-      object(body)
-      check(typeof body.id === "string", "fork should return a session")
-    }, "status"),
+    .at((ctx) => ({
+      path: route("/session/{sessionID}/fork", { sessionID: ctx.state.id }),
+      headers: ctx.headers(),
+      body: {},
+    }))
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(typeof body.id === "string", "fork should return a session")
+      },
+      "status",
+    ),
   http
     .post("/session/{sessionID}/abort", "session.abort")
     .mutating()
@@ -953,7 +1152,10 @@ const scenarios: Scenario[] = [
     }),
   http
     .post("/session/{sessionID}/abort", "session.abort.missing")
-    .at((ctx) => ({ path: route("/session/{sessionID}/abort", { sessionID: "ses_httpapi_missing" }), headers: ctx.headers() }))
+    .at((ctx) => ({
+      path: route("/session/{sessionID}/abort", { sessionID: "ses_httpapi_missing" }),
+      headers: ctx.headers(),
+    }))
     .json(200, (body) => {
       check(body === true, "missing session abort should remain a no-op success")
     }),
@@ -1002,14 +1204,20 @@ const scenarios: Scenario[] = [
         parts: [{ type: "text", text: "hello llm" }],
       },
     }))
-    .jsonEffect(200, (body, ctx) =>
-      Effect.gen(function* () {
-        object(body)
-        check(isRecord(body.info) && body.info.role === "assistant", "prompt should return assistant message")
-        check(Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.text === "fake assistant"), "assistant message should use fake LLM text")
-        yield* ctx.llmWait(1)
-      }),
-    "status"),
+    .jsonEffect(
+      200,
+      (body, ctx) =>
+        Effect.gen(function* () {
+          object(body)
+          check(isRecord(body.info) && body.info.role === "assistant", "prompt should return assistant message")
+          check(
+            Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.text === "fake assistant"),
+            "assistant message should use fake LLM text",
+          )
+          yield* ctx.llmWait(1)
+        }),
+      "status",
+    ),
   http
     .post("/session/{sessionID}/prompt_async", "session.prompt_async")
     .preserveDatabase()
@@ -1053,13 +1261,16 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { command: "init", arguments: "", model: "test/test-model" },
     }))
-    .jsonEffect(200, (body, ctx) =>
-      Effect.gen(function* () {
-        object(body)
-        check(isRecord(body.info) && body.info.role === "assistant", "command should return assistant message")
-        yield* ctx.llmWait(1)
-      }),
-    "status"),
+    .jsonEffect(
+      200,
+      (body, ctx) =>
+        Effect.gen(function* () {
+          object(body)
+          check(isRecord(body.info) && body.info.role === "assistant", "command should return assistant message")
+          yield* ctx.llmWait(1)
+        }),
+      "status",
+    ),
   http
     .post("/session/{sessionID}/shell", "session.shell")
     .preserveDatabase()
@@ -1070,11 +1281,18 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { agent: "build", model: { providerID: "test", modelID: "test-model" }, command: "printf shell-ok" },
     }))
-    .json(200, (body) => {
-      object(body)
-      check(isRecord(body.info) && body.info.role === "assistant", "shell should return assistant message")
-      check(Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.type === "tool"), "shell should return a tool part")
-    }, "status"),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(isRecord(body.info) && body.info.role === "assistant", "shell should return assistant message")
+        check(
+          Array.isArray(body.parts) && body.parts.some((part) => isRecord(part) && part.type === "tool"),
+          "shell should return a tool part",
+        )
+      },
+      "status",
+    ),
   http
     .post("/session/{sessionID}/summarize", "session.summarize")
     .preserveDatabase()
@@ -1122,17 +1340,20 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { providerID: "test", modelID: "test-model", auto: false },
     }))
-    .jsonEffect(200, (body, ctx) =>
-      Effect.gen(function* () {
-        check(body === true, "summarize should return true")
-        const messages = yield* ctx.messages(ctx.state.id)
-        check(
-          messages.some((message) => message.info.role === "assistant" && message.info.summary === true),
-          "summarize should create a summary assistant message",
-        )
-        yield* ctx.llmWait(1)
-      }),
-    "status"),
+    .jsonEffect(
+      200,
+      (body, ctx) =>
+        Effect.gen(function* () {
+          check(body === true, "summarize should return true")
+          const messages = yield* ctx.messages(ctx.state.id)
+          check(
+            messages.some((message) => message.info.role === "assistant" && message.info.summary === true),
+            "summarize should create a summary assistant message",
+          )
+          yield* ctx.llmWait(1)
+        }),
+      "status",
+    ),
   http
     .post("/session/{sessionID}/revert", "session.revert")
     .mutating()
@@ -1148,25 +1369,42 @@ const scenarios: Scenario[] = [
       headers: ctx.headers(),
       body: { messageID: ctx.state.message.info.id },
     }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.id === ctx.state.session.id, "revert should return the session")
-      check(isRecord(body.revert) && body.revert.messageID === ctx.state.message.info.id, "revert should record reverted message")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.id === ctx.state.session.id, "revert should return the session")
+        check(
+          isRecord(body.revert) && body.revert.messageID === ctx.state.message.info.id,
+          "revert should record reverted message",
+        )
+      },
+      "status",
+    ),
   http
     .post("/session/{sessionID}/unrevert", "session.unrevert")
     .mutating()
     .seeded((ctx) => ctx.session({ title: "Unrevert session" }))
-    .at((ctx) => ({ path: route("/session/{sessionID}/unrevert", { sessionID: ctx.state.id }), headers: ctx.headers() }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.id === ctx.state.id, "unrevert should return the session")
-    }, "status"),
+    .at((ctx) => ({
+      path: route("/session/{sessionID}/unrevert", { sessionID: ctx.state.id }),
+      headers: ctx.headers(),
+    }))
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.id === ctx.state.id, "unrevert should return the session")
+      },
+      "status",
+    ),
   http
     .post("/session/{sessionID}/permissions/{permissionID}", "permission.respond")
     .seeded((ctx) => ctx.session({ title: "Deprecated permission session" }))
     .at((ctx) => ({
-      path: route("/session/{sessionID}/permissions/{permissionID}", { sessionID: ctx.state.id, permissionID: "per_httpapi_deprecated" }),
+      path: route("/session/{sessionID}/permissions/{permissionID}", {
+        sessionID: ctx.state.id,
+        permissionID: "per_httpapi_deprecated",
+      }),
       headers: ctx.headers(),
       body: { response: "once" },
     }))
@@ -1178,19 +1416,27 @@ const scenarios: Scenario[] = [
     .mutating()
     .seeded((ctx) => ctx.session({ title: "Share session" }))
     .at((ctx) => ({ path: route("/session/{sessionID}/share", { sessionID: ctx.state.id }), headers: ctx.headers() }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.id === ctx.state.id, "share should return the session")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.id === ctx.state.id, "share should return the session")
+      },
+      "status",
+    ),
   http
     .delete("/session/{sessionID}/share", "session.unshare")
     .mutating()
     .seeded((ctx) => ctx.session({ title: "Unshare session" }))
     .at((ctx) => ({ path: route("/session/{sessionID}/share", { sessionID: ctx.state.id }), headers: ctx.headers() }))
-    .json(200, (body, ctx) => {
-      object(body)
-      check(body.id === ctx.state.id, "unshare should return the session")
-    }, "status"),
+    .json(
+      200,
+      (body, ctx) => {
+        object(body)
+        check(body.id === ctx.state.id, "unshare should return the session")
+      },
+      "status",
+    ),
   http
     .post("/tui/append-prompt", "tui.appendPrompt")
     .at((ctx) => ({ path: "/tui/append-prompt", headers: ctx.headers(), body: { text: "hello" } }))
@@ -1238,13 +1484,21 @@ const scenarios: Scenario[] = [
     .get("/tui/control/next", "tui.control.next")
     .mutating()
     .seeded((ctx) => ctx.tuiRequest({ path: "/tui/exercise", body: { text: "queued" } }))
-    .json(200, (body) => {
-      object(body)
-      check(body.path === "/tui/exercise", "control next should return queued path")
-      object(body.body)
-      check(body.body.text === "queued", "control next should return queued body")
-    }, "status"),
-  http.post("/global/upgrade", "global.upgrade").global().at(() => ({ path: "/global/upgrade", body: { target: 1 } })).status(400),
+    .json(
+      200,
+      (body) => {
+        object(body)
+        check(body.path === "/tui/exercise", "control next should return queued path")
+        object(body.body)
+        check(body.body.text === "queued", "control next should return queued body")
+      },
+      "status",
+    ),
+  http
+    .post("/global/upgrade", "global.upgrade")
+    .global()
+    .at(() => ({ path: "/global/upgrade", body: { target: 1 } }))
+    .status(400),
 ]
 
 const main = Effect.gen(function* () {
@@ -1259,12 +1513,18 @@ const main = Effect.gen(function* () {
 
   printHeader(options, effectRoutes, honoRoutes, selected, missing, extra)
 
-  const results = options.mode === "coverage" ? selected.map(coverageResult) : yield* Effect.forEach(selected, runScenario(options), { concurrency: 1 })
+  const results =
+    options.mode === "coverage"
+      ? selected.map(coverageResult)
+      : yield* Effect.forEach(selected, runScenario(options), { concurrency: 1 })
   printResults(results, missing, extra)
 
-  if (results.some((result) => result.status === "fail")) return yield* Effect.fail(new Error("one or more scenarios failed"))
-  if (options.failOnSkip && results.some((result) => result.status === "skip")) return yield* Effect.fail(new Error("one or more scenarios are skipped"))
-  if (options.failOnMissing && missing.length > 0) return yield* Effect.fail(new Error("one or more routes have no scenario"))
+  if (results.some((result) => result.status === "fail"))
+    return yield* Effect.fail(new Error("one or more scenarios failed"))
+  if (options.failOnSkip && results.some((result) => result.status === "skip"))
+    return yield* Effect.fail(new Error("one or more scenarios are skipped"))
+  if (options.failOnMissing && missing.length > 0)
+    return yield* Effect.fail(new Error("one or more routes have no scenario"))
 })
 
 function runScenario(options: Options) {
@@ -1322,102 +1582,107 @@ function withContext<A, E>(scenario: ActiveScenario, use: (ctx: SeededContext<un
     }),
     (ctx) => Effect.promise(async () => void (await ctx.dir?.[Symbol.asyncDispose]())).pipe(Effect.ignore),
   ).pipe(
-    Effect.flatMap((context) => Effect.gen(function* () {
-      const modules = yield* Effect.promise(() => runtime())
-      const path = context.dir?.path
-      const instance = path
-        ? yield* modules.InstanceStore.Service.use((store) => store.load({ directory: path })).pipe(
-            Effect.provide(modules.AppLayer),
-            Effect.catchCause((cause) =>
-              Effect.sleep("100 millis").pipe(
-                Effect.andThen(
-                  modules.InstanceStore.Service.use((store) => store.load({ directory: path })).pipe(
-                    Effect.provide(modules.AppLayer),
+    Effect.flatMap((context) =>
+      Effect.gen(function* () {
+        const modules = yield* Effect.promise(() => runtime())
+        const path = context.dir?.path
+        const instance = path
+          ? yield* modules.InstanceStore.Service.use((store) => store.load({ directory: path })).pipe(
+              Effect.provide(modules.AppLayer),
+              Effect.catchCause((cause) =>
+                Effect.sleep("100 millis").pipe(
+                  Effect.andThen(
+                    modules.InstanceStore.Service.use((store) => store.load({ directory: path })).pipe(
+                      Effect.provide(modules.AppLayer),
+                    ),
                   ),
+                  Effect.catchCause(() => Effect.failCause(cause)),
                 ),
-                Effect.catchCause(() => Effect.failCause(cause)),
-              ),
-            ),
-          )
-        : undefined
-      const run = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-        effect.pipe(Effect.provideService(modules.InstanceRef, instance), Effect.provide(modules.AppLayer))
-      const directory = () => {
-        if (!context.dir?.path) throw new Error("scenario needs a project directory")
-        return context.dir.path
-      }
-      const llm = () => {
-        if (!context.llm) throw new Error("scenario needs fake LLM")
-        return context.llm
-      }
-      const base: ScenarioContext = {
-        directory: context.dir?.path,
-        headers: (extra) => ({ ...(context.dir?.path ? { "x-opencode-directory": context.dir.path } : {}), ...extra }),
-        file: (name, content) =>
-          Effect.promise(() => {
-            return Bun.write(`${directory()}/${name}`, content)
-          }).pipe(Effect.asVoid),
-        session: (input) =>
-          run(modules.Session.Service.use((svc) => svc.create({ title: input?.title, parentID: input?.parentID }))),
-        sessionGet: (sessionID) =>
-          run(modules.Session.Service.use((svc) => svc.get(sessionID))).pipe(
-            Effect.catchCause(() => Effect.succeed(undefined)),
-          ),
-        project: () =>
-          Effect.sync(() => {
-            if (!instance) throw new Error("scenario needs a project directory")
-            return instance.project
-          }),
-        message: (sessionID, input) =>
-          Effect.gen(function* () {
-            const info: MessageV2.User = {
-              id: MessageID.ascending(),
-              sessionID,
-              role: "user",
-              time: { created: Date.now() },
-              agent: "build",
-              model: {
-                providerID: ProviderID.opencode,
-                modelID: ModelID.make("test"),
-              },
-            }
-            const part: MessageV2.TextPart = {
-              id: PartID.ascending(),
-              sessionID,
-              messageID: info.id,
-              type: "text",
-              text: input?.text ?? "hello",
-            }
-            yield* run(
-              modules.Session.Service.use((svc) =>
-                Effect.gen(function* () {
-                  yield* svc.updateMessage(info)
-                  yield* svc.updatePart(part)
-                }),
               ),
             )
-            return { info, part }
+          : undefined
+        const run = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+          effect.pipe(Effect.provideService(modules.InstanceRef, instance), Effect.provide(modules.AppLayer))
+        const directory = () => {
+          if (!context.dir?.path) throw new Error("scenario needs a project directory")
+          return context.dir.path
+        }
+        const llm = () => {
+          if (!context.llm) throw new Error("scenario needs fake LLM")
+          return context.llm
+        }
+        const base: ScenarioContext = {
+          directory: context.dir?.path,
+          headers: (extra) => ({
+            ...(context.dir?.path ? { "x-opencode-directory": context.dir.path } : {}),
+            ...extra,
           }),
-        messages: (sessionID) =>
-          run(modules.Session.Service.use((svc) => svc.messages({ sessionID }))),
-        todos: (sessionID, todos) =>
-          run(modules.Todo.Service.use((svc) => svc.update({ sessionID, todos }))),
-        worktree: (input) =>
-          run(modules.Worktree.Service.use((svc) => svc.create(input))),
-        worktreeRemove: (directory) =>
-          run(modules.Worktree.Service.use((svc) => svc.remove({ directory })).pipe(Effect.ignore)),
-        llmText: (value) => Effect.suspend(() => llm().text(value)),
-        llmWait: (count) => Effect.suspend(() => llm().wait(count)),
-        tuiRequest: (request) => Effect.sync(() => modules.Tui.submitTuiRequest(request)),
-      }
-      const state = yield* scenario.seed(base)
-      return yield* use({ ...base, state })
-    }).pipe(Effect.ensuring(context.llm ? context.llm.reset : Effect.void))),
+          file: (name, content) =>
+            Effect.promise(() => {
+              return Bun.write(`${directory()}/${name}`, content)
+            }).pipe(Effect.asVoid),
+          session: (input) =>
+            run(modules.Session.Service.use((svc) => svc.create({ title: input?.title, parentID: input?.parentID }))),
+          sessionGet: (sessionID) =>
+            run(modules.Session.Service.use((svc) => svc.get(sessionID))).pipe(
+              Effect.catchCause(() => Effect.succeed(undefined)),
+            ),
+          project: () =>
+            Effect.sync(() => {
+              if (!instance) throw new Error("scenario needs a project directory")
+              return instance.project
+            }),
+          message: (sessionID, input) =>
+            Effect.gen(function* () {
+              const info: MessageV2.User = {
+                id: MessageID.ascending(),
+                sessionID,
+                role: "user",
+                time: { created: Date.now() },
+                agent: "build",
+                model: {
+                  providerID: ProviderID.opencode,
+                  modelID: ModelID.make("test"),
+                },
+              }
+              const part: MessageV2.TextPart = {
+                id: PartID.ascending(),
+                sessionID,
+                messageID: info.id,
+                type: "text",
+                text: input?.text ?? "hello",
+              }
+              yield* run(
+                modules.Session.Service.use((svc) =>
+                  Effect.gen(function* () {
+                    yield* svc.updateMessage(info)
+                    yield* svc.updatePart(part)
+                  }),
+                ),
+              )
+              return { info, part }
+            }),
+          messages: (sessionID) => run(modules.Session.Service.use((svc) => svc.messages({ sessionID }))),
+          todos: (sessionID, todos) => run(modules.Todo.Service.use((svc) => svc.update({ sessionID, todos }))),
+          worktree: (input) => run(modules.Worktree.Service.use((svc) => svc.create(input))),
+          worktreeRemove: (directory) =>
+            run(modules.Worktree.Service.use((svc) => svc.remove({ directory })).pipe(Effect.ignore)),
+          llmText: (value) => Effect.suspend(() => llm().text(value)),
+          llmWait: (count) => Effect.suspend(() => llm().wait(count)),
+          tuiRequest: (request) => Effect.sync(() => modules.Tui.submitTuiRequest(request)),
+        }
+        const state = yield* scenario.seed(base)
+        return yield* use({ ...base, state })
+      }).pipe(Effect.ensuring(context.llm ? context.llm.reset : Effect.void)),
+    ),
     Effect.ensuring(scenario.reset ? resetState : Effect.void),
   )
 }
 
-function projectOptions(project: ProjectOptions, llmUrl: string | undefined): { git?: boolean; config?: Partial<Config.Info> } {
+function projectOptions(
+  project: ProjectOptions,
+  llmUrl: string | undefined,
+): { git?: boolean; config?: Partial<Config.Info> } {
   if (!project.llm || !llmUrl) return { git: project.git, config: project.config }
   const fake = fakeLlmConfig(llmUrl)
   return {
@@ -1475,7 +1740,9 @@ function controlledPtyInput(title: string | undefined) {
 }
 
 function call(backend: Backend, scenario: ActiveScenario, ctx: SeededContext<unknown>) {
-  return Effect.promise(async () => capture(await app(await runtime(), backend).request(toRequest(scenario, ctx)), scenario.capture))
+  return Effect.promise(async () =>
+    capture(await app(await runtime(), backend).request(toRequest(scenario, ctx)), scenario.capture),
+  )
 }
 
 const appCache: Partial<Record<Backend, BackendApp>> = {}
@@ -1494,13 +1761,20 @@ function app(modules: Runtime, backend: Backend) {
 
   const handler = HttpRouter.toWebHandler(
     modules.ExperimentalHttpApiServer.routes.pipe(
-      Layer.provide(ConfigProvider.layer(ConfigProvider.fromUnknown({ OPENCODE_SERVER_PASSWORD: undefined, OPENCODE_SERVER_USERNAME: undefined }))),
+      Layer.provide(
+        ConfigProvider.layer(
+          ConfigProvider.fromUnknown({ OPENCODE_SERVER_PASSWORD: undefined, OPENCODE_SERVER_USERNAME: undefined }),
+        ),
+      ),
     ),
     { disableLogger: true },
   ).handler
   return (appCache.effect = {
     request(input: string | URL | Request, init?: RequestInit) {
-      return handler(input instanceof Request ? input : new Request(new URL(input, "http://localhost"), init), modules.ExperimentalHttpApiServer.context)
+      return handler(
+        input instanceof Request ? input : new Request(new URL(input, "http://localhost"), init),
+        modules.ExperimentalHttpApiServer.context,
+      )
     },
   })
 }
@@ -1545,16 +1819,23 @@ async function captureStream(response: Response) {
 const cleanupExercisePaths = Effect.promise(async () => {
   const fs = await import("fs/promises")
   if (!preserveExerciseDatabase) {
-    await Promise.all([exerciseDatabasePath, `${exerciseDatabasePath}-wal`, `${exerciseDatabasePath}-shm`].map((file) => fs.rm(file, { force: true }).catch(() => undefined)))
+    await Promise.all(
+      [exerciseDatabasePath, `${exerciseDatabasePath}-wal`, `${exerciseDatabasePath}-shm`].map((file) =>
+        fs.rm(file, { force: true }).catch(() => undefined),
+      ),
+    )
   }
-  if (!preserveExerciseGlobalRoot) await fs.rm(exerciseGlobalRoot, { recursive: true, force: true }).catch(() => undefined)
+  if (!preserveExerciseGlobalRoot)
+    await fs.rm(exerciseGlobalRoot, { recursive: true, force: true }).catch(() => undefined)
 })
 
 function compare(scenario: ActiveScenario, effect: CallResult, legacy: CallResult) {
   return Effect.sync(() => {
-    if (effect.status !== legacy.status) throw new Error(`legacy returned ${legacy.status}, effect returned ${effect.status}`)
+    if (effect.status !== legacy.status)
+      throw new Error(`legacy returned ${legacy.status}, effect returned ${effect.status}`)
     if (scenario.compare === "status") return
-    if (stable(effect.body) !== stable(legacy.body)) throw new Error(`JSON parity mismatch\nlegacy: ${stable(legacy.body)}\neffect: ${stable(effect.body)}`)
+    if (stable(effect.body) !== stable(legacy.body))
+      throw new Error(`JSON parity mismatch\nlegacy: ${stable(legacy.body)}\neffect: ${stable(effect.body)}`)
   })
 }
 
@@ -1570,7 +1851,9 @@ const resetState = Effect.promise(async () => {
 
 function routeKeys(spec: OpenApiSpec) {
   return Object.entries(spec.paths ?? {})
-    .flatMap(([path, item]) => OpenApiMethods.filter((method) => item[method]).map((method) => `${method.toUpperCase()} ${path}`))
+    .flatMap(([path, item]) =>
+      OpenApiMethods.filter((method) => item[method]).map((method) => `${method.toUpperCase()} ${path}`),
+    )
     .sort()
 }
 
@@ -1602,10 +1885,21 @@ function option(args: string[], name: string) {
 
 function matches(options: Options, scenario: Scenario) {
   if (!options.include) return true
-  return scenario.name.includes(options.include) || scenario.path.includes(options.include) || scenario.method.includes(options.include.toUpperCase())
+  return (
+    scenario.name.includes(options.include) ||
+    scenario.path.includes(options.include) ||
+    scenario.method.includes(options.include.toUpperCase())
+  )
 }
 
-function printHeader(options: Options, effectRoutes: string[], honoRoutes: string[], selected: Scenario[], missing: string[], extra: Scenario[]) {
+function printHeader(
+  options: Options,
+  effectRoutes: string[],
+  honoRoutes: string[],
+  selected: Scenario[],
+  missing: string[],
+  extra: Scenario[],
+) {
   console.log(`${color.cyan}HttpApi exerciser${color.reset}`)
   console.log(`${color.dim}db=${exerciseDatabasePath}${color.reset}`)
   console.log(`${color.dim}global=${exerciseGlobalRoot}${color.reset}`)
@@ -1618,14 +1912,20 @@ function printHeader(options: Options, effectRoutes: string[], honoRoutes: strin
 function printResults(results: Result[], missing: string[], extra: Scenario[]) {
   for (const result of results) {
     if (result.status === "pass") {
-      console.log(`${color.green}PASS${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name}`)
+      console.log(
+        `${color.green}PASS${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name}`,
+      )
       continue
     }
     if (result.status === "skip") {
-      console.log(`${color.yellow}SKIP${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name} ${color.dim}${result.scenario.reason}${color.reset}`)
+      console.log(
+        `${color.yellow}SKIP${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name} ${color.dim}${result.scenario.reason}${color.reset}`,
+      )
       continue
     }
-    console.log(`${color.red}FAIL${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name}`)
+    console.log(
+      `${color.red}FAIL${color.reset} ${pad(result.scenario.method, 6)} ${pad(result.scenario.path, 48)} ${result.scenario.name}`,
+    )
     console.log(`${color.red}${indent(result.message)}${color.reset}`)
   }
   if (missing.length > 0) {
@@ -1634,7 +1934,8 @@ function printResults(results: Result[], missing: string[], extra: Scenario[]) {
   }
   if (extra.length > 0) {
     console.log("\nExtra scenarios")
-    for (const scenario of extra) console.log(`${color.yellow}EXTRA${color.reset} ${routeKey(scenario)} ${scenario.name}`)
+    for (const scenario of extra)
+      console.log(`${color.yellow}EXTRA${color.reset} ${routeKey(scenario)} ${scenario.name}`)
   }
   console.log(
     `\n${color.dim}summary pass=${results.filter((result) => result.status === "pass").length} fail=${results.filter((result) => result.status === "fail").length} skip=${results.filter((result) => result.status === "skip").length} missing=${missing.length} extra=${extra.length}${color.reset}`,
@@ -1661,7 +1962,11 @@ function stable(value: unknown): string {
 function sort(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sort)
   if (!value || typeof value !== "object") return value
-  return Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key, item]) => [key, sort(item)]))
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => [key, sort(item)]),
+  )
 }
 
 function array(value: unknown): asserts value is unknown[] {

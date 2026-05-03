@@ -61,7 +61,11 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>) 
     opts?: number | TestOptions,
   ) => {
     const args = instanceArgs(options, opts)
-    return test(name, () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer), args.testOptions)
+    return test(
+      name,
+      () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
+      args.testOptions,
+    )
   }
 
   instance.only = <A, E2>(
@@ -71,7 +75,11 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>) 
     opts?: number | TestOptions,
   ) => {
     const args = instanceArgs(options, opts)
-    return test.only(name, () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer), args.testOptions)
+    return test.only(
+      name,
+      () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
+      args.testOptions,
+    )
   }
 
   instance.skip = <A, E2>(
@@ -81,7 +89,11 @@ const make = <R, E>(testLayer: Layer.Layer<R, E>, liveLayer: Layer.Layer<R, E>) 
     opts?: number | TestOptions,
   ) => {
     const args = instanceArgs(options, opts)
-    return test.skip(name, () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer), args.testOptions)
+    return test.skip(
+      name,
+      () => run(body(value).pipe(withTmpdirInstance(args.instanceOptions)), liveLayer),
+      args.testOptions,
+    )
   }
 
   return { effect, live, instance }
