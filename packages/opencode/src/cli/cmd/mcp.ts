@@ -268,17 +268,16 @@ export const McpAuthCommand = effectCmd({
       }
     })
 
-    yield* MCP.Service.use((mcp) => mcp.authenticate(serverName))
-      .pipe(
-        Effect.tap((status) =>
-          Effect.sync(() => {
-            if (status.status === "connected") {
-              spinner.stop("Authentication successful!")
-            } else if (status.status === "needs_client_registration") {
-              spinner.stop("Authentication failed", 1)
-              prompts.log.error(status.error)
-              prompts.log.info("Add clientId to your MCP server config:")
-              prompts.log.info(`
+    yield* MCP.Service.use((mcp) => mcp.authenticate(serverName)).pipe(
+      Effect.tap((status) =>
+        Effect.sync(() => {
+          if (status.status === "connected") {
+            spinner.stop("Authentication successful!")
+          } else if (status.status === "needs_client_registration") {
+            spinner.stop("Authentication failed", 1)
+            prompts.log.error(status.error)
+            prompts.log.info("Add clientId to your MCP server config:")
+            prompts.log.info(`
   "mcp": {
     "${serverName}": {
       "type": "remote",
@@ -289,23 +288,23 @@ export const McpAuthCommand = effectCmd({
       }
     }
   }`)
-            } else if (status.status === "failed") {
-              spinner.stop("Authentication failed", 1)
-              prompts.log.error(status.error)
-            } else {
-              spinner.stop("Unexpected status: " + status.status, 1)
-            }
-          }),
-        ),
-        Effect.catchCause((cause) =>
-          Effect.sync(() => {
+          } else if (status.status === "failed") {
             spinner.stop("Authentication failed", 1)
-            const error = Cause.squash(cause)
-            prompts.log.error(error instanceof Error ? error.message : String(error))
-          }),
-        ),
-        Effect.ensuring(Effect.sync(() => unsubscribe())),
-      )
+            prompts.log.error(status.error)
+          } else {
+            spinner.stop("Unexpected status: " + status.status, 1)
+          }
+        }),
+      ),
+      Effect.catchCause((cause) =>
+        Effect.sync(() => {
+          spinner.stop("Authentication failed", 1)
+          const error = Cause.squash(cause)
+          prompts.log.error(error instanceof Error ? error.message : String(error))
+        }),
+      ),
+      Effect.ensuring(Effect.sync(() => unsubscribe())),
+    )
 
     prompts.outro("Done")
   }),
