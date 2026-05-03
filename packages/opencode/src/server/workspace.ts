@@ -11,11 +11,7 @@ import { Session } from "@/session/session"
 import { Effect } from "effect"
 import * as Log from "@opencode-ai/core/util/log"
 import { ServerProxy } from "./proxy"
-import {
-  getWorkspaceRouteSessionID,
-  isLocalWorkspaceRoute,
-  workspaceProxyURL,
-} from "./shared/workspace-routing"
+import { getWorkspaceRouteSessionID, isLocalWorkspaceRoute, workspaceProxyURL } from "./shared/workspace-routing"
 
 async function getSessionWorkspace(url: URL) {
   const id = getWorkspaceRouteSessionID(url)
