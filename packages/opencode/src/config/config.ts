@@ -192,8 +192,14 @@ export const Info = Schema.Struct({
       ]),
     ),
   ).annotate({ description: "MCP (Model Context Protocol) server configurations" }),
-  formatter: Schema.optional(ConfigFormatter.Info),
-  lsp: Schema.optional(ConfigLSP.Info),
+  formatter: Schema.optional(ConfigFormatter.Info).annotate({
+    description:
+      "Enable or configure formatters. Omit or set to false to disable, true to enable built-ins, or an object to enable built-ins with overrides.",
+  }),
+  lsp: Schema.optional(ConfigLSP.Info).annotate({
+    description:
+      "Enable or configure LSP servers. Omit or set to false to disable, true to enable built-ins, or an object to enable built-ins with overrides.",
+  }),
   instructions: Schema.optional(Schema.mutable(Schema.Array(Schema.String))).annotate({
     description: "Additional instruction files or patterns to include",
   }),
