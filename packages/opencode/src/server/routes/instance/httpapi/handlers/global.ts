@@ -1,6 +1,7 @@
 import { Config } from "@/config/config"
 import { GlobalBus, type GlobalEvent as GlobalBusEvent } from "@/bus/global"
 import { EffectBridge } from "@/effect/bridge"
+import { Bus } from "@/bus"
 import { Installation } from "@/installation"
 import { disposeAllInstancesAndEmitGlobalDisposed } from "@/server/global-lifecycle"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
@@ -43,11 +44,11 @@ function eventResponse() {
   })
   const heartbeat = Stream.tick("10 seconds").pipe(
     Stream.drop(1),
-    Stream.map(() => ({ payload: { type: "server.heartbeat", properties: {} } })),
+    Stream.map(() => ({ payload: { id: Bus.createID(), type: "server.heartbeat", properties: {} } })),
   )
 
   return HttpServerResponse.stream(
-    Stream.make({ payload: { type: "server.connected", properties: {} } }).pipe(
+    Stream.make({ payload: { id: Bus.createID(), type: "server.connected", properties: {} } }).pipe(
       Stream.concat(events.pipe(Stream.merge(heartbeat, { haltStrategy: "left" }))),
       Stream.map(eventData),
       Stream.pipeThroughChannel(Sse.encode()),

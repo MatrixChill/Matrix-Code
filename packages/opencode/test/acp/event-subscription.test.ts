@@ -59,6 +59,7 @@ function toolEvent(
           raw: opts.raw,
         }
   const payload: EventMessagePartUpdated = {
+    id: `evt_${opts.callID}`,
     type: "message.part.updated",
     properties: {
       sessionID: sessionId,
