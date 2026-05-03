@@ -32,7 +32,12 @@ export const layer = Layer.sync(Service)(() => {
       const active = Array.from(sockets)
       sockets.clear()
       yield* Effect.all(
-        active.map((close) => close.pipe(Effect.timeout("1 second"), Effect.catch(() => Effect.void))),
+        active.map((close) =>
+          close.pipe(
+            Effect.timeout("1 second"),
+            Effect.catch(() => Effect.void),
+          ),
+        ),
         { concurrency: "unbounded", discard: true },
       )
     }),

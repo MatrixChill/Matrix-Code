@@ -39,13 +39,16 @@ export function websocket(
             Effect.catchReason("SocketError", "SocketCloseError", () => Effect.void),
             Effect.catch(() => Effect.void),
           )
-      const closeAccepted = Effect.all(
-        [closeSocket(inbound, writeInbound), closeSocket(outbound, writeOutbound)],
-        { concurrency: "unbounded", discard: true },
-      )
+      const closeAccepted = Effect.all([closeSocket(inbound, writeInbound), closeSocket(outbound, writeOutbound)], {
+        concurrency: "unbounded",
+        discard: true,
+      })
       const registered = yield* WebSocketTracker.register(
         Effect.all(
-          [writeInbound(WebSocketTracker.SERVER_CLOSING_EVENT()), writeOutbound(WebSocketTracker.SERVER_CLOSING_EVENT())],
+          [
+            writeInbound(WebSocketTracker.SERVER_CLOSING_EVENT()),
+            writeOutbound(WebSocketTracker.SERVER_CLOSING_EVENT()),
+          ],
           { concurrency: "unbounded", discard: true },
         ),
       )

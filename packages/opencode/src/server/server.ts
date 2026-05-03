@@ -195,11 +195,7 @@ export async function listen(opts: ListenOptions): Promise<Listener> {
   url = next
 
   const mdns =
-    opts.mdns &&
-    inner.port &&
-    opts.hostname !== "127.0.0.1" &&
-    opts.hostname !== "localhost" &&
-    opts.hostname !== "::1"
+    opts.mdns && inner.port && opts.hostname !== "127.0.0.1" && opts.hostname !== "localhost" && opts.hostname !== "::1"
   if (mdns) {
     MDNS.publish(inner.port, opts.mdnsDomain)
   } else if (opts.mdns) {
@@ -326,7 +322,9 @@ async function listenHttpApi(opts: ListenOptions, selection: ServerBackend.Selec
       const requested = close ? forceStop() : Promise.resolve()
       // The first call starts scope shutdown. A later stop(true) cannot undo
       // that, but it still runs forceStop() before awaiting the original close.
-      stopPromise ??= requested.then(() => Effect.runPromiseExit(Scope.close(resolved!.scope, Exit.void))).then(() => undefined)
+      stopPromise ??= requested
+        .then(() => Effect.runPromiseExit(Scope.close(resolved!.scope, Exit.void)))
+        .then(() => undefined)
       return requested.then(() => stopPromise!)
     },
   }
