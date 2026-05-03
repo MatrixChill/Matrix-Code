@@ -86,4 +86,3 @@ export function errorData(error: unknown) {
   data.formatted = errorFormat(error)
   return data
 }
-
