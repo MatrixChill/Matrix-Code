@@ -1,15 +1,8 @@
-import { Effect } from "effect"
 import { context, type InstanceContext } from "./instance-context"
-import { InstanceRuntime } from "./instance-runtime"
 
 export type { InstanceContext } from "./instance-context"
-export type { LoadInput } from "./instance-store"
 
 export const Instance = {
-  async provide<R>(input: { directory: string; init?: Effect.Effect<void>; fn: () => R }): Promise<R> {
-    const ctx = await InstanceRuntime.load({ directory: input.directory, init: input.init })
-    return context.provide(ctx, async () => input.fn())
-  },
   get current() {
     return context.use()
   },
