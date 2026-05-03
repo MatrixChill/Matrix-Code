@@ -1592,6 +1592,9 @@ export type Config = {
           enabled: boolean
         }
   }
+  /**
+   * Enable or configure formatters. Omit or set to false to disable, true to enable built-ins, or an object to enable built-ins with overrides.
+   */
   formatter?:
     | boolean
     | {
@@ -1604,6 +1607,9 @@ export type Config = {
           extensions?: Array<string>
         }
       }
+  /**
+   * Enable or configure LSP servers. Omit or set to false to disable, true to enable built-ins, or an object to enable built-ins with overrides.
+   */
   lsp?:
     | boolean
     | {
