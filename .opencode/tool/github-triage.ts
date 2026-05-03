@@ -40,7 +40,9 @@ export default tool({
 
 Provide the team that should own the issue. This tool picks a random assignee from that team and does not apply labels.`,
   args: {
-    team: tool.schema.enum(Object.keys(TEAM) as [keyof typeof TEAM, ...(keyof typeof TEAM)[]]).describe("The owning team"),
+    team: tool.schema
+      .enum(Object.keys(TEAM) as [keyof typeof TEAM, ...(keyof typeof TEAM)[]])
+      .describe("The owning team"),
   },
   async execute(args) {
     const issue = getIssueNumber()
