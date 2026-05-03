@@ -236,4 +236,3 @@ export async function waitForDependencies() {
 export async function get() {
   return runPromise((svc) => svc.get())
 }
-
