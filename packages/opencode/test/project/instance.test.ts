@@ -236,5 +236,4 @@ describe("InstanceStore", () => {
       expect(() => Instance.current).toThrow()
     }),
   )
-
 })
