@@ -377,7 +377,7 @@ export const layer: Layer.Layer<
           case "tool-result": {
             const toolCall = yield* readToolCall(value.toolCallId)
             // TODO(v2): Temporary dual-write while migrating session messages to v2 events.
-              EventV2.run(SessionEvent.Tool.Success.Sync, {
+            EventV2.run(SessionEvent.Tool.Success.Sync, {
               sessionID: ctx.sessionID,
               callID: value.toolCallId,
               structured: value.output.metadata,

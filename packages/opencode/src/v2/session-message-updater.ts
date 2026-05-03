@@ -89,9 +89,7 @@ export function update<Result>(adapter: Adapter<Result>, event: SessionEvent.Eve
     assistant?.content.findLast((item): item is DraftText => item.type === "text")
 
   const latestReasoning = (assistant: DraftAssistant | undefined, reasoningID: string) =>
-    assistant?.content.findLast(
-      (item): item is DraftReasoning => item.type === "reasoning" && item.id === reasoningID,
-    )
+    assistant?.content.findLast((item): item is DraftReasoning => item.type === "reasoning" && item.id === reasoningID)
 
   SessionEvent.All.match(event, {
     "session.next.agent.switched": (event) => {

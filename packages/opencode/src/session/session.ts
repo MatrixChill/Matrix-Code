@@ -81,7 +81,11 @@ export function fromRow(row: SessionRow): Info {
     title: row.title,
     agent: row.agent ?? undefined,
     model: row.model
-      ? { id: ModelID.make(row.model.id), providerID: ProviderID.make(row.model.providerID), variant: row.model.variant }
+      ? {
+          id: ModelID.make(row.model.id),
+          providerID: ProviderID.make(row.model.providerID),
+          variant: row.model.variant,
+        }
       : undefined,
     version: row.version,
     summary,
