@@ -205,10 +205,7 @@ describe("HttpApi UI fallback", () => {
           },
           { "assets/app.js": "/$bunfs/root/assets/app.js" },
         )
-      }).pipe(
-        Effect.provide(AppFileSystem.defaultLayer),
-        Effect.map(HttpServerResponse.toWeb),
-      ),
+      }).pipe(Effect.provide(AppFileSystem.defaultLayer), Effect.map(HttpServerResponse.toWeb)),
     )
 
     expect(response.status).toBe(200)
