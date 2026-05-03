@@ -22,9 +22,7 @@ const TreeCommand = effectCmd({
   handler: Effect.fn("Cli.debug.rg.tree")(function* (args) {
     const ctx = yield* InstanceRef
     if (!ctx) return
-    const tree = yield* Effect.orDie(
-      Ripgrep.Service.use((svc) => svc.tree({ cwd: ctx.directory, limit: args.limit })),
-    )
+    const tree = yield* Effect.orDie(Ripgrep.Service.use((svc) => svc.tree({ cwd: ctx.directory, limit: args.limit })))
     process.stdout.write(tree + EOL)
   }),
 })
