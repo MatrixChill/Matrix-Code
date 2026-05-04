@@ -280,7 +280,10 @@ describe("HttpApi Server.listen", () => {
 
       // Mint with the project directory — succeeds, ticket binds to that scope.
       const scoped = await fetch(
-        new URL(`${PtyPaths.connectToken.replace(":ptyID", info.id)}?directory=${encodeURIComponent(tmp.path)}`, listener.url),
+        new URL(
+          `${PtyPaths.connectToken.replace(":ptyID", info.id)}?directory=${encodeURIComponent(tmp.path)}`,
+          listener.url,
+        ),
         {
           method: "POST",
           headers: { authorization: authorization(), "x-opencode-ticket": "1" },
