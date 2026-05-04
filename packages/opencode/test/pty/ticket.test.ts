@@ -26,9 +26,7 @@ describe("PTY websocket tickets", () => {
       const ptyID = PtyID.ascending()
       const issued = yield* tickets.issue({ ptyID, directory: "/tmp/a" })
 
-      expect(
-        yield* tickets.consume({ ptyID, directory: "/tmp/b", ticket: issued.ticket }),
-      ).toBe(false)
+      expect(yield* tickets.consume({ ptyID, directory: "/tmp/b", ticket: issued.ticket })).toBe(false)
       expect(yield* tickets.consume({ ptyID, directory: "/tmp/a", ticket: issued.ticket })).toBe(true)
     }),
   )

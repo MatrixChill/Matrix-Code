@@ -28,7 +28,9 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/PtyTicket") {}
 
 function matches(record: Scope, input: Scope) {
-  return record.ptyID === input.ptyID && record.directory === input.directory && record.workspaceID === input.workspaceID
+  return (
+    record.ptyID === input.ptyID && record.directory === input.directory && record.workspaceID === input.workspaceID
+  )
 }
 
 // Tickets are inserted via Cache.set and removed atomically via invalidateWhen. The lookup is
