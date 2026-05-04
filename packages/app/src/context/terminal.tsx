@@ -94,7 +94,12 @@ export function getTerminalServerScope(conn: ServerConnection.Any | undefined, k
   if (conn.type === "http") {
     try {
       const url = new URL(conn.http.url)
-      if (url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1" || url.hostname === "[::1]")
+      if (
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1" ||
+        url.hostname === "::1" ||
+        url.hostname === "[::1]"
+      )
         return
     } catch {
       return key
@@ -127,12 +132,7 @@ const trimTerminal = (pty: LocalPTY) => {
   }
 }
 
-export function clearWorkspaceTerminals(
-  dir: string,
-  sessionIDs?: string[],
-  platform?: Platform,
-  scope?: string,
-) {
+export function clearWorkspaceTerminals(dir: string, sessionIDs?: string[], platform?: Platform, scope?: string) {
   const key = getWorkspaceTerminalCacheKey(dir, scope)
   for (const cache of caches) {
     const entry = cache.get(key)

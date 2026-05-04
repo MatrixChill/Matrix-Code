@@ -62,7 +62,10 @@ describe("getTerminalServerScope", () => {
       ),
     ).toBe("wsl:Debian" as ServerKey)
     expect(
-      getTerminalServerScope({ type: "http", http: { url: "https://example.com" } }, "https://example.com" as ServerKey),
+      getTerminalServerScope(
+        { type: "http", http: { url: "https://example.com" } },
+        "https://example.com" as ServerKey,
+      ),
     ).toBe("https://example.com" as ServerKey)
   })
 })
