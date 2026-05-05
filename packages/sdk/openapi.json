@@ -218,16 +218,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get health information about the OpenCode server.",
@@ -255,16 +245,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Subscribe to global events from the OpenCode system using server-sent events.",
@@ -289,16 +269,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Config"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -371,16 +341,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Global disposed"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -510,16 +470,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get events",
@@ -561,16 +511,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Config"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -696,16 +636,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of all configured AI providers and their default models.",
@@ -747,16 +677,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConsoleState"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -834,16 +754,6 @@
                   "required": ["orgs"],
                   "additionalProperties": false,
                   "description": "Switchable Console orgs"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -1080,16 +990,6 @@
                     "type": "string"
                   },
                   "description": "List of worktree directories"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -1392,16 +1292,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of all OpenCode sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.",
@@ -1447,16 +1337,6 @@
                     "$ref": "#/components/schemas/McpResource"
                   },
                   "description": "MCP resources"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -1576,16 +1456,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Search for text patterns across files in the project using ripgrep.",
@@ -1670,16 +1540,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Search for files or directories by name or pattern in the project directory.",
@@ -1733,16 +1593,6 @@
                     "$ref": "#/components/schemas/Symbol"
                   },
                   "description": "Symbols"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -1802,16 +1652,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "List files and directories in a specified path.",
@@ -1864,16 +1704,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Read the content of a specified file.",
@@ -1922,16 +1752,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get the git status of all files in the project.",
@@ -1974,16 +1794,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Instance disposed"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2031,16 +1841,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Retrieve the current working directory and related path information for the OpenCode instance.",
@@ -2082,16 +1882,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VcsInfo"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2152,16 +1942,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Retrieve the current git diff for the working tree or against the default branch.",
@@ -2210,16 +1990,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of all available commands in the OpenCode system.",
@@ -2265,16 +2035,6 @@
                     "$ref": "#/components/schemas/Agent"
                   },
                   "description": "List of agents"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2342,16 +2102,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of all available skills in the OpenCode system.",
@@ -2397,16 +2147,6 @@
                     "$ref": "#/components/schemas/LSPStatus"
                   },
                   "description": "LSP server status"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2458,16 +2198,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get formatter status",
@@ -2513,16 +2243,6 @@
                     "$ref": "#/components/schemas/MCPStatus"
                   },
                   "description": "MCP server status"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2673,7 +2393,7 @@
             }
           },
           "400": {
-            "description": "McpUnsupportedOAuthError | BadRequest",
+            "description": "McpUnsupportedOAuthError",
             "content": {
               "application/json": {
                 "schema": {
@@ -2747,16 +2467,6 @@
                   "required": ["success"],
                   "additionalProperties": false,
                   "description": "OAuth credentials removed"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -2912,7 +2622,7 @@
             }
           },
           "400": {
-            "description": "McpUnsupportedOAuthError | BadRequest",
+            "description": "McpUnsupportedOAuthError",
             "content": {
               "application/json": {
                 "schema": {
@@ -2983,16 +2693,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Connect an MCP server.",
@@ -3045,16 +2745,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Disconnect an MCP server.",
@@ -3102,16 +2792,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of projects that have been opened with OpenCode.",
@@ -3156,16 +2836,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Retrieve the currently active project that OpenCode is working with.",
@@ -3207,16 +2877,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Project"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -3393,16 +3053,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of available shells on the system.",
@@ -3448,16 +3098,6 @@
                     "$ref": "#/components/schemas/Pty"
                   },
                   "description": "List of sessions"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -3596,16 +3236,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Pty"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -3763,16 +3393,6 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Not found",
             "content": {
@@ -3848,16 +3468,6 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
-          },
           "403": {
             "description": "Forbidden",
             "content": {
@@ -3922,16 +3532,6 @@
                     "$ref": "#/components/schemas/QuestionRequest"
                   },
                   "description": "List of pending questions"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -4151,16 +3751,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get all pending permission requests across all sessions.",
@@ -4322,16 +3912,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get a list of all available AI providers, including both available and connected ones.",
@@ -4380,16 +3960,6 @@
                     }
                   },
                   "description": "Provider auth methods"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -4663,16 +4233,6 @@
                     "$ref": "#/components/schemas/Session"
                   },
                   "description": "List of sessions"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -5292,16 +4852,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Get the file changes (diff) that resulted from a specific user message in the session.",
@@ -5789,16 +5339,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Session"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -7128,16 +6668,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Start sync loops for workspaces in the current project that have active sessions.",
@@ -7519,16 +7049,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Create a v2 session message and queue it for the agent loop.",
@@ -7594,16 +7114,6 @@
         "responses": {
           "204": {
             "description": "<No Content>"
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Compact a v2 session conversation.",
@@ -7650,16 +7160,6 @@
         "responses": {
           "204": {
             "description": "<No Content>"
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Wait for a v2 session agent loop to become idle.",
@@ -7713,16 +7213,6 @@
                   "items": {
                     "$ref": "#/components/schemas/SessionMessage"
                   }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -7905,16 +7395,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Open the help dialog in the TUI to display user assistance information.",
@@ -7957,16 +7437,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Session dialog opened successfully"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8015,16 +7485,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Open the theme dialog.",
@@ -8067,16 +7527,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Model dialog opened successfully"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8125,16 +7575,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Submit the prompt.",
@@ -8177,16 +7617,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Prompt cleared successfully"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8303,16 +7733,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Toast notification shown successfully"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8555,16 +7975,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "Retrieve the next TUI request from the queue for processing.",
@@ -8607,16 +8017,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Response submitted successfully"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8688,16 +8088,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
-                }
-              }
-            }
           }
         },
         "description": "List all available workspace adapters for the current project.",
@@ -8743,16 +8133,6 @@
                     "$ref": "#/components/schemas/Workspace"
                   },
                   "description": "Workspaces"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -8843,7 +8223,7 @@
                     ]
                   }
                 },
-                "required": ["type", "branch", "extra"],
+                "required": ["type", "branch"],
                 "additionalProperties": false
               }
             }
@@ -8901,16 +8281,6 @@
                     "additionalProperties": false
                   },
                   "description": "Workspace status"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
@@ -9094,16 +8464,6 @@
                 "schema": {
                   "type": "boolean",
                   "description": "Connected session"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
                 }
               }
             }
