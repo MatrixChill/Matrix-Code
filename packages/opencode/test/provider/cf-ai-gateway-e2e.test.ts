@@ -27,12 +27,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 beforeEach(() => {
   captured = null
-  const handle = async (
-    input: Parameters<typeof fetch>[0],
-    init?: Parameters<typeof fetch>[1],
-  ): Promise<Response> => {
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url
+  const handle = async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]): Promise<Response> => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url
     if (url.startsWith("https://gateway.ai.cloudflare.com/")) {
       const bodyText = typeof init?.body === "string" ? init.body : ""
       captured = { url, outerBody: bodyText ? JSON.parse(bodyText) : null }
