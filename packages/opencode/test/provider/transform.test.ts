@@ -1172,8 +1172,18 @@ describe("ProviderTransform.message - surrogate sanitization", () => {
           { type: "text", text: text("assistant text") },
           { type: "reasoning", text: text("assistant reasoning") },
           { type: "tool-call", toolCallId: "call-1", toolName: "Read", input: { filePath: ".opencode/tool/emoji.ts" } },
-          { type: "tool-result", toolCallId: "call-2", toolName: "Read", output: { type: "text", value: text("assistant tool text") } },
-          { type: "tool-result", toolCallId: "call-3", toolName: "Read", output: { type: "error-text", value: text("assistant tool error") } },
+          {
+            type: "tool-result",
+            toolCallId: "call-2",
+            toolName: "Read",
+            output: { type: "text", value: text("assistant tool text") },
+          },
+          {
+            type: "tool-result",
+            toolCallId: "call-3",
+            toolName: "Read",
+            output: { type: "error-text", value: text("assistant tool error") },
+          },
           {
             type: "tool-result",
             toolCallId: "call-4",
@@ -1185,8 +1195,18 @@ describe("ProviderTransform.message - surrogate sanitization", () => {
       {
         role: "tool",
         content: [
-          { type: "tool-result", toolCallId: "call-5", toolName: "Read", output: { type: "text", value: text("tool text") } },
-          { type: "tool-result", toolCallId: "call-6", toolName: "Read", output: { type: "error-text", value: text("tool error") } },
+          {
+            type: "tool-result",
+            toolCallId: "call-5",
+            toolName: "Read",
+            output: { type: "text", value: text("tool text") },
+          },
+          {
+            type: "tool-result",
+            toolCallId: "call-6",
+            toolName: "Read",
+            output: { type: "error-text", value: text("tool error") },
+          },
           {
             type: "tool-result",
             toolCallId: "call-7",
