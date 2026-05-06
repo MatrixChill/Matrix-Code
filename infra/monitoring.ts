@@ -296,7 +296,7 @@ for (const model of models) {
         name: spec.title,
         description: spec.description,
         queryJson: honeycomb.getQuerySpecificationOutput(spec.json).json,
-        alertType: "on_true",
+        alertType: "on_change",
         frequency: 300,
         thresholds: [{ ...spec.threshold, exceededLimit: 1 }],
         recipients: [
