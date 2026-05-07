@@ -178,7 +178,6 @@ new honeycomb.Trigger("IncreasedFreeTierRequests", {
     calculations: [
       {
         op: "COUNT",
-        name: "REQUESTS",
         filterCombination: "AND",
         filters: [
           { column: "event_type", op: "=", value: "completions" },
