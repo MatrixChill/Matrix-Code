@@ -103,7 +103,8 @@ export function createDialogProviderOptions() {
 
     toast.show({
       variant: "error",
-      message: "Provider ids must start with a lowercase letter or number and only use lowercase letters, numbers, hyphens, and underscores",
+      message:
+        "Provider ids must start with a lowercase letter or number and only use lowercase letters, numbers, hyphens, and underscores",
     })
     return promptCustomProviderID()
   }
@@ -192,22 +193,12 @@ export function createDialogProviderOptions() {
               }
               if (result.data?.method === "code") {
                 dialog.replace(() => (
-                  <CodeMethod
-                    providerID={providerID}
-                    title={method.label}
-                    index={index}
-                    authorization={result.data!}
-                  />
+                  <CodeMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
                 ))
               }
               if (result.data?.method === "auto") {
                 dialog.replace(() => (
-                  <AutoMethod
-                    providerID={providerID}
-                    title={method.label}
-                    index={index}
-                    authorization={result.data!}
-                  />
+                  <AutoMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
                 ))
               }
             }
