@@ -137,7 +137,7 @@ new honeycomb.Trigger("IncreasedProviderHttpErrorsGo", {
   description,
   queryJson: providerHttpErrorsQuery("go"),
   alertType: "on_change",
-  frequency: 300,
+  frequency: 600,
   thresholds: [{ op: ">=", value: 0.8, exceededLimit: 1 }],
   recipients: [
     {
@@ -156,7 +156,7 @@ new honeycomb.Trigger("IncreasedProviderHttpErrorsZen", {
   description,
   queryJson: providerHttpErrorsQuery("zen"),
   alertType: "on_change",
-  frequency: 300,
+  frequency: 600,
   thresholds: [{ op: ">=", value: 0.8, exceededLimit: 1 }],
   recipients: [
     {
