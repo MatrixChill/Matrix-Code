@@ -74,8 +74,7 @@ export function retryable(error: Err) {
         message: GO_UPSELL_MESSAGE,
         action: {
           title: "Free limit reached",
-          message:
-            "Subscribe to OpenCode Go for reliable access to the best open-source models, starting at $5/month.",
+          message: "Subscribe to OpenCode Go for reliable access to the best open-source models, starting at $5/month.",
           label: "subscribe",
           link: GO_UPSELL_URL,
         },
