@@ -88,7 +88,7 @@ const providerHttpErrorsQuery = (product: "go" | "zen") => {
     formulas: [
       { name: "ERROR", expression: "IF(GTE(SUM($SUCCESS, $FAILED), 500), DIV($FAILED, SUM($SUCCESS, $FAILED)), 0)" },
     ],
-    timeRange: 900,
+    timeRange: 1800,
   }).json
 }
 
@@ -140,14 +140,14 @@ new honeycomb.Trigger("IncreasedProviderHttpErrorsGo", {
   frequency: 300,
   thresholds: [{ op: ">=", value: 0.8, exceededLimit: 1 }],
   recipients: [
-    // {
-    //   id: webhookRecipient.id,
-    //   notificationDetails: [
-    //     {
-    //       variables: [{ name: "type", value: "provider_http_errors" }],
-    //     },
-    //   ],
-    // },
+    {
+      id: webhookRecipient.id,
+      notificationDetails: [
+        {
+          variables: [{ name: "type", value: "provider_http_errors" }],
+        },
+      ],
+    },
   ],
 })
 
@@ -159,13 +159,13 @@ new honeycomb.Trigger("IncreasedProviderHttpErrorsZen", {
   frequency: 300,
   thresholds: [{ op: ">=", value: 0.8, exceededLimit: 1 }],
   recipients: [
-    // {
-    //   id: webhookRecipient.id,
-    //   notificationDetails: [
-    //     {
-    //       variables: [{ name: "type", value: "provider_http_errors" }],
-    //     },
-    //   ],
-    // },
+    {
+      id: webhookRecipient.id,
+      notificationDetails: [
+        {
+          variables: [{ name: "type", value: "provider_http_errors" }],
+        },
+      ],
+    },
   ],
 })
