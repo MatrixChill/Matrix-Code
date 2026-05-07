@@ -166,7 +166,9 @@ export async function confirmWorkspaceFileChanges(input: {
   sourceWorkspaceID?: string
 }) {
   const status = await input.sdk.client.vcs.status({ workspace: input.sourceWorkspaceID }).catch(() => undefined)
-  const fileChangeChoice = status?.data?.length ? await DialogWorkspaceFileChanges.show(input.dialog, status.data) : "no"
+  const fileChangeChoice = status?.data?.length
+    ? await DialogWorkspaceFileChanges.show(input.dialog, status.data)
+    : "no"
   if (!fileChangeChoice) return
   return fileChangeChoice === "yes"
 }
@@ -262,7 +264,9 @@ export function DialogWorkspaceSelect(props: {
           return
         }
 
-        dialog.replace(() => <DialogExistingWorkspaceSelect omitWorkspaceID={omittedWorkspaceID()} onSelect={props.onSelect} />)
+        dialog.replace(() => (
+          <DialogExistingWorkspaceSelect omitWorkspaceID={omittedWorkspaceID()} onSelect={props.onSelect} />
+        ))
       }}
     />
   )

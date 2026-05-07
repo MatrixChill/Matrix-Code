@@ -12,11 +12,7 @@ import { Flag } from "@opencode-ai/core/flag/flag"
 import { DialogSessionRename } from "./dialog-session-rename"
 import { createDebouncedSignal } from "../util/signal"
 import { useToast } from "../ui/toast"
-import {
-  openWorkspaceSelect,
-  type WorkspaceSelection,
-  warpWorkspaceSession,
-} from "./dialog-workspace-create"
+import { openWorkspaceSelect, type WorkspaceSelection, warpWorkspaceSession } from "./dialog-workspace-create"
 import { Spinner } from "./spinner"
 import { errorMessage } from "@/util/error"
 import { DialogSessionDeleteFailed } from "./dialog-session-delete-failed"
