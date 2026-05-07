@@ -1101,8 +1101,7 @@ export function Session() {
                             >
                               <text fg={theme.textMuted}>{revert()!.reverted.length} message reverted</text>
                               <text fg={theme.textMuted}>
-                                <span style={{ fg: theme.text }}>{redoShortcut()}</span> or /redo to
-                                restore
+                                <span style={{ fg: theme.text }}>{redoShortcut()}</span> or /redo to restore
                               </text>
                               <Show when={revert()!.diffFiles?.length}>
                                 <box marginTop={1}>

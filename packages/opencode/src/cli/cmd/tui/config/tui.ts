@@ -23,12 +23,7 @@ import * as Log from "@opencode-ai/core/util/log"
 import { ConfigVariable } from "@/config/variable"
 import { Npm } from "@opencode-ai/core/npm"
 import { LegacyKeymapTransform } from "./legacy-keymap-transform"
-import {
-  KeymapSectionNames,
-  keymapBindingDefaults,
-  type KeymapInfo,
-  type KeymapSection,
-} from "./tui-schema"
+import { KeymapSectionNames, keymapBindingDefaults, type KeymapInfo, type KeymapSection } from "./tui-schema"
 
 const log = Log.create({ service: "tui.config" })
 

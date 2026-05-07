@@ -55,11 +55,11 @@ You do not need to use a leader key, but we recommend doing so.
 
 `keymap.sections` is grouped by semantic area. Each section contains command names and the key sequence that triggers them.
 
-| Field | Description |
-| ----- | ----------- |
-| `leader` | The key used by `<leader>` sequences. Defaults to `ctrl+x`. |
+| Field            | Description                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `leader`         | The key used by `<leader>` sequences. Defaults to `ctrl+x`.                                         |
 | `leader_timeout` | How long OpenCode waits for the next key after the leader key, in milliseconds. Defaults to `2000`. |
-| `sections` | A map of TUI areas to command bindings. |
+| `sections`       | A map of TUI areas to command bindings.                                                             |
 
 ---
 
@@ -310,7 +310,7 @@ On native Windows, the defaults for undo and terminal suspend are different for 
 
 - `input.undo` defaults to `ctrl+z,ctrl+-,super+z` when it is not explicitly configured (the `ctrl+z` binding is added because Windows terminals do not support POSIX suspend).
 - `terminal.suspend` is disabled because native Windows terminals do not support POSIX suspend.
-:::
+  :::
 
 ---
 

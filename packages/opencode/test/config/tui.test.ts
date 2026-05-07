@@ -428,16 +428,20 @@ test("resolves semantic keymap sections", async () => {
   expect(config.keymap.sections.global.find((binding) => binding.cmd === "command.palette.show")?.key).toBe("alt+p")
   expect(config.keymap.sections.global.find((binding) => binding.cmd === "session.new")?.key).toBe("<leader>n")
   expect(config.keymap.sections.prompt.find((binding) => binding.cmd === "prompt.editor")?.key).toBe("ctrl+e")
-  expect(config.keymap.sections.autocomplete.find((binding) => binding.cmd === "prompt.autocomplete.next")?.key).toBe("ctrl+j")
-  expect(config.keymap.sections.dialog_actions.find((binding) => binding.cmd === "dialog.action.toggle")?.key).toBe("ctrl+t")
+  expect(config.keymap.sections.autocomplete.find((binding) => binding.cmd === "prompt.autocomplete.next")?.key).toBe(
+    "ctrl+j",
+  )
+  expect(config.keymap.sections.dialog_actions.find((binding) => binding.cmd === "dialog.action.toggle")?.key).toBe(
+    "ctrl+t",
+  )
   expect(config.keymap.sections.model.find((binding) => binding.cmd === "model.dialog.favorite")?.key).toBe("ctrl+f")
   expect(config.keymap.sections.plugins.find((binding) => binding.cmd === "plugin.dialog.install")?.key).toBe("shift+i")
   expect(config.keymap.pick("plugins", ["plugin.dialog.install"]).map((binding) => binding.cmd)).toEqual([
     "plugin.dialog.install",
   ])
-  expect(
-    (config.keymap.pick("plugins", ["plugin.dialog.install"])[0] as { group?: unknown } | undefined)?.group,
-  ).toBe("Plugins")
+  expect((config.keymap.pick("plugins", ["plugin.dialog.install"])[0] as { group?: unknown } | undefined)?.group).toBe(
+    "Plugins",
+  )
   expect(config.keymap.omit("plugins", ["plugin.dialog.install"]).map((binding) => binding.cmd)).toEqual([])
 })
 
@@ -477,8 +481,12 @@ test("legacy keybinds transform into semantic keymap sections", async () => {
   ])
   expect(config.keymap.sections.global.find((binding) => binding.cmd === "command.palette.show")?.key).toBe("alt+p")
   expect(config.keymap.sections.prompt.find((binding) => binding.cmd === "prompt.editor")?.key).toBe("ctrl+e")
-  expect(config.keymap.sections.autocomplete.find((binding) => binding.cmd === "prompt.autocomplete.next")?.key).toBe("ctrl+j")
-  expect(config.keymap.sections.dialog_actions.find((binding) => binding.cmd === "dialog.action.toggle")?.key).toBe("ctrl+t")
+  expect(config.keymap.sections.autocomplete.find((binding) => binding.cmd === "prompt.autocomplete.next")?.key).toBe(
+    "ctrl+j",
+  )
+  expect(config.keymap.sections.dialog_actions.find((binding) => binding.cmd === "dialog.action.toggle")?.key).toBe(
+    "ctrl+t",
+  )
   expect(config.keymap.sections.model.find((binding) => binding.cmd === "model.dialog.provider")?.key).toBe("ctrl+a")
   expect(config.keymap.sections.model.find((binding) => binding.cmd === "model.dialog.favorite")?.key).toBe("ctrl+f")
   expect(config.keymap.sections.plugins.find((binding) => binding.cmd === "plugin.dialog.install")?.key).toBe("shift+i")
@@ -486,9 +494,9 @@ test("legacy keybinds transform into semantic keymap sections", async () => {
   expect(config.keymap.pick("plugins", ["plugin.dialog.install"]).map((binding) => binding.cmd)).toEqual([
     "plugin.dialog.install",
   ])
-  expect(
-    (config.keymap.omit("plugins", ["plugin.dialog.install"])[0] as { group?: unknown } | undefined)?.group,
-  ).toBe("Plugins")
+  expect((config.keymap.omit("plugins", ["plugin.dialog.install"])[0] as { group?: unknown } | undefined)?.group).toBe(
+    "Plugins",
+  )
   expect(config.keymap.omit("plugins", ["plugin.dialog.install"]).map((binding) => binding.cmd)).toEqual([
     "plugins.list",
   ])

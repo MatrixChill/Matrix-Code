@@ -60,12 +60,7 @@ import { useArgs } from "@tui/context/args"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { type WorkspaceStatus } from "../workspace-label"
 import { useCommandPalette } from "../../context/command-palette"
-import {
-  useBindings,
-  useCommandShortcut,
-  useLeaderActive,
-  useOpencodeKeymap,
-} from "../../keymap"
+import { useBindings, useCommandShortcut, useLeaderActive, useOpencodeKeymap } from "../../keymap"
 import { useTuiConfig } from "../../context/tui-config"
 
 export type PromptProps = {
@@ -890,7 +885,13 @@ export function Prompt(props: PromptProps) {
       target: inputTarget,
       enabled: (() => {
         cursorVersion()
-        return inputTarget() !== undefined && !props.disabled && store.mode === "normal" && !auto()?.visible && input?.visualCursor.offset === 0
+        return (
+          inputTarget() !== undefined &&
+          !props.disabled &&
+          store.mode === "normal" &&
+          !auto()?.visible &&
+          input?.visualCursor.offset === 0
+        )
       })(),
       bindings: [
         {

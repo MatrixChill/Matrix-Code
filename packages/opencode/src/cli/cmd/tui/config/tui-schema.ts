@@ -293,7 +293,12 @@ export function keymapBindingDefaults(input: { section: string; binding: Readonl
 export const KeymapConfig = z
   .object({
     leader: z.string().prefault("ctrl+x"),
-    leader_timeout: z.number().int().positive().prefault(KeymapLeaderTimeoutDefault).describe("Leader key timeout in milliseconds"),
+    leader_timeout: z
+      .number()
+      .int()
+      .positive()
+      .prefault(KeymapLeaderTimeoutDefault)
+      .describe("Leader key timeout in milliseconds"),
     sections: KeymapSections,
   })
   .strict()

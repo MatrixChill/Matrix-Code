@@ -220,11 +220,7 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
           },
         },
         ...(confirm()
-          ? [
-              { key: "return", cmd: () => submit() },
-              { key: "escape", cmd: () => reject() },
-              ...sections.question,
-            ]
+          ? [{ key: "return", cmd: () => submit() }, { key: "escape", cmd: () => reject() }, ...sections.question]
           : [
               ...Array.from({ length: max }, (_, index) => ({
                 key: String(index + 1),

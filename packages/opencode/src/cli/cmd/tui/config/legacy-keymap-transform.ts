@@ -46,7 +46,12 @@ const inputCommands = {
   input_select_all: "input.select.all",
 } as const satisfies Partial<Record<keyof LegacyKeybinds, string>>
 
-function add(config: SectionsConfig, section: KeymapSection, command: string, binding: BindingValue<Renderable, KeyEvent> | undefined) {
+function add(
+  config: SectionsConfig,
+  section: KeymapSection,
+  command: string,
+  binding: BindingValue<Renderable, KeyEvent> | undefined,
+) {
   if (binding === undefined) return
   config[section] ??= {}
   config[section][command] = binding
@@ -154,7 +159,12 @@ export function create(keybinds: LegacyKeybinds): KeymapConfigInput {
   add(config, "dialog_select", "dialog.select.submit", keybinds["dialog.select.submit"])
   add(config, "dialog_actions", "dialog.action.delete", combineBindings(keybinds.stash_delete, keybinds.session_delete))
   add(config, "dialog_actions", "dialog.action.rename", keybinds.session_rename)
-  add(config, "dialog_actions", "dialog.action.toggle", combineBindings(keybinds["dialog.mcp.toggle"], keybinds["plugins.toggle"]))
+  add(
+    config,
+    "dialog_actions",
+    "dialog.action.toggle",
+    combineBindings(keybinds["dialog.mcp.toggle"], keybinds["plugins.toggle"]),
+  )
   add(config, "model", "model.dialog.provider", keybinds.model_provider_list)
   add(config, "model", "model.dialog.favorite", keybinds.model_favorite_toggle)
 
