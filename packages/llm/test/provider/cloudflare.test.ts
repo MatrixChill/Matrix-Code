@@ -181,9 +181,7 @@ describe("Cloudflare", () => {
           dynamicResponse((input) =>
             Effect.gen(function* () {
               const web = yield* HttpClientRequest.toWeb(input.request).pipe(Effect.orDie)
-              expect(web.url).toBe(
-                "https://api.cloudflare.com/client/v4/accounts/test-account/ai/v1/chat/completions",
-              )
+              expect(web.url).toBe("https://api.cloudflare.com/client/v4/accounts/test-account/ai/v1/chat/completions")
               expect(web.headers.get("authorization")).toBe("Bearer test-token")
               expect(decodeJson(input.text)).toMatchObject({
                 model: "@cf/meta/llama-3.1-8b-instruct",

@@ -7,13 +7,7 @@
     "route": "cloudflare-ai-gateway",
     "transport": "http",
     "model": "workers-ai/@cf/openai/gpt-oss-20b",
-    "tags": [
-      "prefix:cloudflare-ai-gateway",
-      "provider:cloudflare-ai-gateway",
-      "tool",
-      "tool-call",
-      "golden"
-    ]
+    "tags": ["prefix:cloudflare-ai-gateway", "provider:cloudflare-ai-gateway", "tool", "tool-call", "golden"]
   },
   "interactions": [
     {

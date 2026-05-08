@@ -164,7 +164,10 @@ describe("LLM.generateObject", () => {
       const layer = dynamicResponse((input) =>
         Effect.sync(() =>
           input.respond(
-            sseEvents(toolCallChunk("call_1", "generate_object", '{"value":"not-a-number"}'), finishChunk("tool_calls")),
+            sseEvents(
+              toolCallChunk("call_1", "generate_object", '{"value":"not-a-number"}'),
+              finishChunk("tool_calls"),
+            ),
             { headers: { "content-type": "text/event-stream" } },
           ),
         ),

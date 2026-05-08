@@ -7,12 +7,7 @@
     "route": "cloudflare-ai-gateway",
     "transport": "http",
     "model": "workers-ai/@cf/meta/llama-3.1-8b-instruct",
-    "tags": [
-      "prefix:cloudflare-ai-gateway",
-      "provider:cloudflare-ai-gateway",
-      "text",
-      "golden"
-    ]
+    "tags": ["prefix:cloudflare-ai-gateway", "provider:cloudflare-ai-gateway", "text", "golden"]
   },
   "interactions": [
     {

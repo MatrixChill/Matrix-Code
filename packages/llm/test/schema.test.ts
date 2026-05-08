@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { Schema } from "effect"
-import {
-  ContentPart,
-  LLMEvent,
-  LLMRequest,
-  ModelID,
-  ModelLimits,
-  ModelRef,
-  ProviderID,
-} from "../src/schema"
+import { ContentPart, LLMEvent, LLMRequest, ModelID, ModelLimits, ModelRef, ProviderID } from "../src/schema"
 
 const model = new ModelRef({
   id: ModelID.make("fake-model"),

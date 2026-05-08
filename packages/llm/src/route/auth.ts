@@ -168,8 +168,9 @@ export function bearerHeader(
   name: string,
   source?: string | Redacted.Redacted<string> | Config.Config<string | Redacted.Redacted<string>> | Credential,
 ) {
-  const render = (input: string | Redacted.Redacted<string> | Config.Config<string | Redacted.Redacted<string>> | Credential) =>
-    fromCredential(credentialInput(input), (secret) => ({ [name]: `Bearer ${secret}` }))
+  const render = (
+    input: string | Redacted.Redacted<string> | Config.Config<string | Redacted.Redacted<string>> | Credential,
+  ) => fromCredential(credentialInput(input), (secret) => ({ [name]: `Bearer ${secret}` }))
   if (source === undefined) return render
   return render(source)
 }

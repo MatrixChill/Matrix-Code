@@ -2,12 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { LLM } from "../src"
 import { Endpoint } from "../src/route"
 
-const request = (
-  input: {
-    readonly baseURL: string
-    readonly queryParams?: Record<string, string>
-  },
-) =>
+const request = (input: { readonly baseURL: string; readonly queryParams?: Record<string, string> }) =>
   LLM.request({
     model: LLM.model({
       id: "model-1",
@@ -43,7 +38,9 @@ describe("Endpoint", () => {
 
   test("path may be a function of the validated body", () => {
     const url = Endpoint.render(
-      Endpoint.path<{ readonly modelId: string }>(({ body }) => `/model/${encodeURIComponent(body.modelId)}/converse-stream`),
+      Endpoint.path<{ readonly modelId: string }>(
+        ({ body }) => `/model/${encodeURIComponent(body.modelId)}/converse-stream`,
+      ),
       {
         request: request({ baseURL: "https://bedrock-runtime.us-east-1.amazonaws.com" }),
         body: { modelId: "us.amazon.nova-micro-v1:0" },

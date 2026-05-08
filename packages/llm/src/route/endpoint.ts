@@ -30,9 +30,7 @@ const renderPart = <Body>(part: EndpointPart<Body>, input: EndpointInput<Body>) 
   typeof part === "function" ? part(input) : part
 
 export const render = <Body>(endpoint: Endpoint<Body>, input: EndpointInput<Body>) => {
-  const url = new URL(
-    `${ProviderShared.trimBaseUrl(input.request.model.baseURL)}${renderPart(endpoint.path, input)}`,
-  )
+  const url = new URL(`${ProviderShared.trimBaseUrl(input.request.model.baseURL)}${renderPart(endpoint.path, input)}`)
   const params = input.request.model.queryParams
   if (params) for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
   return url

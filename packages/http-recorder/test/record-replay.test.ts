@@ -64,10 +64,8 @@ describe("http-recorder", () => {
 
   test("applies custom URL redaction after built-in redaction", () => {
     expect(
-      HttpRecorder.redactUrl(
-        "https://example.test/accounts/real-account/path?key=secret-key",
-        undefined,
-        (url) => url.replace("/accounts/real-account/", "/accounts/{account}/"),
+      HttpRecorder.redactUrl("https://example.test/accounts/real-account/path?key=secret-key", undefined, (url) =>
+        url.replace("/accounts/real-account/", "/accounts/{account}/"),
       ),
     ).toBe("https://example.test/accounts/{account}/path?key=%5BREDACTED%5D")
   })

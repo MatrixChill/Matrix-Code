@@ -65,7 +65,11 @@ const redactionSet = (values: ReadonlyArray<string> | undefined, defaults: Reado
 
 export type UrlRedactor = (url: string) => string
 
-export const redactUrl = (raw: string, query: ReadonlyArray<string> = DEFAULT_REDACT_QUERY, urlRedactor?: UrlRedactor) => {
+export const redactUrl = (
+  raw: string,
+  query: ReadonlyArray<string> = DEFAULT_REDACT_QUERY,
+  urlRedactor?: UrlRedactor,
+) => {
   if (!URL.canParse(raw)) return urlRedactor?.(raw) ?? raw
   const url = new URL(raw)
   if (url.username) url.username = REDACTED

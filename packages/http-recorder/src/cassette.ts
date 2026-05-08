@@ -90,7 +90,10 @@ export const layer = (options: { readonly directory?: string } = {}) =>
         return (yield* walk(directory))
           .filter((file) => file.endsWith(".json"))
           .map((file) => ({
-            name: path.relative(directory, file).replace(/\\/g, "/").replace(/\.json$/, ""),
+            name: path
+              .relative(directory, file)
+              .replace(/\\/g, "/")
+              .replace(/\.json$/, ""),
             path: file,
           }))
           .toSorted((a, b) => a.name.localeCompare(b.name))

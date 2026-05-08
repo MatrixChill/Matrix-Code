@@ -142,9 +142,7 @@ const modelWithDefaults =
     if (!provider) throw new Error(`Route.model(${route.id}) requires a provider`)
     const baseURL = mapped.baseURL ?? defaults.baseURL ?? route.defaults.baseURL
     if (!baseURL)
-      throw new Error(
-        `Route.model(${route.id}) requires a baseURL — supply it via input, defaults, or route defaults`,
-      )
+      throw new Error(`Route.model(${route.id}) requires a baseURL — supply it via input, defaults, or route defaults`)
     const generation = mergeGenerationOptions(route.defaults.generation, defaults.generation)
     const providerOptions = mergeProviderOptions(route.defaults.providerOptions, defaults.providerOptions)
     const http = mergeHttpOptions(httpOptions(route.defaults.http), httpOptions(defaults.http))

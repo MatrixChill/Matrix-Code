@@ -110,7 +110,12 @@ const PROVIDERS: ReadonlyArray<Provider> = [
     note: "Cloudflare Unified/OpenAI-compatible gateway; supports provider/model ids like workers-ai/@cf/...",
     vars: [
       { name: "CLOUDFLARE_ACCOUNT_ID", label: "Cloudflare account ID", secret: false },
-      { name: "CLOUDFLARE_GATEWAY_ID", label: "Cloudflare AI Gateway ID (defaults to default)", optional: true, secret: false },
+      {
+        name: "CLOUDFLARE_GATEWAY_ID",
+        label: "Cloudflare AI Gateway ID (defaults to default)",
+        optional: true,
+        secret: false,
+      },
       { name: "CLOUDFLARE_API_TOKEN", label: "Cloudflare AI Gateway token" },
     ],
     validate: (env) =>
