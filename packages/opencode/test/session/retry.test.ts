@@ -414,6 +414,8 @@ describe("session.message-v2.fromError", () => {
     expect(MessageV2.APIError.isInstance(result)).toBe(true)
     if (!MessageV2.APIError.isInstance(result)) throw new Error("expected APIError")
     expect(result.data.isRetryable).toBe(true)
-    expect(SessionRetry.retryable(result, retryProvider)).toEqual({ message: "An error occurred while processing your request." })
+    expect(SessionRetry.retryable(result, retryProvider)).toEqual({
+      message: "An error occurred while processing your request.",
+    })
   })
 })

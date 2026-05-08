@@ -9441,6 +9441,12 @@
               "action": {
                 "type": "object",
                 "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
                   "title": {
                     "type": "string"
                   },
@@ -9454,7 +9460,7 @@
                     "type": "string"
                   }
                 },
-                "required": ["title", "message", "label"],
+                "required": ["reason", "provider", "title", "message", "label"],
                 "additionalProperties": false
               },
               "next": {
