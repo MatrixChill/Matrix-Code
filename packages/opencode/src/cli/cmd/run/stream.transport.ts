@@ -561,37 +561,37 @@ function createLayer(input: StreamInput) {
             Effect.orElseSucceed(() => []),
           )
 
-        const bootstrapSubagentHistory = Effect.fn("RunStreamTransport.bootstrapSubagentHistory")(
-          function* (sessions: string[]) {
-            yield* Effect.forEach(
-              sessions,
-              (sessionID) =>
-                messages(sessionID, SUBAGENT_CALL_BOOTSTRAP_LIMIT).pipe(
-                  Effect.tap((messagesList) =>
-                    Effect.sync(() => {
-                      if (
-                        !bootstrapSubagentCalls({
-                          data: state.subagent,
-                          sessionID,
-                          messages: messagesList,
-                          thinking: input.thinking,
-                          limits: input.limits(),
-                        })
-                      ) {
-                        return
-                      }
+        const bootstrapSubagentHistory = Effect.fn("RunStreamTransport.bootstrapSubagentHistory")(function* (
+          sessions: string[],
+        ) {
+          yield* Effect.forEach(
+            sessions,
+            (sessionID) =>
+              messages(sessionID, SUBAGENT_CALL_BOOTSTRAP_LIMIT).pipe(
+                Effect.tap((messagesList) =>
+                  Effect.sync(() => {
+                    if (
+                      !bootstrapSubagentCalls({
+                        data: state.subagent,
+                        sessionID,
+                        messages: messagesList,
+                        thinking: input.thinking,
+                        limits: input.limits(),
+                      })
+                    ) {
+                      return
+                    }
 
-                      syncFooter([], undefined, currentSubagentState())
-                    }),
-                  ),
+                    syncFooter([], undefined, currentSubagentState())
+                  }),
                 ),
-              {
-                concurrency: 4,
-                discard: true,
-              },
-            )
-          },
-        )
+              ),
+            {
+              concurrency: 4,
+              discard: true,
+            },
+          )
+        })
 
         const bootstrap = Effect.fn("RunStreamTransport.bootstrap")(function* () {
           const [messagesList, children, permissions, questions] = yield* Effect.all(
@@ -651,7 +651,10 @@ function createLayer(input: StreamInput) {
             return
           }
 
-          yield* bootstrapSubagentHistory(sessions).pipe(Effect.forkIn(scope, { startImmediately: true }), Effect.asVoid)
+          yield* bootstrapSubagentHistory(sessions).pipe(
+            Effect.forkIn(scope, { startImmediately: true }),
+            Effect.asVoid,
+          )
         })
 
         const idle = Effect.fn("RunStreamTransport.idle")((fallback: boolean) =>

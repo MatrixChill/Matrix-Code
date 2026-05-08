@@ -477,7 +477,8 @@ describe("run stream transport", () => {
       const boot = await waitFor(() => {
         const item = ui.events.findLast((event) => event.type === "stream.subagent")
         const state = item?.type === "stream.subagent" ? item.state : undefined
-        return state?.tabs.some((tab) => tab.sessionID === "child-1") && state.permissions.some((req) => req.id === "perm-1")
+        return state?.tabs.some((tab) => tab.sessionID === "child-1") &&
+          state.permissions.some((req) => req.id === "perm-1")
           ? state
           : undefined
       })
@@ -509,7 +510,9 @@ describe("run stream transport", () => {
         const item = ui.events.findLast((event) => event.type === "stream.subagent")
         const state = item?.type === "stream.subagent" ? item.state : undefined
         const detail = state?.details["child-1"]
-        return detail?.commits.some((commit) => commit.kind === "tool" && commit.tool === "edit" && commit.phase === "start")
+        return detail?.commits.some(
+          (commit) => commit.kind === "tool" && commit.tool === "edit" && commit.phase === "start",
+        )
           ? state
           : undefined
       })
