@@ -37,10 +37,7 @@ void Log.init({ print: false })
 
 const testServerLayer = Layer.mergeAll(
   NodeHttpServer.layer(Http.createServer, { host: "127.0.0.1", port: 0 }),
-  Workspace.defaultLayer.pipe(
-    Layer.provide(InstanceStore.defaultLayer),
-    Layer.provide(InstanceBootstrap.defaultLayer),
-  ),
+  Workspace.defaultLayer.pipe(Layer.provide(InstanceStore.defaultLayer), Layer.provide(InstanceBootstrap.defaultLayer)),
   SessionNs.defaultLayer,
 )
 const it = testEffect(testServerLayer)
@@ -1096,9 +1093,7 @@ describe("workspace sync state", () => {
 
               expect(
                 captured.events
-                  .filter(
-                    (event) => event.workspace === info.id && event.payload.type === Workspace.Event.Status.type,
-                  )
+                  .filter((event) => event.workspace === info.id && event.payload.type === Workspace.Event.Status.type)
                   .map((event) => event.payload.properties.status),
               ).toEqual(["disconnected", "connecting", "connected"])
               expect(calls.filter((call) => call.url.pathname === "/sync/global/event")).toHaveLength(1)
