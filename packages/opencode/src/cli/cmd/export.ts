@@ -27,8 +27,7 @@ function diff(kind: string, diffs: { file: string; patch?: string }[] | undefine
   return diffs?.map((item, i) => ({
     ...item,
     file: redact(`${kind}-file`, String(i), item.file),
-    patch:
-      item.patch === undefined ? undefined : redact(`${kind}-patch`, String(i), item.patch),
+    patch: item.patch === undefined ? undefined : redact(`${kind}-patch`, String(i), item.patch),
   }))
 }
 
