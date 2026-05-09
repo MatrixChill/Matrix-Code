@@ -23,8 +23,7 @@ const failingAccountLayer = Layer.succeed(
     active: () => Effect.succeed(Option.none()),
     activeOrg: () => Effect.succeed(Option.none()),
     list: () => Effect.succeed([]),
-    orgsByAccount: () =>
-      Effect.fail(new ORIG.AccountServiceError({ message: "simulated upstream failure" })),
+    orgsByAccount: () => Effect.fail(new ORIG.AccountServiceError({ message: "simulated upstream failure" })),
     remove: () => Effect.void,
     use: () => Effect.void,
     orgs: () => Effect.succeed([]),
