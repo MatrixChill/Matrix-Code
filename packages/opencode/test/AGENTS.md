@@ -152,8 +152,7 @@ import { Effect, Layer } from "effect"
 import { Account } from "@/account/account"
 
 const failingAccountLayer = Layer.mock(Account.Service, {
-  orgsByAccount: () =>
-    Effect.fail(new Account.AccountServiceError({ message: "simulated upstream failure" })),
+  orgsByAccount: () => Effect.fail(new Account.AccountServiceError({ message: "simulated upstream failure" })),
 })
 ```
 
