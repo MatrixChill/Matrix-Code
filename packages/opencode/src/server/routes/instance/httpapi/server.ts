@@ -1,6 +1,13 @@
 import { Context, Effect, Layer } from "effect"
 import { HttpApiBuilder, OpenApi } from "effect/unstable/httpapi"
-import { FetchHttpClient, HttpClient, HttpMiddleware, HttpRouter, HttpServer, HttpServerResponse } from "effect/unstable/http"
+import {
+  FetchHttpClient,
+  HttpClient,
+  HttpMiddleware,
+  HttpRouter,
+  HttpServer,
+  HttpServerResponse,
+} from "effect/unstable/http"
 import * as Socket from "effect/unstable/socket/Socket"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Account } from "@/account/account"
@@ -149,10 +156,8 @@ const openApiDocument = OpenApi.fromApi(PublicApi)
 const openApiDocumentJson = JSON.stringify(openApiDocument)
 
 const docRoute = HttpRouter.use((router) =>
-  router.add(
-    "GET",
-    "/doc",
-    () => Effect.succeed(HttpServerResponse.text(openApiDocumentJson, { headers: { "content-type": "application/json" } })),
+  router.add("GET", "/doc", () =>
+    Effect.succeed(HttpServerResponse.text(openApiDocumentJson, { headers: { "content-type": "application/json" } })),
   ),
 ).pipe(Layer.provide(authOnlyRouterLayer))
 
