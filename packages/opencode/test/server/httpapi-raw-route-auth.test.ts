@@ -12,7 +12,6 @@ import * as Log from "@opencode-ai/core/util/log"
 
 void Log.init({ print: false })
 
-
 function app(input: { password?: string; username?: string }) {
   const handler = HttpRouter.toWebHandler(
     ExperimentalHttpApiServer.routes.pipe(

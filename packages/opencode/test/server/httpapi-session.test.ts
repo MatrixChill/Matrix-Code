@@ -421,9 +421,9 @@ describe("session HttpApi", () => {
           directory: currentDir,
         })
         const headers = { "x-opencode-directory": tmp.path }
-        const sessions = (yield* json<Session.Info[]>(yield* request(`${SessionPaths.list}?${query}`, { headers }))).map(
-          (item) => item.id,
-        )
+        const sessions = (yield* json<Session.Info[]>(
+          yield* request(`${SessionPaths.list}?${query}`, { headers }),
+        )).map((item) => item.id)
 
         expect(sessions).toContain(pathSession.id)
         expect(sessions).not.toContain(pathlessSession.id)

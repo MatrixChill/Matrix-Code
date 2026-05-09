@@ -14,8 +14,9 @@ export const WorkspaceInfo = Schema.Struct({
 }).annotate({ identifier: "Workspace" })
 export type WorkspaceInfo = DeepMutable<Schema.Schema.Type<typeof WorkspaceInfo>>
 
-export const WorkspaceListedInfo = Schema.Struct(Struct.omit(WorkspaceInfo.fields, ["id"]))
-  .annotate({ identifier: "WorkspaceListedInfo" })
+export const WorkspaceListedInfo = Schema.Struct(Struct.omit(WorkspaceInfo.fields, ["id"])).annotate({
+  identifier: "WorkspaceListedInfo",
+})
 export type WorkspaceListedInfo = DeepMutable<Schema.Schema.Type<typeof WorkspaceListedInfo>>
 
 export const WorkspaceAdapterEntry = Schema.Struct({

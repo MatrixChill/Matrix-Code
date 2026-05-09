@@ -8,7 +8,6 @@ import { waitGlobalBusEventPromise } from "./global-bus"
 
 void Log.init({ print: false })
 
-
 function app() {
   return Server.Default().app
 }

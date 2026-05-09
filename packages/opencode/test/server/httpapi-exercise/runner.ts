@@ -8,15 +8,7 @@ import { MessageID, PartID } from "../../../src/session/schema"
 import { call, callAuthProbe } from "./backend"
 import { original } from "./environment"
 import { runtime } from "./runtime"
-import type {
-  ActiveScenario,
-  Options,
-  ProjectOptions,
-  Result,
-  Scenario,
-  ScenarioContext,
-  SeededContext,
-} from "./types"
+import type { ActiveScenario, Options, ProjectOptions, Result, Scenario, ScenarioContext, SeededContext } from "./types"
 
 export function runScenario(options: Options) {
   return (scenario: Scenario) => {

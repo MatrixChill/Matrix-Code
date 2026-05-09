@@ -287,7 +287,6 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("keeps matched API routes ahead of the UI fallback", async () => {
-
     const response = await Server.Default().app.request("/session/nope")
 
     expect(response.status).toBe(404)
@@ -344,7 +343,6 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("allows web UI preflight without auth", async () => {
-
     const response = await app({ password: "secret", username: "opencode" }).request("/", {
       method: "OPTIONS",
       headers: {
