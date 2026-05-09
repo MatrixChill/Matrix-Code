@@ -79,9 +79,7 @@ const setupWorkspace = (kind: string) =>
   Effect.gen(function* () {
     const dir = yield* tmpdirScoped({ git: true })
     yield* Project.use.fromDirectory(dir)
-    const projectID = yield* Project.Service.use((svc) =>
-      svc.fromDirectory(dir).pipe(Effect.map((p) => p.project.id)),
-    )
+    const projectID = yield* Project.Service.use((svc) => svc.fromDirectory(dir).pipe(Effect.map((p) => p.project.id)))
     registerAdapter(projectID, kind, localAdapter(dir))
     const workspace = yield* Workspace.Service.use((svc) =>
       svc.create({ type: kind, branch: null, extra: null, projectID }),

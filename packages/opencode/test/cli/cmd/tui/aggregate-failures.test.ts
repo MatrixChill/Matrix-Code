@@ -43,17 +43,13 @@ describe("aggregateFailures", () => {
 
   test("attaches structured failure list under .cause", () => {
     const reason = new Error("nope")
-    const err = aggregateFailures([
-      { name: "providers", result: { status: "rejected", reason } },
-    ])
+    const err = aggregateFailures([{ name: "providers", result: { status: "rejected", reason } }])
     const cause = err!.cause as { failures: Array<{ name: string; reason: unknown }> }
     expect(cause.failures).toEqual([{ name: "providers", reason }])
   })
 
   test("falls back to String() for opaque reasons", () => {
-    const err = aggregateFailures([
-      { name: "x", result: { status: "rejected", reason: 42 } },
-    ])
+    const err = aggregateFailures([{ name: "x", result: { status: "rejected", reason: 42 } }])
     expect(err!.message).toContain("x: 42")
   })
 })

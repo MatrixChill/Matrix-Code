@@ -406,9 +406,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           // Surface every failed endpoint in one labeled message instead of
           // letting the first rejection drown its siblings as unhandled
           // rejections.
-          const failure = aggregateFailures(
-            blockingRequests.map((r, i) => ({ name: r.name, result: settled[i] })),
-          )
+          const failure = aggregateFailures(blockingRequests.map((r, i) => ({ name: r.name, result: settled[i] })))
           if (failure) throw failure
         })
         .then(async () => {
