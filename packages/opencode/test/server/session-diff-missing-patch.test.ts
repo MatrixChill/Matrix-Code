@@ -45,7 +45,10 @@ describe("session diff with missing patch (#26574)", () => {
           directory: tmp.path,
           fn: async () => {
             const session = await Effect.runPromise(
-              Effect.provide(Session.Service.use((s) => s.create({ title: "missing-patch" })), Session.defaultLayer),
+              Effect.provide(
+                Session.Service.use((s) => s.create({ title: "missing-patch" })),
+                Session.defaultLayer,
+              ),
             )
 
             // Mimic legacy/imported on-disk shape: a diff entry with no
@@ -61,10 +64,9 @@ describe("session diff with missing patch (#26574)", () => {
             )
 
             const headers = { "x-opencode-directory": tmp.path }
-            const response = await Server.Default().app.request(
-              pathFor(SessionPaths.diff, { sessionID: session.id }),
-              { headers },
-            )
+            const response = await Server.Default().app.request(pathFor(SessionPaths.diff, { sessionID: session.id }), {
+              headers,
+            })
             expect(response.status).toBe(200)
             const body = (await response.json()) as Array<{ file: string; patch?: string; additions: number }>
             expect(body).toHaveLength(1)
