@@ -8,7 +8,6 @@ import type {
   ToolStatePending,
   ToolStateRunning,
 } from "@opencode-ai/sdk/v2"
-import { Instance } from "../../src/project/instance"
 import { WithInstance } from "../../src/project/with-instance"
 import { tmpdir } from "../fixture/fixture"
 
@@ -113,6 +112,7 @@ function completedToolEvent(
     ...(opts.attachments && { attachments: opts.attachments }),
   }
   const payload: EventMessagePartUpdated = {
+    id: `evt_${opts.callID}`,
     type: "message.part.updated",
     properties: {
       sessionID: sessionId,
@@ -671,7 +671,7 @@ describe("acp.agent event subscription", () => {
 
   test("emits image attachments as ACP tool content blocks on live completed tool updates", async () => {
     await using tmp = await tmpdir()
-    await Instance.provide({
+    await WithInstance.provide({
       directory: tmp.path,
       fn: async () => {
         const { agent, controller, sessionUpdates, stop } = createFakeAgent()
@@ -728,7 +728,7 @@ describe("acp.agent event subscription", () => {
 
   test("replays completed tool image attachments as ACP tool content blocks", async () => {
     await using tmp = await tmpdir()
-    await Instance.provide({
+    await WithInstance.provide({
       directory: tmp.path,
       fn: async () => {
         const { agent, sessionUpdates, stop, sdk } = createFakeAgent()
