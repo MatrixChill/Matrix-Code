@@ -4,7 +4,7 @@ import { ProviderID, ModelID } from "@/provider/schema"
 import { Session } from "@/session/session"
 import { Worktree } from "@/worktree"
 import { NonNegativeInt } from "@opencode-ai/core/schema"
-import { Schema, SchemaGetter } from "effect"
+import { Schema } from "effect"
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
 import { Authorization } from "../middleware/authorization"
 import { InstanceContextMiddleware } from "../middleware/instance-context"
@@ -14,6 +14,7 @@ import {
   WorkspaceRoutingQueryFields,
 } from "../middleware/workspace-routing"
 import { described } from "./metadata"
+import { QueryBoolean } from "./query"
 
 const ConsoleStateResponse = Schema.Struct({
   consoleManagedProviders: Schema.mutable(Schema.Array(Schema.String)),
@@ -52,12 +53,6 @@ export const ToolListQuery = Schema.Struct({
   model: ModelID,
 })
 
-const QueryBoolean = Schema.Literals(["true", "false"]).pipe(
-  Schema.decodeTo(Schema.Boolean, {
-    decode: SchemaGetter.transform((value) => value === "true"),
-    encode: SchemaGetter.transform((value) => (value ? "true" : "false")),
-  }),
-)
 const WorktreeList = Schema.Array(Schema.String)
 export const SessionListQuery = Schema.Struct({
   ...WorkspaceRoutingQueryFields,

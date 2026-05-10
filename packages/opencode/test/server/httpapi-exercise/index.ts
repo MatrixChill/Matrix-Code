@@ -524,7 +524,10 @@ const scenarios: Scenario[] = [
         yield* ctx.worktreeRemove(ctx.state.directory)
       }),
     ),
-  http.protected.get("/experimental/session", "experimental.session.list").json(200, array),
+  http.protected
+    .get("/experimental/session", "experimental.session.list")
+    .at((ctx) => ({ path: "/experimental/session?roots=false&archived=false", headers: ctx.headers() }))
+    .json(200, array),
   http.protected.get("/experimental/resource", "experimental.resource.list").json(),
   http.protected
     .post("/sync/history", "sync.history.list")

@@ -84,7 +84,7 @@ Verification:
 
 Concrete first targets:
 
-- Replace `roots` / `archived` reliance on `QueryBooleanParameters` with explicit route schema helpers.
+- `[x]` Consolidate `roots` / `archived` onto an explicit shared route schema helper. Keep `QueryBooleanParameters` until route-level schema metadata can preserve the SDK's `boolean | "true" | "false"` call shape without a global transform.
 - Replace `start` / `cursor` / `limit` reliance on `QueryNumberParameters` with explicit route schema constraints where missing.
 - Keep `GET /find/file limit`, `GET /session/{sessionID}/diff messageID`, and `GET /session/{sessionID}/message limit` overrides until their route schemas generate identical SDK types directly.
 

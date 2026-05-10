@@ -2,17 +2,11 @@ import { SessionID } from "@/session/schema"
 import { SessionMessage } from "@/v2/session-message"
 import { Prompt } from "@/v2/session-prompt"
 import { SessionV2 } from "@/v2/session"
-import { Schema, SchemaGetter } from "effect"
+import { Schema } from "effect"
 import { HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
 import { Authorization } from "../../middleware/authorization"
 import { WorkspaceRoutingQuery, WorkspaceRoutingQueryFields } from "../../middleware/workspace-routing"
-
-const QueryBoolean = Schema.Literals(["true", "false"]).pipe(
-  Schema.decodeTo(Schema.Boolean, {
-    decode: SchemaGetter.transform((value) => value === "true"),
-    encode: SchemaGetter.transform((value) => (value ? "true" : "false")),
-  }),
-)
+import { QueryBoolean } from "../query"
 
 export const SessionsQuery = Schema.Struct({
   ...WorkspaceRoutingQueryFields,

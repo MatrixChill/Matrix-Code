@@ -1,5 +1,5 @@
 import { afterEach, describe, expect } from "bun:test"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 import { OpenApi } from "effect/unstable/httpapi"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Server } from "../../src/server/server"
@@ -24,6 +24,7 @@ import {
 } from "../../src/server/routes/instance/httpapi/groups/session"
 import { MessagesQuery as V2MessagesQuery } from "../../src/server/routes/instance/httpapi/groups/v2/message"
 import { SessionsQuery as V2SessionsQuery } from "../../src/server/routes/instance/httpapi/groups/v2/session"
+import { QueryBoolean } from "../../src/server/routes/instance/httpapi/groups/query"
 import { resetDatabase } from "../fixture/db"
 import { disposeAllInstances, tmpdir } from "../fixture/fixture"
 import { it } from "../lib/effect"
@@ -105,6 +106,23 @@ describe("httpapi query schema drift", () => {
   const expectNotSchemaRejection = (status: number, url: string) => {
     expect(status, `route ${url} 400'd, query schema is missing routing fields`).not.toBe(400)
   }
+
+  it.effect(
+    "boolean query schema accepts only true and false strings",
+    Effect.sync(() => {
+      const decode = Schema.decodeUnknownSync(QueryBoolean)
+      const encode = Schema.encodeUnknownSync(QueryBoolean)
+
+      expect(decode("true")).toBe(true)
+      expect(decode("false")).toBe(false)
+      expect(encode(true)).toBe("true")
+      expect(encode(false)).toBe("false")
+
+      for (const input of ["1", "yes", "True", "", true, false]) {
+        expect(() => decode(input)).toThrow()
+      }
+    }),
+  )
 
   it.effect(
     "OpenAPI workspace query params are declared by runtime query schemas",
