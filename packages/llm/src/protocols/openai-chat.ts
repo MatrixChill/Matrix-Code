@@ -348,10 +348,7 @@ const step = (state: ParserState, event: OpenAIChatEvent) =>
 const finishEvents = (state: ParserState): ReadonlyArray<LLMEvent> => {
   const hasToolCalls = state.toolCallEvents.length > 0
   const reason = state.finishReason === "stop" && hasToolCalls ? "tool-calls" : state.finishReason
-  return [
-    ...state.toolCallEvents,
-    ...(reason ? [LLMEvent.requestFinish({ reason, usage: state.usage })] : []),
-  ]
+  return [...state.toolCallEvents, ...(reason ? [LLMEvent.requestFinish({ reason, usage: state.usage })] : [])]
 }
 
 // =============================================================================

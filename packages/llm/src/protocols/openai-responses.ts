@@ -377,12 +377,7 @@ const TERMINAL_TYPES = new Set(["response.completed", "response.incomplete", "re
 
 const onOutputTextDelta = (state: ParserState, event: OpenAIResponsesEvent): StepResult => {
   if (!event.delta) return [state, NO_EVENTS]
-  return [
-    state,
-    [
-      LLMEvent.textDelta({ id: event.item_id ?? "text-0", text: event.delta }),
-    ],
-  ]
+  return [state, [LLMEvent.textDelta({ id: event.item_id ?? "text-0", text: event.delta })]]
 }
 
 const onOutputItemAdded = (state: ParserState, event: OpenAIResponsesEvent): StepResult => {

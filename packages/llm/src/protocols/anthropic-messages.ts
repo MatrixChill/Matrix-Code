@@ -482,13 +482,21 @@ const onContentBlockDelta = Effect.fn("AnthropicMessages.onContentBlockDelta")(f
   }
 
   if (delta?.type === "thinking_delta" && delta.thinking) {
-    return [state, [LLMEvent.reasoningDelta({ id: `reasoning-${event.index ?? 0}`, text: delta.thinking })]] satisfies StepResult
+    return [
+      state,
+      [LLMEvent.reasoningDelta({ id: `reasoning-${event.index ?? 0}`, text: delta.thinking })],
+    ] satisfies StepResult
   }
 
   if (delta?.type === "signature_delta" && delta.signature) {
     return [
       state,
-      [LLMEvent.reasoningEnd({ id: `reasoning-${event.index ?? 0}`, providerMetadata: anthropicMetadata({ signature: delta.signature }) })],
+      [
+        LLMEvent.reasoningEnd({
+          id: `reasoning-${event.index ?? 0}`,
+          providerMetadata: anthropicMetadata({ signature: delta.signature }),
+        }),
+      ],
     ] satisfies StepResult
   }
 

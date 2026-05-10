@@ -468,10 +468,7 @@ const step = (state: ParserState, event: BedrockEvent) =>
     if (event.validationException || event.throttlingException) {
       const message =
         event.validationException?.message ?? event.throttlingException?.message ?? "Bedrock Converse error"
-      return [
-        state,
-        [LLMEvent.providerError({ message, retryable: event.throttlingException !== undefined })],
-      ] as const
+      return [state, [LLMEvent.providerError({ message, retryable: event.throttlingException !== undefined })]] as const
     }
 
     return [state, []] as const
