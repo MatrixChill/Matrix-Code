@@ -5025,7 +5025,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "pattern": "^msg.*"
+              "pattern": "^msg"
             },
             "required": false
           }
