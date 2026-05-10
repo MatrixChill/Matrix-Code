@@ -21,16 +21,10 @@ export class SchemaErrorMiddleware extends HttpApiMiddleware.Service<SchemaError
   "@opencode/HttpApiSchemaError",
 ) {}
 
-export const schemaErrorLayer = HttpApiMiddleware.layerSchemaErrorTransform(
-  SchemaErrorMiddleware,
-  (error) => {
-    const reason = truncateReason(error.cause.message)
-    log.warn("schema rejection", { kind: error.kind, reason })
-    return Effect.succeed(
-      HttpServerResponse.jsonUnsafe(
-        { name: "BadRequest", data: { message: reason, kind: error.kind } },
-        { status: 400 },
-      ),
-    )
-  },
-)
+export const schemaErrorLayer = HttpApiMiddleware.layerSchemaErrorTransform(SchemaErrorMiddleware, (error) => {
+  const reason = truncateReason(error.cause.message)
+  log.warn("schema rejection", { kind: error.kind, reason })
+  return Effect.succeed(
+    HttpServerResponse.jsonUnsafe({ name: "BadRequest", data: { message: reason, kind: error.kind } }, { status: 400 }),
+  )
+})
