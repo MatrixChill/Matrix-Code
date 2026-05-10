@@ -1,19 +1,17 @@
-import { Effect, PlatformError, Ref, Scope } from "effect"
+import { Data, Effect, Ref, Scope } from "effect"
 import type * as CassetteService from "./cassette"
+import type { CassetteNotFoundError } from "./cassette"
 import type { SecretFinding } from "./redaction"
-import type { Cassette, CassetteMetadata, Interaction } from "./schema"
+import type { CassetteMetadata, Interaction } from "./schema"
 
-export class UnsafeCassetteError extends Error {
-  readonly _tag = "UnsafeCassetteError"
-  constructor(
-    readonly cassetteName: string,
-    readonly findings: ReadonlyArray<SecretFinding>,
-  ) {
-    super(
-      `Refusing to write cassette "${cassetteName}" because it contains possible secrets: ${findings
-        .map((finding) => `${finding.path} (${finding.reason})`)
-        .join(", ")}`,
-    )
+export class UnsafeCassetteError extends Data.TaggedError("UnsafeCassetteError")<{
+  readonly cassetteName: string
+  readonly findings: ReadonlyArray<SecretFinding>
+}> {
+  override get message() {
+    return `Refusing to write cassette "${this.cassetteName}" because it contains possible secrets: ${this.findings
+      .map((finding) => `${finding.path} (${finding.reason})`)
+      .join(", ")}`
   }
 }
 
@@ -35,16 +33,17 @@ export const appendOrFail = (
   name: string,
   interaction: Interaction,
   metadata: CassetteMetadata | undefined,
-): Effect.Effect<Cassette, UnsafeCassetteError> =>
+): Effect.Effect<void, UnsafeCassetteError> =>
   cassette.append(name, interaction, metadata).pipe(
-    Effect.orDie,
-    Effect.flatMap(({ cassette: result, findings }) =>
-      findings.length === 0 ? Effect.succeed(result) : Effect.fail(new UnsafeCassetteError(name, findings)),
+    Effect.flatMap(({ findings }) =>
+      findings.length === 0
+        ? Effect.void
+        : Effect.fail(new UnsafeCassetteError({ cassetteName: name, findings })),
     ),
   )
 
 export interface ReplayState<T> {
-  readonly load: Effect.Effect<ReadonlyArray<T>, PlatformError.PlatformError>
+  readonly load: Effect.Effect<ReadonlyArray<T>, CassetteNotFoundError>
   readonly cursor: Effect.Effect<number>
   readonly advance: Effect.Effect<void>
 }
@@ -52,7 +51,7 @@ export interface ReplayState<T> {
 export const makeReplayState = <T>(
   cassette: CassetteService.Interface,
   name: string,
-  project: (cassette: Cassette) => ReadonlyArray<T>,
+  project: (interactions: ReadonlyArray<Interaction>) => ReadonlyArray<T>,
 ): Effect.Effect<ReplayState<T>, never, Scope.Scope> =>
   Effect.gen(function* () {
     const load = yield* Effect.cached(cassette.read(name).pipe(Effect.map(project)))

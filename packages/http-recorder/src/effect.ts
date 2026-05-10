@@ -138,7 +138,7 @@ export const recordingLayer = (
 
 export const cassetteLayer = (name: string, options: RecordReplayOptions = {}): Layer.Layer<HttpClient.HttpClient> =>
   recordingLayer(name, options).pipe(
-    Layer.provide(CassetteService.layer({ directory: options.directory })),
+    Layer.provide(CassetteService.fileSystem({ directory: options.directory })),
     Layer.provide(FetchHttpClient.layer),
     Layer.provide(NodeFileSystem.layer),
   )

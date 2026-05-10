@@ -1,5 +1,3 @@
-import type { Cassette } from "./schema"
-
 export const REDACTED = "[REDACTED]"
 
 const DEFAULT_REDACT_HEADERS = [
@@ -113,4 +111,3 @@ export const secretFindings = (value: unknown): ReadonlyArray<SecretFinding> =>
       .map((item) => ({ path: entry.path, reason: `environment secret ${item.name}` })),
   ])
 
-export const cassetteSecretFindings = (cassette: Cassette) => secretFindings(cassette)

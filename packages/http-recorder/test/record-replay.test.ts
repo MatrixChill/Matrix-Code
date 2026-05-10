@@ -7,7 +7,18 @@ import * as os from "node:os"
 import * as path from "node:path"
 import { HttpRecorder } from "../src"
 import { redactedErrorRequest } from "../src/effect"
-import { cassetteFor, formatCassette, parseCassette } from "../src/storage"
+import type { Interaction } from "../src/schema"
+
+const seedCassetteDirectory = (directory: string, name: string, interactions: ReadonlyArray<Interaction>) =>
+  Effect.runPromise(
+    Effect.gen(function* () {
+      const cassette = yield* HttpRecorder.Cassette.Service
+      yield* Effect.forEach(interactions, (interaction) => cassette.append(name, interaction))
+    }).pipe(
+      Effect.provide(HttpRecorder.Cassette.fileSystem({ directory })),
+      Effect.provide(NodeFileSystem.layer),
+    ),
+  )
 
 const post = (url: string, body: object) =>
   Effect.gen(function* () {
@@ -34,7 +45,7 @@ const runRecorder = <A, E>(effect: Effect.Effect<A, E, HttpRecorder.Cassette.Ser
     Effect.scoped(
       effect.pipe(
         Effect.provide(
-          HttpRecorder.Cassette.layer({ directory: fs.mkdtempSync(path.join(os.tmpdir(), "http-recorder-")) }),
+          HttpRecorder.Cassette.fileSystem({ directory: fs.mkdtempSync(path.join(os.tmpdir(), "http-recorder-")) }),
         ),
         Effect.provide(NodeFileSystem.layer),
       ),
@@ -109,7 +120,7 @@ describe("http-recorder", () => {
 
   test("detects secret-looking values without returning the secret", () => {
     expect(
-      HttpRecorder.cassetteSecretFindings({
+      HttpRecorder.secretFindings({
         version: 1,
         interactions: [
           {
@@ -137,7 +148,7 @@ describe("http-recorder", () => {
 
   test("detects secret-looking values inside metadata", () => {
     expect(
-      HttpRecorder.cassetteSecretFindings({
+      HttpRecorder.secretFindings({
         version: 1,
         metadata: { token: "REMOVED_API_KEY" },
         interactions: [],
@@ -145,60 +156,42 @@ describe("http-recorder", () => {
     ).toEqual([{ path: "metadata.token", reason: "API key" }])
   })
 
-  test("formats websocket cassettes with shared metadata", () => {
-    const cassette = cassetteFor(
-      "websocket/basic",
-      [
-        {
-          transport: "websocket",
-          open: { url: "wss://example.test/realtime", headers: { "content-type": "application/json" } },
-          client: [{ kind: "text", body: JSON.stringify({ type: "response.create" }) }],
-          server: [{ kind: "text", body: JSON.stringify({ type: "response.completed" }) }],
-        },
-      ],
-      { provider: "openai" },
-    )
+  test("replays websocket interactions seeded into the in-memory cassette adapter", async () => {
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const cassette = yield* HttpRecorder.Cassette.Service
+          const executor = yield* HttpRecorder.makeWebSocketExecutor({
+            name: "websocket/replay",
+            cassette,
+            compareClientMessagesAsJson: true,
+            live: { open: () => Effect.die(new Error("unexpected live WebSocket open")) },
+          })
+          const connection = yield* executor.open({
+            url: "wss://example.test/realtime",
+            headers: Headers.fromInput({ "content-type": "application/json" }),
+          })
+          yield* connection.sendText(JSON.stringify({ type: "response.create" }))
+          const messages: Array<string | Uint8Array> = []
+          yield* connection.messages.pipe(Stream.runForEach((message) => Effect.sync(() => messages.push(message))))
+          yield* connection.close
 
-    expect(cassette.metadata).toMatchObject({ name: "websocket/basic", provider: "openai" })
-    expect(parseCassette(formatCassette(cassette))).toEqual(cassette)
-  })
-
-  test("replays websocket interactions from the shared cassette service", async () => {
-    await runRecorder(
-      Effect.gen(function* () {
-        const cassette = yield* HttpRecorder.Cassette.Service
-        yield* cassette.write(
-          "websocket/replay",
-          cassetteFor(
-            "websocket/replay",
-            [
-              {
-                transport: "websocket",
-                open: { url: "wss://example.test/realtime", headers: { "content-type": "application/json" } },
-                client: [{ kind: "text", body: JSON.stringify({ type: "response.create" }) }],
-                server: [{ kind: "text", body: JSON.stringify({ type: "response.completed" }) }],
-              },
-            ],
-            undefined,
+          expect(messages).toEqual([JSON.stringify({ type: "response.completed" })])
+        }).pipe(
+          Effect.provide(
+            HttpRecorder.Cassette.memory({
+              "websocket/replay": [
+                {
+                  transport: "websocket",
+                  open: { url: "wss://example.test/realtime", headers: { "content-type": "application/json" } },
+                  client: [{ kind: "text", body: JSON.stringify({ type: "response.create" }) }],
+                  server: [{ kind: "text", body: JSON.stringify({ type: "response.completed" }) }],
+                },
+              ],
+            }),
           ),
-        )
-        const executor = yield* HttpRecorder.makeWebSocketExecutor({
-          name: "websocket/replay",
-          cassette,
-          compareClientMessagesAsJson: true,
-          live: { open: () => Effect.die(new Error("unexpected live WebSocket open")) },
-        })
-        const connection = yield* executor.open({
-          url: "wss://example.test/realtime",
-          headers: Headers.fromInput({ "content-type": "application/json" }),
-        })
-        yield* connection.sendText(JSON.stringify({ type: "response.create" }))
-        const messages: Array<string | Uint8Array> = []
-        yield* connection.messages.pipe(Stream.runForEach((message) => Effect.sync(() => messages.push(message))))
-        yield* connection.close
-
-        expect(messages).toEqual([JSON.stringify({ type: "response.completed" })])
-      }),
+        ),
+      ),
     )
   })
 
@@ -228,17 +221,14 @@ describe("http-recorder", () => {
         yield* connection.messages.pipe(Stream.runDrain)
         yield* connection.close
 
-        expect(yield* cassette.read("websocket/record")).toMatchObject({
-          metadata: { name: "websocket/record", provider: "test" },
-          interactions: [
-            {
-              transport: "websocket",
-              open: { url: "wss://example.test/realtime", headers: { "content-type": "application/json" } },
-              client: [{ kind: "text", body: JSON.stringify({ type: "response.create" }) }],
-              server: [{ kind: "text", body: JSON.stringify({ type: "response.completed" }) }],
-            },
-          ],
-        })
+        expect(yield* cassette.read("websocket/record")).toMatchObject([
+          {
+            transport: "websocket",
+            open: { url: "wss://example.test/realtime", headers: { "content-type": "application/json" } },
+            client: [{ kind: "text", body: JSON.stringify({ type: "response.create" }) }],
+            server: [{ kind: "text", body: JSON.stringify({ type: "response.completed" }) }],
+          },
+        ])
       }),
     )
   })
@@ -303,28 +293,18 @@ describe("http-recorder", () => {
 
   test("auto mode replays when the cassette exists", async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "http-recorder-auto-"))
-    const cassettePath = path.join(directory, "auto-replay.json")
-    fs.writeFileSync(
-      cassettePath,
-      formatCassette(
-        cassetteFor(
-          "auto-replay",
-          [
-            {
-              transport: "http",
-              request: {
-                method: "POST",
-                url: "https://example.test/echo",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ step: 1 }),
-              },
-              response: { status: 200, headers: { "content-type": "application/json" }, body: '{"reply":"hi"}' },
-            },
-          ],
-          undefined,
-        ),
-      ),
-    )
+    await seedCassetteDirectory(directory, "auto-replay", [
+      {
+        transport: "http",
+        request: {
+          method: "POST",
+          url: "https://example.test/echo",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ step: 1 }),
+        },
+        response: { status: 200, headers: { "content-type": "application/json" }, body: '{"reply":"hi"}' },
+      },
+    ])
 
     const result = await runWith(
       "auto-replay",

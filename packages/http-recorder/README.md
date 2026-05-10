@@ -160,9 +160,9 @@ const program = Effect.gen(function* () {
 
 ## Inspecting cassettes programmatically
 
-`Cassette.Service` exposes `read`, `write`, `append`, `exists`, `list`, and
-`scan` (re-running the secret detector over an existing cassette). Useful
-for CI checks:
+`Cassette.Service` exposes `read`, `append`, `exists`, and `list`. `read`
+returns the recorded interactions for a name; the file format is hidden
+behind the seam. Useful for CI checks:
 
 ```ts
 import { HttpRecorder } from "@opencode-ai/http-recorder"
@@ -170,12 +170,21 @@ import { Effect } from "effect"
 
 const audit = Effect.gen(function* () {
   const cassettes = yield* HttpRecorder.Cassette.Service
-  const findings = yield* Effect.forEach(yield* cassettes.list(), (entry) =>
-    cassettes.read(entry.name).pipe(Effect.map((c) => ({ entry, findings: cassettes.scan(c) }))),
+  const entries = yield* cassettes.list()
+  const issues = yield* Effect.forEach(entries, (entry) =>
+    cassettes.read(entry.name).pipe(
+      Effect.map((interactions) => ({ name: entry.name, findings: HttpRecorder.secretFindings(interactions) })),
+    ),
   )
-  return findings.filter((r) => r.findings.length > 0)
+  return issues.filter((i) => i.findings.length > 0)
 })
 ```
+
+`cassetteLayer` is the batteries-included entry point — it provides
+`Cassette.fileSystem({ directory })` automatically. If you want to provide
+your own `Cassette.Service` (e.g. an in-memory adapter for the recorder's
+own unit tests), use `recordingLayer` and supply `Cassette.fileSystem` /
+`Cassette.memory` yourself.
 
 ## Options reference
 
