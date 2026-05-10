@@ -9,7 +9,9 @@ const context = createContext<{
 
 export function PathFormatterProvider(props: ParentProps<{ path: string | undefined }>) {
   return (
-    <context.Provider value={{ path: () => props.path || process.cwd(), format: (input) => formatPath(input, props.path) }}>
+    <context.Provider
+      value={{ path: () => props.path || process.cwd(), format: (input) => formatPath(input, props.path) }}
+    >
       {props.children}
     </context.Provider>
   )
