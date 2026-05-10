@@ -15,15 +15,15 @@ so the user's editor catches mistakes as they type.
 
 ## Where files live
 
-| Scope | Path |
-|---|---|
-| Project config | `./opencode.json`, `./opencode.jsonc`, or `.opencode/opencode.json` (opencode walks up from the cwd to the worktree root) |
-| Global config | `~/.config/opencode/opencode.json` (NOT `~/.opencode/`) |
-| Project agents | `.opencode/agent/<name>.md` or `.opencode/agents/<name>.md` |
-| Global agents | `~/.config/opencode/agent(s)/<name>.md` |
-| Project skills | `.opencode/skill(s)/<name>/SKILL.md` |
-| Global skills | `~/.config/opencode/skill(s)/<name>/SKILL.md` |
-| External skills (auto-loaded) | `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` |
+| Scope                         | Path                                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Project config                | `./opencode.json`, `./opencode.jsonc`, or `.opencode/opencode.json` (opencode walks up from the cwd to the worktree root) |
+| Global config                 | `~/.config/opencode/opencode.json` (NOT `~/.opencode/`)                                                                   |
+| Project agents                | `.opencode/agent/<name>.md` or `.opencode/agents/<name>.md`                                                               |
+| Global agents                 | `~/.config/opencode/agent(s)/<name>.md`                                                                                   |
+| Project skills                | `.opencode/skill(s)/<name>/SKILL.md`                                                                                      |
+| Global skills                 | `~/.config/opencode/skill(s)/<name>/SKILL.md`                                                                             |
+| External skills (auto-loaded) | `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md`                                                    |
 
 Configs from each scope are deep-merged. Project overrides global. Unknown
 top-level keys in `opencode.json` are rejected with `ConfigInvalidError`.
@@ -143,7 +143,7 @@ description: One sentence covering what this skill does AND when to trigger it. 
 ```
 
 - `name` is required, lowercase hyphen-separated, up to 64 chars, and matches the folder name.
-- `description` is effectively required: skills without one are filtered out and never surfaced to the model. Cover both *what* the skill does and *when* to use it. Write in third person ("Use when...", not "I help with..."). Front-load concrete trigger keywords and filenames; gate with "Use ONLY when..." if the skill should stay quiet on adjacent topics.
+- `description` is effectively required: skills without one are filtered out and never surfaced to the model. Cover both _what_ the skill does and _when_ to use it. Write in third person ("Use when...", not "I help with..."). Front-load concrete trigger keywords and filenames; gate with "Use ONLY when..." if the skill should stay quiet on adjacent topics.
 - Optional: `license`, `compatibility`, `metadata` (string-string map).
 
 Register skills from non-default locations via `skills.paths` (scanned
@@ -248,6 +248,7 @@ export default (async ({ client, project, directory, $ }) => {
 ```
 
 Hook surface (mutate `output` in place; return `void`):
+
 - `event(input)`: every bus event
 - `config(cfg)`: once on init with the merged config
 - `chat.message`, `chat.params`, `chat.headers`
