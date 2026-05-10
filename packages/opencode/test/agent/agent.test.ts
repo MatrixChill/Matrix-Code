@@ -174,7 +174,9 @@ test("reference config creates scout-backed subagents", async () => {
         expect(effect).toBeDefined()
         expect(effect?.mode).toBe("subagent")
         expect(effect?.prompt).toContain("Repository: github.com/effect/effect-smol")
-        expect(effect?.prompt).toContain(`Cached directory: ${path.join(Global.Path.repos, "github.com", "effect", "effect-smol")}`)
+        expect(effect?.prompt).toContain(
+          `Cached directory: ${path.join(Global.Path.repos, "github.com", "effect", "effect-smol")}`,
+        )
         expect(effect?.prompt).toContain("Do not call repo_clone")
         expect(evalPerm(effect, "repo_clone")).toBe("deny")
 

@@ -351,19 +351,17 @@ export const layer = Layer.effect(
               description: referenceDescription(resolved),
               permission: Permission.merge(
                 agents.scout.permission,
-                Permission.fromConfig(
-                  {
-                    repo_clone: "deny",
-                    ...(localPath
-                      ? {
-                          external_directory: {
-                            [localPath]: "allow",
-                            [path.join(localPath, "*")]: "allow",
-                          },
-                        }
-                      : {}),
-                  },
-                ),
+                Permission.fromConfig({
+                  repo_clone: "deny",
+                  ...(localPath
+                    ? {
+                        external_directory: {
+                          [localPath]: "allow",
+                          [path.join(localPath, "*")]: "allow",
+                        },
+                      }
+                    : {}),
+                }),
               ),
               prompt: referencePrompt(resolved),
               options: { reference: cfg.reference?.[resolved.name], resolved },
