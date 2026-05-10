@@ -51,7 +51,9 @@ export const makeReplayState = <T>(
         if (used === 0) return
         const interactions = yield* load.pipe(Effect.orDie)
         if (used < interactions.length)
-          yield* Effect.die(new Error(`Unused recorded interactions in ${name}: used ${used} of ${interactions.length}`))
+          yield* Effect.die(
+            new Error(`Unused recorded interactions in ${name}: used ${used} of ${interactions.length}`),
+          )
       }),
     )
 

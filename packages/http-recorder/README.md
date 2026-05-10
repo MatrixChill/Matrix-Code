@@ -34,9 +34,7 @@ const program = Effect.gen(function* () {
 Effect.runPromise(program.pipe(Effect.provide(HttpRecorder.cassetteLayer("users/get-one"))))
 
 // Record. Hits the upstream and writes the cassette.
-Effect.runPromise(
-  program.pipe(Effect.provide(HttpRecorder.cassetteLayer("users/get-one", { mode: "record" }))),
-)
+Effect.runPromise(program.pipe(Effect.provide(HttpRecorder.cassetteLayer("users/get-one", { mode: "record" }))))
 ```
 
 Set the mode from the environment in your test setup:
@@ -190,12 +188,12 @@ const audit = Effect.gen(function* () {
 
 ```ts
 type RecordReplayOptions = {
-  mode?: "record" | "replay" | "passthrough"   // default: "replay"
-  directory?: string                            // default: <cwd>/test/fixtures/recordings
-  metadata?: Record<string, unknown>            // merged into cassette.metadata
-  redactor?: Redactor                           // default: Redactor.defaults()
-  dispatch?: "match" | "sequential"             // default: "match"
-  match?: (incoming, recorded) => boolean       // custom matcher
+  mode?: "record" | "replay" | "passthrough" // default: "replay"
+  directory?: string // default: <cwd>/test/fixtures/recordings
+  metadata?: Record<string, unknown> // merged into cassette.metadata
+  redactor?: Redactor // default: Redactor.defaults()
+  dispatch?: "match" | "sequential" // default: "match"
+  match?: (incoming, recorded) => boolean // custom matcher
 }
 ```
 

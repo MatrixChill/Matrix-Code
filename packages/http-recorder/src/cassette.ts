@@ -111,4 +111,3 @@ export const layer = (options: { readonly directory?: string } = {}) =>
       return Service.of({ path: pathFor, read, write, append, exists, list, scan: cassetteSecretFindings })
     }),
   )
-

@@ -44,7 +44,14 @@ const decodeResponseBody = (snapshot: ResponseSnapshot) =>
   snapshot.bodyEncoding === "base64" ? Buffer.from(snapshot.body, "base64") : snapshot.body
 
 export const redactedErrorRequest = (request: HttpClientRequest.HttpClientRequest) =>
-  HttpClientRequest.makeWith(request.method, redactUrl(request.url), UrlParams.empty, Option.none(), Headers.empty, HttpBody.empty)
+  HttpClientRequest.makeWith(
+    request.method,
+    redactUrl(request.url),
+    UrlParams.empty,
+    Option.none(),
+    Headers.empty,
+    HttpBody.empty,
+  )
 
 const transportError = (request: HttpClientRequest.HttpClientRequest, description: string) =>
   new HttpClientError.HttpClientError({
