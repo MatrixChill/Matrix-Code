@@ -12010,6 +12010,36 @@
         "enum": ["auto", "stretch"],
         "description": "@deprecated Always uses stretch layout."
       },
+      "ImageAttachmentConfig": {
+        "type": "object",
+        "properties": {
+          "auto_resize": {
+            "type": "boolean"
+          },
+          "max_width": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "max_height": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "max_base64_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "AttachmentConfig": {
+        "type": "object",
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImageAttachmentConfig"
+          }
+        },
+        "additionalProperties": false
+      },
       "Config": {
         "type": "object",
         "properties": {
@@ -12339,6 +12369,9 @@
             "additionalProperties": {
               "type": "boolean"
             }
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/AttachmentConfig"
           },
           "enterprise": {
             "type": "object",

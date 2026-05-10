@@ -9,7 +9,9 @@ const it = testEffect(Layer.mergeAll(Image.layer.pipe(Layer.provide(TestConfig.l
 const tiny = testEffect(
   Layer.mergeAll(
     Image.layer.pipe(
-      Layer.provide(TestConfig.layer({ get: () => Effect.succeed({ attachment: { image: { max_base64_bytes: 1 } } }) })),
+      Layer.provide(
+        TestConfig.layer({ get: () => Effect.succeed({ attachment: { image: { max_base64_bytes: 1 } } }) }),
+      ),
     ),
   ),
 )
@@ -60,7 +62,9 @@ describe("Image", () => {
       const photon = yield* Effect.promise(() => import("@silvia-odwyer/photon-node"))
       const source = new photon.PhotonImage(new Uint8Array(Array.from({ length: 4 }, () => 255)), 1, 1)
       const image = yield* Image.Service
-      const exit = yield* image.normalize(part("image/png", Buffer.from(source.get_bytes()).toString("base64"))).pipe(Effect.exit)
+      const exit = yield* image
+        .normalize(part("image/png", Buffer.from(source.get_bytes()).toString("base64")))
+        .pipe(Effect.exit)
 
       source.free()
       expect(Exit.isFailure(exit)).toBe(true)

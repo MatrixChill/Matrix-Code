@@ -389,12 +389,10 @@ export const layer: Layer.Layer<
                 typeof attachment.mime === "string" &&
                 typeof attachment.url === "string",
             )
-            const normalized = yield* Effect.forEach(
-              toolAttachments,
-              (attachment) =>
-                attachment.mime.startsWith("image/")
-                  ? image.normalize(attachment).pipe(Effect.exit)
-                  : Effect.succeed(Exit.succeed<MessageV2.FilePart>(attachment)),
+            const normalized = yield* Effect.forEach(toolAttachments, (attachment) =>
+              attachment.mime.startsWith("image/")
+                ? image.normalize(attachment).pipe(Effect.exit)
+                : Effect.succeed(Exit.succeed<MessageV2.FilePart>(attachment)),
             )
             const omitted = normalized.filter(Exit.isFailure).length
             const attachments = normalized.filter(Exit.isSuccess).map((item) => item.value)

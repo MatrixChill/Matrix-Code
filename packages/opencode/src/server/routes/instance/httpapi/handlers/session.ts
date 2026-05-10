@@ -270,10 +270,9 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
           Effect.provideService(WorkspaceRef, workspace),
           Effect.mapError(() => new HttpApiError.BadRequest({})),
         )
-      return HttpServerResponse.stream(
-        Stream.make(JSON.stringify(message)).pipe(Stream.encodeText),
-        { contentType: "application/json" },
-      )
+      return HttpServerResponse.stream(Stream.make(JSON.stringify(message)).pipe(Stream.encodeText), {
+        contentType: "application/json",
+      })
     })
 
     const promptAsync = Effect.fn("SessionHttpApi.promptAsync")(function* (ctx: {
