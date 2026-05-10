@@ -4518,7 +4518,8 @@
                     "$ref": "#/components/schemas/PermissionRuleset"
                   },
                   "workspaceID": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^wrk"
                   }
                 },
                 "additionalProperties": false
@@ -8504,7 +8505,8 @@
                 "type": "object",
                 "properties": {
                   "id": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^wrk"
                   },
                   "type": {
                     "type": "string"
@@ -8612,7 +8614,8 @@
                     "type": "object",
                     "properties": {
                       "workspaceID": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^wrk"
                       },
                       "status": {
                         "type": "string",
@@ -8648,7 +8651,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "pattern": "^wrk.*"
+              "pattern": "^wrk"
             },
             "required": true
           },
@@ -8756,7 +8759,8 @@
                   "id": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^wrk"
                       },
                       {
                         "type": "null"
@@ -10969,7 +10973,8 @@
             "type": "string"
           },
           "workspaceID": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^wrk"
           },
           "directory": {
             "type": "string"
@@ -12802,7 +12807,8 @@
             "type": "string"
           },
           "workspaceID": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^wrk"
           },
           "directory": {
             "type": "string"
@@ -13908,7 +13914,8 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^wrk"
           },
           "type": {
             "type": "string"
@@ -14265,7 +14272,8 @@
                   "workspaceID": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^wrk"
                       },
                       {
                         "type": "null"
@@ -16488,7 +16496,8 @@
             "type": "object",
             "properties": {
               "workspaceID": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^wrk"
               },
               "status": {
                 "type": "string",
@@ -18020,7 +18029,8 @@
             "type": "string"
           },
           "workspaceID": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^wrk"
           },
           "path": {
             "type": "string"
