@@ -9200,12 +9200,10 @@
             "type": "string"
           },
           "additions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "deletions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "status": {
             "type": "string",
@@ -10047,31 +10045,25 @@
             "type": "object",
             "properties": {
               "total": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "input": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "output": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "reasoning": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "cache": {
                 "type": "object",
                 "properties": {
                   "read": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "write": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   }
                 },
                 "required": ["read", "write"],
@@ -10255,12 +10247,10 @@
             "type": "string"
           },
           "start": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "end": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           }
         },
         "required": ["value", "start", "end"],
@@ -10643,31 +10633,25 @@
             "type": "object",
             "properties": {
               "total": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "input": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "output": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "reasoning": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "cache": {
                 "type": "object",
                 "properties": {
                   "read": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "write": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   }
                 },
                 "required": ["read", "write"],
@@ -10935,16 +10919,13 @@
             "type": "object",
             "properties": {
               "additions": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "deletions": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "files": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "diffs": {
                 "type": "array",
@@ -12767,16 +12748,13 @@
             "type": "object",
             "properties": {
               "additions": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "deletions": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "files": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "diffs": {
                 "type": "array",
@@ -13094,12 +13072,10 @@
             "type": "string"
           },
           "additions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "deletions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "status": {
             "type": "string",
@@ -13119,12 +13095,10 @@
             "type": "string"
           },
           "additions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "deletions": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "status": {
             "type": "string",
@@ -14247,16 +14221,13 @@
                         "type": "object",
                         "properties": {
                           "additions": {
-                            "type": "integer",
-                            "minimum": 0
+                            "type": "number"
                           },
                           "deletions": {
-                            "type": "integer",
-                            "minimum": 0
+                            "type": "number"
                           },
                           "files": {
-                            "type": "integer",
-                            "minimum": 0
+                            "type": "number"
                           },
                           "diffs": {
                             "type": "array",
@@ -14841,27 +14812,22 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "output": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "reasoning": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "cache": {
                     "type": "object",
                     "properties": {
                       "read": {
-                        "type": "integer",
-                        "minimum": 0
+                        "type": "number"
                       },
                       "write": {
-                        "type": "integer",
-                        "minimum": 0
+                        "type": "number"
                       }
                     },
                     "required": ["read", "write"],
@@ -15579,8 +15545,7 @@
                 "type": "string"
               },
               "attempt": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "error": {
                 "$ref": "#/components/schemas/SessionNextRetry_error"
@@ -17083,27 +17048,22 @@
                 "type": "object",
                 "properties": {
                   "input": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "output": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "reasoning": {
-                    "type": "integer",
-                    "minimum": 0
+                    "type": "number"
                   },
                   "cache": {
                     "type": "object",
                     "properties": {
                       "read": {
-                        "type": "integer",
-                        "minimum": 0
+                        "type": "number"
                       },
                       "write": {
-                        "type": "integer",
-                        "minimum": 0
+                        "type": "number"
                       }
                     },
                     "required": ["read", "write"],
@@ -17691,8 +17651,7 @@
             "type": "string"
           },
           "statusCode": {
-            "type": "integer",
-            "minimum": 0
+            "type": "number"
           },
           "isRetryable": {
             "type": "boolean"
@@ -17736,8 +17695,7 @@
                 "type": "string"
               },
               "attempt": {
-                "type": "integer",
-                "minimum": 0
+                "type": "number"
               },
               "error": {
                 "$ref": "#/components/schemas/SessionNextRetry_error"
