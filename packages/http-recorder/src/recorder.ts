@@ -24,10 +24,7 @@ const isCI = () => {
   return value !== undefined && value !== "" && value !== "false" && value !== "0"
 }
 
-export const resolveAutoMode = (
-  cassette: CassetteService.Interface,
-  name: string,
-): Effect.Effect<ResolvedMode> =>
+export const resolveAutoMode = (cassette: CassetteService.Interface, name: string): Effect.Effect<ResolvedMode> =>
   Effect.gen(function* () {
     if (isCI()) return "replay"
     return (yield* cassette.exists(name)) ? "replay" : "record"

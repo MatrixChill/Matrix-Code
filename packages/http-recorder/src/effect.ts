@@ -116,10 +116,7 @@ export const recordingLayer = (
           const incoming = yield* snapshotRequest(request)
           const interactions = yield* replay.load.pipe(
             Effect.mapError(() =>
-              transportError(
-                request,
-                `Fixture "${name}" not found. Run locally to record it (CI=true forces replay).`,
-              ),
+              transportError(request, `Fixture "${name}" not found. Run locally to record it (CI=true forces replay).`),
             ),
           )
           const result = sequential
