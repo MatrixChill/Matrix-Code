@@ -172,9 +172,9 @@ const audit = Effect.gen(function* () {
   const cassettes = yield* HttpRecorder.Cassette.Service
   const entries = yield* cassettes.list()
   const issues = yield* Effect.forEach(entries, (entry) =>
-    cassettes.read(entry.name).pipe(
-      Effect.map((interactions) => ({ name: entry.name, findings: HttpRecorder.secretFindings(interactions) })),
-    ),
+    cassettes
+      .read(entry.name)
+      .pipe(Effect.map((interactions) => ({ name: entry.name, findings: HttpRecorder.secretFindings(interactions) }))),
   )
   return issues.filter((i) => i.findings.length > 0)
 })

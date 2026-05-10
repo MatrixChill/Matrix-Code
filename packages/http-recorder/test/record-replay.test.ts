@@ -14,10 +14,7 @@ const seedCassetteDirectory = (directory: string, name: string, interactions: Re
     Effect.gen(function* () {
       const cassette = yield* HttpRecorder.Cassette.Service
       yield* Effect.forEach(interactions, (interaction) => cassette.append(name, interaction))
-    }).pipe(
-      Effect.provide(HttpRecorder.Cassette.fileSystem({ directory })),
-      Effect.provide(NodeFileSystem.layer),
-    ),
+    }).pipe(Effect.provide(HttpRecorder.Cassette.fileSystem({ directory })), Effect.provide(NodeFileSystem.layer)),
   )
 
 const post = (url: string, body: object) =>

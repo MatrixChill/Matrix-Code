@@ -110,4 +110,3 @@ export const secretFindings = (value: unknown): ReadonlyArray<SecretFinding> =>
       .filter((item) => entry.value.includes(item.value))
       .map((item) => ({ path: entry.path, reason: `environment secret ${item.name}` })),
   ])
-

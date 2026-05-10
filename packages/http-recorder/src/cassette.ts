@@ -20,11 +20,7 @@ export interface AppendResult {
 
 export interface Interface {
   readonly read: (name: string) => Effect.Effect<ReadonlyArray<Interaction>, CassetteNotFoundError>
-  readonly append: (
-    name: string,
-    interaction: Interaction,
-    metadata?: CassetteMetadata,
-  ) => Effect.Effect<AppendResult>
+  readonly append: (name: string, interaction: Interaction, metadata?: CassetteMetadata) => Effect.Effect<AppendResult>
   readonly exists: (name: string) => Effect.Effect<boolean>
   readonly list: () => Effect.Effect<ReadonlyArray<string>>
 }
@@ -112,7 +108,12 @@ export const fileSystem = (
             Effect.map((files) =>
               files
                 .filter((file) => file.endsWith(".json"))
-                .map((file) => path.relative(directory, file).replace(/\\/g, "/").replace(/\.json$/, ""))
+                .map((file) =>
+                  path
+                    .relative(directory, file)
+                    .replace(/\\/g, "/")
+                    .replace(/\.json$/, ""),
+                )
                 .toSorted((a, b) => a.localeCompare(b)),
             ),
           ),

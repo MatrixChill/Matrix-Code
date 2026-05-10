@@ -34,13 +34,13 @@ export const appendOrFail = (
   interaction: Interaction,
   metadata: CassetteMetadata | undefined,
 ): Effect.Effect<void, UnsafeCassetteError> =>
-  cassette.append(name, interaction, metadata).pipe(
-    Effect.flatMap(({ findings }) =>
-      findings.length === 0
-        ? Effect.void
-        : Effect.fail(new UnsafeCassetteError({ cassetteName: name, findings })),
-    ),
-  )
+  cassette
+    .append(name, interaction, metadata)
+    .pipe(
+      Effect.flatMap(({ findings }) =>
+        findings.length === 0 ? Effect.void : Effect.fail(new UnsafeCassetteError({ cassetteName: name, findings })),
+      ),
+    )
 
 export interface ReplayState<T> {
   readonly load: Effect.Effect<ReadonlyArray<T>, CassetteNotFoundError>
