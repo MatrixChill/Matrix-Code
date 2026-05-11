@@ -59,7 +59,11 @@ describe("applyCachePolicy", () => {
           model: anthropicModel,
           system: "Sys A",
           tools: [{ name: "t1", description: "t1", inputSchema: { type: "object", properties: {} } }],
-          messages: [Message.user("first user"), Message.assistant("assistant reply"), Message.user("latest user message")],
+          messages: [
+            Message.user("first user"),
+            Message.assistant("assistant reply"),
+            Message.user("latest user message"),
+          ],
           cache: "auto",
         }),
       )
