@@ -1866,8 +1866,9 @@ it.live("injects metadata for bare configured reference mentions", () =>
         })
 
         const stored = MessageV2.get({ sessionID: session.id, messageID: message.info.id })
-        const synthetic = stored.parts
-          .filter((part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true)
+        const synthetic = stored.parts.filter(
+          (part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
+        )
         const reference = synthetic.find((part) => part.text.startsWith("Referenced configured reference @docs."))
 
         expect(reference?.metadata?.reference).toMatchObject({ name: "docs", kind: "local", path: docs })

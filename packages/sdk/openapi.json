@@ -11120,6 +11120,12 @@
             "items": {
               "$ref": "#/components/schemas/PromptAgentAttachment"
             }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptReferenceAttachment"
+            }
           }
         },
         "required": ["text"],
@@ -17039,6 +17045,41 @@
         "required": ["name"],
         "additionalProperties": false
       },
+      "PromptReferenceAttachment": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["local", "git", "invalid"]
+          },
+          "uri": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "targetUri": {
+            "type": "string"
+          },
+          "problem": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/PromptSource"
+          }
+        },
+        "required": ["name", "kind"],
+        "additionalProperties": false
+      },
       "EventSessionNextPrompted": {
         "type": "object",
         "properties": {
@@ -18229,6 +18270,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PromptAgentAttachment"
+            }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptReferenceAttachment"
             }
           },
           "type": {
