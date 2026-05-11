@@ -131,8 +131,12 @@ function referenceTextPart(input: {
   const metadata: ReferencePromptMetadata = {
     name: input.reference.name,
     kind: input.reference.kind,
-    ...(input.reference.kind === "invalid" ? { repository: input.reference.repository } : { path: input.reference.path }),
-    ...(input.reference.kind === "git" ? { repository: input.reference.repository, branch: input.reference.branch } : {}),
+    ...(input.reference.kind === "invalid"
+      ? { repository: input.reference.repository }
+      : { path: input.reference.path }),
+    ...(input.reference.kind === "git"
+      ? { repository: input.reference.repository, branch: input.reference.branch }
+      : {}),
     ...(input.target === undefined ? {} : { target: input.target }),
     ...(input.targetPath ? { targetPath: input.targetPath } : {}),
     problem: input.problem ?? (input.reference.kind === "invalid" ? input.reference.message : undefined),

@@ -1925,7 +1925,9 @@ it.live("injects metadata for configured reference file attachments", () =>
         const synthetic = stored.parts.filter(
           (part): part is MessageV2.TextPart => part.type === "text" && part.synthetic === true,
         )
-        const reference = synthetic.find((part) => part.text.startsWith("Referenced configured reference @docs/README.md."))
+        const reference = synthetic.find((part) =>
+          part.text.startsWith("Referenced configured reference @docs/README.md."),
+        )
 
         expect(reference?.metadata?.reference).toMatchObject({
           name: "docs",
