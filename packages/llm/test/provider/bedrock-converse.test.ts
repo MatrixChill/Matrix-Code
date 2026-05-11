@@ -464,9 +464,7 @@ describe("Bedrock Converse route", () => {
       const prepared = yield* LLMClient.prepare(
         LLM.request({
           model,
-          tools: [
-            { name: "lookup", description: "lookup", inputSchema: { type: "object", properties: {} }, cache },
-          ],
+          tools: [{ name: "lookup", description: "lookup", inputSchema: { type: "object", properties: {} }, cache }],
           messages: [
             LLM.user("What's the weather?"),
             LLM.assistant([LLM.toolCall({ id: "call_1", name: "lookup", input: {} })]),

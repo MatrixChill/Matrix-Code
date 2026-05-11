@@ -225,10 +225,7 @@ const lowerToolSpec = (tool: ToolDefinition): BedrockToolSpec => ({
   },
 })
 
-const lowerTools = (
-  breakpoints: BedrockCache.Breakpoints,
-  tools: ReadonlyArray<ToolDefinition>,
-): BedrockTool[] => {
+const lowerTools = (breakpoints: BedrockCache.Breakpoints, tools: ReadonlyArray<ToolDefinition>): BedrockTool[] => {
   const result: BedrockTool[] = []
   for (const tool of tools) {
     result.push(lowerToolSpec(tool))

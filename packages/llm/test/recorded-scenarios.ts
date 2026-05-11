@@ -12,8 +12,7 @@ export const weatherToolName = "get_weather"
 // a fixed sentence — the cassette replays bit-for-bit, so the exact text matters
 // only when re-recording with `RECORD=true`.
 export const LARGE_CACHEABLE_SYSTEM = (() => {
-  const sentence =
-    "You are a concise, factual assistant. Answer precisely and avoid filler. Cite numbers when known. "
+  const sentence = "You are a concise, factual assistant. Answer precisely and avoid filler. Cite numbers when known. "
   // ~100 chars per sentence × 250 repeats ≈ 25,000 chars ≈ 5k+ tokens, safely
   // above every provider's threshold.
   return sentence.repeat(250)
