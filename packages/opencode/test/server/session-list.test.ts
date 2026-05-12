@@ -37,7 +37,9 @@ describe("session.list", () => {
         yield* Effect.promise(() => mkdir(path.join(test.directory, "packages", "app"), { recursive: true }))
 
         const root = yield* withSession({ title: "root" })
-        const parent = yield* withSession({ title: "parent" }).pipe(provideInstance(path.join(test.directory, "packages")))
+        const parent = yield* withSession({ title: "parent" }).pipe(
+          provideInstance(path.join(test.directory, "packages")),
+        )
         const current = yield* withSession({ title: "current" }).pipe(
           provideInstance(path.join(test.directory, "packages", "opencode")),
         )
@@ -64,7 +66,9 @@ describe("session.list", () => {
         yield* Effect.promise(() => mkdir(path.join(test.directory, "packages", "app"), { recursive: true }))
 
         const root = yield* withSession({ title: "root" })
-        const parent = yield* withSession({ title: "parent" }).pipe(provideInstance(path.join(test.directory, "packages")))
+        const parent = yield* withSession({ title: "parent" }).pipe(
+          provideInstance(path.join(test.directory, "packages")),
+        )
         const current = yield* withSession({ title: "current" }).pipe(
           provideInstance(path.join(test.directory, "packages", "opencode")),
         )
@@ -72,11 +76,9 @@ describe("session.list", () => {
           provideInstance(path.join(test.directory, "packages", "app")),
         )
 
-        const ids = (
-          yield* SessionNs.Service.use((session) =>
-            session.list({ directory: path.join(test.directory, "packages", "opencode") }),
-          )
-        ).map((session) => session.id)
+        const ids = (yield* SessionNs.Service.use((session) =>
+          session.list({ directory: path.join(test.directory, "packages", "opencode") }),
+        )).map((session) => session.id)
         expect(ids).not.toContain(root.id)
         expect(ids).not.toContain(parent.id)
         expect(ids).toContain(current.id)
@@ -109,14 +111,12 @@ describe("session.list", () => {
           provideInstance(path.join(test.directory, "packages", "app")),
         )
 
-        const pathIDs = (
-          yield* SessionNs.Service.use((session) =>
-            session.list({
-              directory: path.join(test.directory, "packages", "app"),
-              path: "packages/opencode/src",
-            }),
-          )
-        ).map((session) => session.id)
+        const pathIDs = (yield* SessionNs.Service.use((session) =>
+          session.list({
+            directory: path.join(test.directory, "packages", "app"),
+            path: "packages/opencode/src",
+          }),
+        )).map((session) => session.id)
         expect(pathIDs).not.toContain(parent.id)
         expect(pathIDs).toContain(current.id)
         expect(pathIDs).toContain(deeper.id)
@@ -131,7 +131,9 @@ describe("session.list", () => {
       Effect.gen(function* () {
         Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = false
         const test = yield* TestInstance
-        yield* Effect.promise(() => mkdir(path.join(test.directory, "packages", "opencode", "src"), { recursive: true }))
+        yield* Effect.promise(() =>
+          mkdir(path.join(test.directory, "packages", "opencode", "src"), { recursive: true }),
+        )
         yield* Effect.promise(() => mkdir(path.join(test.directory, "packages", "app"), { recursive: true }))
 
         const current = yield* withSession({ title: "legacy-current" }).pipe(
@@ -142,20 +144,22 @@ describe("session.list", () => {
         )
 
         yield* Effect.sync(() =>
-          Database.use((db) => db.update(SessionTable).set({ path: null }).where(eq(SessionTable.id, current.id)).run()),
+          Database.use((db) =>
+            db.update(SessionTable).set({ path: null }).where(eq(SessionTable.id, current.id)).run(),
+          ),
         )
         yield* Effect.sync(() =>
-          Database.use((db) => db.update(SessionTable).set({ path: null }).where(eq(SessionTable.id, sibling.id)).run()),
+          Database.use((db) =>
+            db.update(SessionTable).set({ path: null }).where(eq(SessionTable.id, sibling.id)).run(),
+          ),
         )
 
-        const pathIDs = (
-          yield* SessionNs.Service.use((session) =>
-            session.list({
-              directory: path.join(test.directory, "packages", "opencode", "src"),
-              path: "packages/opencode/src",
-            }),
-          )
-        ).map((session) => session.id)
+        const pathIDs = (yield* SessionNs.Service.use((session) =>
+          session.list({
+            directory: path.join(test.directory, "packages", "opencode", "src"),
+            path: "packages/opencode/src",
+          }),
+        )).map((session) => session.id)
         expect(pathIDs).toContain(current.id)
         expect(pathIDs).not.toContain(sibling.id)
       }),

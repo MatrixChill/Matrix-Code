@@ -4,7 +4,10 @@ import { Effect } from "effect"
 import fs from "fs/promises"
 import path from "path"
 
-const it = process.platform === "win32" ? (await import("../lib/effect")).testEffect((await import("../../src/file")).File.defaultLayer) : undefined
+const it =
+  process.platform === "win32"
+    ? (await import("../lib/effect")).testEffect((await import("../../src/file")).File.defaultLayer)
+    : undefined
 
 describe("file fsmonitor", () => {
   if (!it) {

@@ -106,13 +106,15 @@ describe("File.list path traversal protection", () => {
 })
 
 describe("containsPath", () => {
-  it.instance("returns true for path inside directory", () =>
-    Effect.gen(function* () {
-      const test = yield* TestInstance
-      const ctx = yield* InstanceState.context
-      expect(containsPath(path.join(test.directory, "foo.txt"), ctx)).toBe(true)
-      expect(containsPath(path.join(test.directory, "src", "file.ts"), ctx)).toBe(true)
-    }),
+  it.instance(
+    "returns true for path inside directory",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const ctx = yield* InstanceState.context
+        expect(containsPath(path.join(test.directory, "foo.txt"), ctx)).toBe(true)
+        expect(containsPath(path.join(test.directory, "src", "file.ts"), ctx)).toBe(true)
+      }),
     { git: true },
   )
 
@@ -135,32 +137,38 @@ describe("containsPath", () => {
     { git: true },
   )
 
-  it.instance("returns false for path outside both directory and worktree", () =>
-    Effect.gen(function* () {
-      const ctx = yield* InstanceState.context
-      expect(containsPath("/etc/passwd", ctx)).toBe(false)
-      expect(containsPath("/tmp/other-project", ctx)).toBe(false)
-    }),
+  it.instance(
+    "returns false for path outside both directory and worktree",
+    () =>
+      Effect.gen(function* () {
+        const ctx = yield* InstanceState.context
+        expect(containsPath("/etc/passwd", ctx)).toBe(false)
+        expect(containsPath("/tmp/other-project", ctx)).toBe(false)
+      }),
     { git: true },
   )
 
-  it.instance("returns false for path with .. escaping worktree", () =>
-    Effect.gen(function* () {
-      const test = yield* TestInstance
-      const ctx = yield* InstanceState.context
-      expect(containsPath(path.join(test.directory, "..", "escape.txt"), ctx)).toBe(false)
-    }),
+  it.instance(
+    "returns false for path with .. escaping worktree",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const ctx = yield* InstanceState.context
+        expect(containsPath(path.join(test.directory, "..", "escape.txt"), ctx)).toBe(false)
+      }),
     { git: true },
   )
 
-  it.instance("handles directory === worktree (running from repo root)", () =>
-    Effect.gen(function* () {
-      const test = yield* TestInstance
-      const ctx = yield* InstanceState.context
-      expect(ctx.directory).toBe(ctx.worktree)
-      expect(containsPath(path.join(test.directory, "file.txt"), ctx)).toBe(true)
-      expect(containsPath("/etc/passwd", ctx)).toBe(false)
-    }),
+  it.instance(
+    "handles directory === worktree (running from repo root)",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const ctx = yield* InstanceState.context
+        expect(ctx.directory).toBe(ctx.worktree)
+        expect(containsPath(path.join(test.directory, "file.txt"), ctx)).toBe(true)
+        expect(containsPath("/etc/passwd", ctx)).toBe(false)
+      }),
     { git: true },
   )
 

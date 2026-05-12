@@ -212,7 +212,8 @@ describe("tool.apply_patch freeform", () => {
       const target = path.join(test.directory, "example.cs")
       yield* writeText(target, `${bom}using System;\n\nclass Test {}\n`)
 
-      const patchText = "*** Begin Patch\n*** Update File: example.cs\n@@\n class Test {}\n+class Next {}\n*** End Patch"
+      const patchText =
+        "*** Begin Patch\n*** Update File: example.cs\n@@\n class Test {}\n+class Next {}\n*** End Patch"
 
       yield* execute({ patchText }, ctx)
 
@@ -320,7 +321,10 @@ describe("tool.apply_patch freeform", () => {
       const { ctx } = makeCtx()
       const patchText = "*** Begin Patch\n*** Update File: missing.txt\n@@\n-nope\n+better\n*** End Patch"
 
-      yield* expectFailure(execute({ patchText }, ctx), "apply_patch verification failed: Failed to read file to update")
+      yield* expectFailure(
+        execute({ patchText }, ctx),
+        "apply_patch verification failed: Failed to read file to update",
+      )
     }),
   )
 
@@ -518,7 +522,8 @@ EOF`
 
       // Patch uses ASCII equivalents - should match via normalized pass
       // The replacement uses ASCII quotes from the patch (not preserving Unicode)
-      const patchText = '*** Begin Patch\n*** Update File: unicode.txt\n@@\n-He said "hello"\n+He said "hi"\n*** End Patch'
+      const patchText =
+        '*** Begin Patch\n*** Update File: unicode.txt\n@@\n-He said "hello"\n+He said "hi"\n*** End Patch'
 
       yield* execute({ patchText }, ctx)
       // Result has ASCII quotes because that's what the patch specifies
