@@ -115,7 +115,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("handles multi-line text files", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "multiline.txt"), "line1\nline2\nline3", "utf-8"))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "multiline.txt"), "line1\nline2\nline3", "utf-8"),
+        )
 
         const result = yield* read("multiline.txt")
         expect(result.content).toBe("line1\nline2\nline3")
@@ -141,7 +143,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("returns empty for binary non-image files", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "binary.so"), Buffer.from([0x7f, 0x45, 0x4c, 0x46])))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "binary.so"), Buffer.from([0x7f, 0x45, 0x4c, 0x46])),
+        )
 
         const result = yield* read("binary.so")
         expect(result.type).toBe("binary")
@@ -250,7 +254,9 @@ describe("file/index Filesystem patterns", () => {
         yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "readonly.txt"), "content", "utf-8"))
 
         const nonExistentPath = path.join(test.directory, "does-not-exist.txt")
-        expect(Exit.isFailure(yield* Effect.promise(() => Filesystem.readText(nonExistentPath)).pipe(Effect.exit))).toBe(true)
+        expect(
+          Exit.isFailure(yield* Effect.promise(() => Filesystem.readText(nonExistentPath)).pipe(Effect.exit)),
+        ).toBe(true)
 
         const result = yield* read("does-not-exist.txt")
         expect(result.content).toBe("")
@@ -261,7 +267,9 @@ describe("file/index Filesystem patterns", () => {
       Effect.gen(function* () {
         const test = yield* TestInstance
         const nonExistentPath = path.join(test.directory, "does-not-exist.bin")
-        const buffer = yield* Effect.promise(() => Filesystem.readArrayBuffer(nonExistentPath).catch(() => new ArrayBuffer(0)))
+        const buffer = yield* Effect.promise(() =>
+          Filesystem.readArrayBuffer(nonExistentPath).catch(() => new ArrayBuffer(0)),
+        )
         expect(buffer.byteLength).toBe(0)
       }),
     )
@@ -279,7 +287,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("treats .ts files as text", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "test.ts"), "export const value = 1", "utf-8"))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "test.ts"), "export const value = 1", "utf-8"),
+        )
 
         const result = yield* read("test.ts")
         expect(result.type).toBe("text")
@@ -290,7 +300,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("treats .mts files as text", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "test.mts"), "export const value = 1", "utf-8"))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "test.mts"), "export const value = 1", "utf-8"),
+        )
 
         const result = yield* read("test.mts")
         expect(result.type).toBe("text")
@@ -301,7 +313,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("treats .sh files as text", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "test.sh"), "#!/usr/bin/env bash\necho hello", "utf-8"))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "test.sh"), "#!/usr/bin/env bash\necho hello", "utf-8"),
+        )
 
         const result = yield* read("test.sh")
         expect(result.type).toBe("text")
@@ -334,7 +348,9 @@ describe("file/index Filesystem patterns", () => {
     it.instance("returns base64 encoding for images", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
-        yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "test.jpg"), Buffer.from([0xff, 0xd8, 0xff, 0xe0])))
+        yield* Effect.promise(() =>
+          fs.writeFile(path.join(test.directory, "test.jpg"), Buffer.from([0xff, 0xd8, 0xff, 0xe0])),
+        )
 
         const result = yield* read("test.jpg")
         expect(result.encoding).toBe("base64")
@@ -384,7 +400,9 @@ describe("file/index Filesystem patterns", () => {
       () =>
         Effect.gen(function* () {
           const test = yield* TestInstance
-          yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "new.txt"), "line1\nline2\nline3\n", "utf-8"))
+          yield* Effect.promise(() =>
+            fs.writeFile(path.join(test.directory, "new.txt"), "line1\nline2\nline3\n", "utf-8"),
+          )
 
           const result = yield* status()
           const entry = result.find((file) => file.path === "new.txt")
@@ -457,10 +475,14 @@ describe("file/index Filesystem patterns", () => {
         Effect.gen(function* () {
           const test = yield* TestInstance
           const filepath = path.join(test.directory, "data.bin")
-          yield* Effect.promise(() => fs.writeFile(filepath, Buffer.from(Array.from({ length: 256 }, (_, index) => index))))
+          yield* Effect.promise(() =>
+            fs.writeFile(filepath, Buffer.from(Array.from({ length: 256 }, (_, index) => index))),
+          )
           yield* gitAddAll(test.directory)
           yield* gitCommit(test.directory, "add binary")
-          yield* Effect.promise(() => fs.writeFile(filepath, Buffer.from(Array.from({ length: 512 }, (_, index) => index % 256))))
+          yield* Effect.promise(() =>
+            fs.writeFile(filepath, Buffer.from(Array.from({ length: 512 }, (_, index) => index % 256))),
+          )
 
           const result = yield* status()
           const entry = result.find((file) => file.path === "data.bin")
@@ -481,7 +503,9 @@ describe("file/index Filesystem patterns", () => {
           const test = yield* TestInstance
           yield* Effect.promise(() => fs.mkdir(path.join(test.directory, "subdir")))
           yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "file.txt"), "content", "utf-8"))
-          yield* Effect.promise(() => fs.writeFile(path.join(test.directory, "subdir", "nested.txt"), "nested", "utf-8"))
+          yield* Effect.promise(() =>
+            fs.writeFile(path.join(test.directory, "subdir", "nested.txt"), "nested", "utf-8"),
+          )
 
           const nodes = yield* list()
           expect(nodes.length).toBeGreaterThanOrEqual(2)
@@ -633,8 +657,12 @@ describe("file/index Filesystem patterns", () => {
 
           const result = yield* search({ query: "", type: "directory" })
           expect(result.length).toBeGreaterThan(0)
-          const firstHidden = result.findIndex((dir) => dir.split("/").some((part) => part.startsWith(".") && part.length > 1))
-          const lastVisible = result.findLastIndex((dir) => !dir.split("/").some((part) => part.startsWith(".") && part.length > 1))
+          const firstHidden = result.findIndex((dir) =>
+            dir.split("/").some((part) => part.startsWith(".") && part.length > 1),
+          )
+          const lastVisible = result.findLastIndex(
+            (dir) => !dir.split("/").some((part) => part.startsWith(".") && part.length > 1),
+          )
           if (firstHidden >= 0 && lastVisible >= 0) {
             expect(firstHidden).toBeGreaterThan(lastVisible)
           }
