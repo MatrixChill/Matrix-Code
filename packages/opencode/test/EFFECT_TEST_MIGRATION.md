@@ -95,19 +95,20 @@ Use Effect-aware fixtures from `test/fixture/fixture.ts`:
 Use finalizers only as a temporary bridge for existing global mutations:
 
 ```ts
-yield* Effect.acquireUseRelease(
-  Effect.sync(() => {
-    const previous = process.env.MY_FLAG
-    process.env.MY_FLAG = "1"
-    return previous
-  }),
-  () => testBody,
-  (previous) =>
+yield *
+  Effect.acquireUseRelease(
     Effect.sync(() => {
-      if (previous === undefined) delete process.env.MY_FLAG
-      else process.env.MY_FLAG = previous
+      const previous = process.env.MY_FLAG
+      process.env.MY_FLAG = "1"
+      return previous
     }),
-)
+    () => testBody,
+    (previous) =>
+      Effect.sync(() => {
+        if (previous === undefined) delete process.env.MY_FLAG
+        else process.env.MY_FLAG = previous
+      }),
+  )
 ```
 
 TODO: eliminate this pattern over time. Tests should not toggle process-global flags or env vars when the behavior can be modeled with services. Prefer moving flag/env reads behind injectable services such as `Config.Service`, `Env.Service`, or focused test layers, then provide the desired test value through the layer graph instead of mutating `process.env` or `Global.Path`.
@@ -132,7 +133,7 @@ const run = Effect.fn("MyTest.run")(function* (input: Input) {
 8. Replace Promise failure assertions with Effect assertions:
 
 ```ts
-const exit = yield* run(input).pipe(Effect.exit)
+const exit = yield * run(input).pipe(Effect.exit)
 expect(Exit.isFailure(exit)).toBe(true)
 ```
 
