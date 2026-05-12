@@ -60,7 +60,10 @@ function mergeConfigConcatArrays(target: Info, source: Info): Info {
   // Each layer keeps the raw shape the user wrote on disk; consumers should use
   // ConfigPermission.toLayers to normalise.
   if (source.permission) {
-    merged.permission = [...ConfigPermission.toLayers(target.permission), ...ConfigPermission.toLayers(source.permission)]
+    merged.permission = [
+      ...ConfigPermission.toLayers(target.permission),
+      ...ConfigPermission.toLayers(source.permission),
+    ]
   }
   return merged
 }
