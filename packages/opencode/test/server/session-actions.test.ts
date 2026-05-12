@@ -16,26 +16,28 @@ afterEach(async () => {
 })
 
 describe("session action routes", () => {
-  it.instance("abort route returns success", () =>
-    Effect.gen(function* () {
-      const test = yield* TestInstance
-      const session = yield* Effect.acquireRelease(
-        SessionNs.Service.use((svc) => svc.create({})),
-        (created) => SessionNs.Service.use((svc) => svc.remove(created.id)).pipe(Effect.ignore),
-      )
+  it.instance(
+    "abort route returns success",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const session = yield* Effect.acquireRelease(
+          SessionNs.Service.use((svc) => svc.create({})),
+          (created) => SessionNs.Service.use((svc) => svc.remove(created.id)).pipe(Effect.ignore),
+        )
 
-      const res = yield* Effect.promise(() =>
-        Promise.resolve(
-          Server.Default().app.request(`/session/${session.id}/abort`, {
-            method: "POST",
-            headers: { "x-opencode-directory": test.directory },
-          }),
-        ),
-      )
+        const res = yield* Effect.promise(() =>
+          Promise.resolve(
+            Server.Default().app.request(`/session/${session.id}/abort`, {
+              method: "POST",
+              headers: { "x-opencode-directory": test.directory },
+            }),
+          ),
+        )
 
-      expect(res.status).toBe(200)
-      expect(yield* Effect.promise(() => res.json())).toBe(true)
-    }),
+        expect(res.status).toBe(200)
+        expect(yield* Effect.promise(() => res.json())).toBe(true)
+      }),
     { git: true },
   )
 })
