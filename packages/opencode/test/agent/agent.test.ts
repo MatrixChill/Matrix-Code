@@ -638,6 +638,14 @@ it.instance("defaultAgent returns build when no default_agent config", () =>
   }),
 )
 
+it.instance("defaultInfo returns resolved build agent when no default_agent config", () =>
+  Effect.gen(function* () {
+    const agent = yield* load((svc) => svc.defaultInfo())
+    expect(agent.name).toBe("build")
+    expect(agent.mode).toBe("primary")
+  }),
+)
+
 it.instance(
   "defaultAgent respects default_agent config set to plan",
   () =>
