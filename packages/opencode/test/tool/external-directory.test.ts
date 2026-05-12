@@ -107,46 +107,50 @@ describe("tool.assertExternalDirectory", () => {
   )
 
   if (process.platform === "win32") {
-    it.instance("normalizes Windows path variants to one glob", () =>
-      Effect.gen(function* () {
-        const { requests, ctx } = makeCtx()
+    it.instance(
+      "normalizes Windows path variants to one glob",
+      () =>
+        Effect.gen(function* () {
+          const { requests, ctx } = makeCtx()
 
-        const outerTmp = yield* tmpdirScoped()
-        yield* Effect.promise(() => Bun.write(path.join(outerTmp, "outside.txt"), "x"))
+          const outerTmp = yield* tmpdirScoped()
+          yield* Effect.promise(() => Bun.write(path.join(outerTmp, "outside.txt"), "x"))
 
-        const target = path.join(outerTmp, "outside.txt")
-        const alt = target
-          .replace(/^[A-Za-z]:/, "")
-          .replaceAll("\\", "/")
-          .toLowerCase()
+          const target = path.join(outerTmp, "outside.txt")
+          const alt = target
+            .replace(/^[A-Za-z]:/, "")
+            .replaceAll("\\", "/")
+            .toLowerCase()
 
-        yield* assertExternalDirectoryEffect(ctx, alt)
+          yield* assertExternalDirectoryEffect(ctx, alt)
 
-        const req = requests.find((r) => r.permission === "external_directory")
-        const expected = glob(path.join(outerTmp, "*"))
-        expect(req).toBeDefined()
-        expect(req!.patterns).toEqual([expected])
-        expect(req!.always).toEqual([expected])
-      }),
+          const req = requests.find((r) => r.permission === "external_directory")
+          const expected = glob(path.join(outerTmp, "*"))
+          expect(req).toBeDefined()
+          expect(req!.patterns).toEqual([expected])
+          expect(req!.always).toEqual([expected])
+        }),
       { git: true },
     )
 
-    it.instance("uses drive root glob for root files", () =>
-      Effect.gen(function* () {
-        const { requests, ctx } = makeCtx()
+    it.instance(
+      "uses drive root glob for root files",
+      () =>
+        Effect.gen(function* () {
+          const { requests, ctx } = makeCtx()
 
-        const tmp = yield* TestInstance
-        const root = path.parse(tmp.directory).root
-        const target = path.join(root, "boot.ini")
+          const tmp = yield* TestInstance
+          const root = path.parse(tmp.directory).root
+          const target = path.join(root, "boot.ini")
 
-        yield* assertExternalDirectoryEffect(ctx, target)
+          yield* assertExternalDirectoryEffect(ctx, target)
 
-        const req = requests.find((r) => r.permission === "external_directory")
-        const expected = path.join(root, "*")
-        expect(req).toBeDefined()
-        expect(req!.patterns).toEqual([expected])
-        expect(req!.always).toEqual([expected])
-      }),
+          const req = requests.find((r) => r.permission === "external_directory")
+          const expected = path.join(root, "*")
+          expect(req).toBeDefined()
+          expect(req!.patterns).toEqual([expected])
+          expect(req!.always).toEqual([expected])
+        }),
       { git: true },
     )
   }

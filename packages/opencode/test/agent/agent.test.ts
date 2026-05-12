@@ -105,9 +105,9 @@ it.instance("explore agent asks for external directories and allows whitelisted 
     expect(explore).toBeDefined()
     expect(Permission.evaluate("external_directory", "/some/other/path", explore!.permission).action).toBe("ask")
     expect(Permission.evaluate("external_directory", Truncate.GLOB, explore!.permission).action).toBe("allow")
-    expect(Permission.evaluate("external_directory", path.join(Global.Path.tmp, "agent-work"), explore!.permission).action).toBe(
-      "allow",
-    )
+    expect(
+      Permission.evaluate("external_directory", path.join(Global.Path.tmp, "agent-work"), explore!.permission).action,
+    ).toBe("allow")
   }),
 )
 
@@ -548,9 +548,9 @@ it.instance(
 it.instance("global tmp directory children are allowed for external_directory", () =>
   Effect.gen(function* () {
     const build = yield* load((svc) => svc.get("build"))
-    expect(Permission.evaluate("external_directory", path.join(Global.Path.tmp, "scratch"), build!.permission).action).toBe(
-      "allow",
-    )
+    expect(
+      Permission.evaluate("external_directory", path.join(Global.Path.tmp, "scratch"), build!.permission).action,
+    ).toBe("allow")
     expect(Permission.evaluate("external_directory", "/some/other/path", build!.permission).action).toBe("ask")
   }),
 )
