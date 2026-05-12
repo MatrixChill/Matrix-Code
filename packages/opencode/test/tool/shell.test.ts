@@ -27,7 +27,9 @@ const shellLayer = Layer.mergeAll(
   Agent.defaultLayer,
 )
 const it = testEffect(shellLayer)
-type ShellTestServices = (typeof shellLayer extends Layer.Layer<infer ROut, infer _E, infer _RIn> ? ROut : never) | Scope.Scope
+type ShellTestServices =
+  | (typeof shellLayer extends Layer.Layer<infer ROut, infer _E, infer _RIn> ? ROut : never)
+  | Scope.Scope
 
 const initShell = Effect.fn("ShellToolTest.init")(function* () {
   const info = yield* ShellTool
