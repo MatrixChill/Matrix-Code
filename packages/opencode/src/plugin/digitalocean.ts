@@ -246,7 +246,9 @@ async function createModelAccessKey(bearer: string): Promise<ApiKeyInfo> {
   return data.api_key_info
 }
 
-async function listRouters(bearer: string): Promise<{ ok: true; routers: RouterEntry[] } | { ok: false; status: number }> {
+async function listRouters(
+  bearer: string,
+): Promise<{ ok: true; routers: RouterEntry[] } | { ok: false; status: number }> {
   const res = await fetch(`${DO_API_BASE}/v2/gen-ai/models/routers`, {
     headers: {
       Authorization: `Bearer ${bearer}`,
@@ -293,7 +295,9 @@ function parseRoutersJSON(raw: string | undefined): RouterEntry[] {
   try {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.flatMap((r) => (r && typeof r.name === "string" ? [{ name: r.name, uuid: r.uuid, description: r.description }] : []))
+    return parsed.flatMap((r) =>
+      r && typeof r.name === "string" ? [{ name: r.name, uuid: r.uuid, description: r.description }] : [],
+    )
   } catch {
     return []
   }

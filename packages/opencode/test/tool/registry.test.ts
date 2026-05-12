@@ -223,18 +223,15 @@ describe("tool.registry", () => {
       const loaded = (yield* registry.all()).find((tool) => tool.id === "image")
       if (!loaded) throw new Error("custom image tool was not loaded")
       const agents = yield* Agent.Service
-      const result = yield* loaded.execute(
-        {},
-        {
-          sessionID: SessionID.make("ses_test"),
-          messageID: MessageID.make("msg_test"),
-          agent: (yield* agents.defaultInfo()).name,
-          abort: new AbortController().signal,
-          messages: [],
-          metadata: () => Effect.void,
-          ask: () => Effect.void,
-        } satisfies Tool.Context,
-      )
+      const result = yield* loaded.execute({}, {
+        sessionID: SessionID.make("ses_test"),
+        messageID: MessageID.make("msg_test"),
+        agent: (yield* agents.defaultInfo()).name,
+        abort: new AbortController().signal,
+        messages: [],
+        metadata: () => Effect.void,
+        ask: () => Effect.void,
+      } satisfies Tool.Context)
 
       expect(result.output).toBe("here is an image")
       expect(result.attachments).toEqual([

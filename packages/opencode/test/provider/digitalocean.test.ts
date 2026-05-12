@@ -43,10 +43,7 @@ function injectAuth(metadata: Record<string, string> | undefined) {
 test("digitalocean provider autoloads from DIGITALOCEAN_ACCESS_TOKEN", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({ $schema: "https://opencode.ai/config.json" }),
-      )
+      await Bun.write(path.join(dir, "opencode.json"), JSON.stringify({ $schema: "https://opencode.ai/config.json" }))
     },
   })
   await WithInstance.provide({
@@ -68,10 +65,7 @@ test("digitalocean provider autoloads from DIGITALOCEAN_ACCESS_TOKEN", async () 
 test("digitalocean provider.models surfaces cached routers from auth metadata", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({ $schema: "https://opencode.ai/config.json" }),
-      )
+      await Bun.write(path.join(dir, "opencode.json"), JSON.stringify({ $schema: "https://opencode.ai/config.json" }))
     },
   })
   injectAuth({
@@ -100,10 +94,7 @@ test("digitalocean provider.models surfaces cached routers from auth metadata", 
 test("digitalocean provider.models skips refresh when oauth bearer is expired", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({ $schema: "https://opencode.ai/config.json" }),
-      )
+      await Bun.write(path.join(dir, "opencode.json"), JSON.stringify({ $schema: "https://opencode.ai/config.json" }))
     },
   })
   injectAuth({
@@ -125,10 +116,7 @@ test("digitalocean provider.models skips refresh when oauth bearer is expired", 
 test("digitalocean provider.models passes through base models when no auth metadata", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({ $schema: "https://opencode.ai/config.json" }),
-      )
+      await Bun.write(path.join(dir, "opencode.json"), JSON.stringify({ $schema: "https://opencode.ai/config.json" }))
     },
   })
   await WithInstance.provide({
