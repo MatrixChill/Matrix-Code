@@ -82,12 +82,7 @@ async function mount() {
   })
 
   const app = await testRender(() => (
-    <SDKProvider
-      url="http://test"
-      directory="/tmp/root"
-      events={source.source}
-      fetch={fetch}
-    >
+    <SDKProvider url="http://test" directory="/tmp/root" events={source.source} fetch={fetch}>
       <ProjectProvider>
         <Probe
           onReady={async (ctx) => {
