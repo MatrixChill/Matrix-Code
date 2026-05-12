@@ -145,7 +145,9 @@ export const layer = Layer.effect(
         )
       }
     }).pipe(
-      Effect.tapCause((cause) => Effect.logError("failed to run data migrations").pipe(Effect.annotateLogs("cause", cause))),
+      Effect.tapCause((cause) =>
+        Effect.logError("failed to run data migrations").pipe(Effect.annotateLogs("cause", cause)),
+      ),
       Effect.ignore,
       Effect.forkScoped,
     )
