@@ -845,7 +845,9 @@ describe("plugin.loader.shared", () => {
       (tmp) =>
         Effect.gen(function* () {
           yield* load(tmp.path)
-          expect(yield* Effect.promise(() => Filesystem.readJson<{ source: string; enabled: boolean }>(tmp.extra.mark))).toEqual({
+          expect(
+            yield* Effect.promise(() => Filesystem.readJson<{ source: string; enabled: boolean }>(tmp.extra.mark)),
+          ).toEqual({
             source: "tuple",
             enabled: true,
           })

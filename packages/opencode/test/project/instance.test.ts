@@ -220,17 +220,19 @@ describe("InstanceStore", () => {
     }),
   )
 
-  it.instance("provides legacy Promise callers with instance ALS", () =>
-    Effect.gen(function* () {
-      const test = yield* TestInstance
-      const ctx = yield* InstanceRef
-      if (!ctx) throw new Error("InstanceRef not provided")
+  it.instance(
+    "provides legacy Promise callers with instance ALS",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const ctx = yield* InstanceRef
+        if (!ctx) throw new Error("InstanceRef not provided")
 
-      const directory = yield* Effect.promise(() => Promise.resolve(Instance.restore(ctx, () => Instance.directory)))
+        const directory = yield* Effect.promise(() => Promise.resolve(Instance.restore(ctx, () => Instance.directory)))
 
-      expect(directory).toBe(test.directory)
-      expect(() => Instance.current).toThrow()
-    }),
+        expect(directory).toBe(test.directory)
+        expect(() => Instance.current).toThrow()
+      }),
     { git: true },
   )
 })

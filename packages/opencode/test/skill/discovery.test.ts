@@ -101,7 +101,9 @@ describe("Discovery.pull", () => {
         const refs = path.join(agentsSdk, "references")
         expect(yield* Effect.promise(() => Filesystem.exists(path.join(agentsSdk, "SKILL.md")))).toBe(true)
         // agents-sdk has reference files per the index
-        const refDir = yield* Effect.promise(() => Array.fromAsync(new Bun.Glob("**/*.md").scan({ cwd: refs, onlyFiles: true })))
+        const refDir = yield* Effect.promise(() =>
+          Array.fromAsync(new Bun.Glob("**/*.md").scan({ cwd: refs, onlyFiles: true })),
+        )
         expect(refDir.length).toBeGreaterThan(0)
       }
     }),

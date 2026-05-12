@@ -1328,7 +1328,8 @@ export class Agent implements ACPAgent {
     if (!current) {
       this.sessionManager.setModel(session.id, model)
     }
-    const agent = session.modeId ?? (await AppRuntime.runPromise(AgentModule.Service.use((svc) => svc.defaultInfo()))).name
+    const agent =
+      session.modeId ?? (await AppRuntime.runPromise(AgentModule.Service.use((svc) => svc.defaultInfo()))).name
 
     const parts: Array<
       | { type: "text"; text: string; synthetic?: boolean; ignored?: boolean }
