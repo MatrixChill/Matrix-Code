@@ -85,7 +85,8 @@ function projectLayerWithFailure(failArg: string) {
   )
 }
 
-const failureIt = (failArg: string) => testEffect(Layer.mergeAll(projectLayerWithFailure(failArg), CrossSpawnSpawner.defaultLayer))
+const failureIt = (failArg: string) =>
+  testEffect(Layer.mergeAll(projectLayerWithFailure(failArg), CrossSpawnSpawner.defaultLayer))
 
 describe("Project.fromDirectory", () => {
   it.live("should handle git repository with no commits", () =>
@@ -192,7 +193,14 @@ describe("Project.fromDirectory with worktrees", () => {
       const tmp = yield* gitTmpdir()
 
       const worktreePath = path.join(tmp, "..", path.basename(tmp) + "-worktree")
-      yield* Effect.addFinalizer(() => Effect.promise(() => $`git worktree remove ${worktreePath}`.cwd(tmp).quiet().catch(() => {})))
+      yield* Effect.addFinalizer(() =>
+        Effect.promise(() =>
+          $`git worktree remove ${worktreePath}`
+            .cwd(tmp)
+            .quiet()
+            .catch(() => {}),
+        ),
+      )
       yield* Effect.promise(() => $`git worktree add ${worktreePath} -b test-branch-${Date.now()}`.cwd(tmp).quiet())
 
       const { project, sandbox } = yield* run((svc) => svc.fromDirectory(worktreePath))
@@ -211,7 +219,14 @@ describe("Project.fromDirectory with worktrees", () => {
       const { project: main } = yield* run((svc) => svc.fromDirectory(tmp))
 
       const worktreePath = path.join(tmp, "..", path.basename(tmp) + "-wt-shared")
-      yield* Effect.addFinalizer(() => Effect.promise(() => $`git worktree remove ${worktreePath}`.cwd(tmp).quiet().catch(() => {})))
+      yield* Effect.addFinalizer(() =>
+        Effect.promise(() =>
+          $`git worktree remove ${worktreePath}`
+            .cwd(tmp)
+            .quiet()
+            .catch(() => {}),
+        ),
+      )
       yield* Effect.promise(() => $`git worktree add ${worktreePath} -b shared-${Date.now()}`.cwd(tmp).quiet())
 
       const { project: wt } = yield* run((svc) => svc.fromDirectory(worktreePath))
@@ -229,10 +244,12 @@ describe("Project.fromDirectory with worktrees", () => {
     Effect.gen(function* () {
       const tmp = yield* gitTmpdir()
 
-    // Create a bare remote, push, then clone into a second directory
+      // Create a bare remote, push, then clone into a second directory
       const bare = tmp + "-bare"
       const clone = tmp + "-clone"
-      yield* Effect.addFinalizer(() => Effect.promise(() => $`rm -rf ${bare} ${clone}`.quiet().nothrow()).pipe(Effect.ignore))
+      yield* Effect.addFinalizer(() =>
+        Effect.promise(() => $`rm -rf ${bare} ${clone}`.quiet().nothrow()).pipe(Effect.ignore),
+      )
       yield* Effect.promise(() => $`git clone --bare ${tmp} ${bare}`.quiet())
       yield* Effect.promise(() => $`git clone ${bare} ${clone}`.quiet())
 
@@ -251,8 +268,18 @@ describe("Project.fromDirectory with worktrees", () => {
       const worktree2 = path.join(tmp, "..", path.basename(tmp) + "-wt2")
       yield* Effect.addFinalizer(() =>
         Effect.gen(function* () {
-          yield* Effect.promise(() => $`git worktree remove ${worktree1}`.cwd(tmp).quiet().catch(() => {}))
-          yield* Effect.promise(() => $`git worktree remove ${worktree2}`.cwd(tmp).quiet().catch(() => {}))
+          yield* Effect.promise(() =>
+            $`git worktree remove ${worktree1}`
+              .cwd(tmp)
+              .quiet()
+              .catch(() => {}),
+          )
+          yield* Effect.promise(() =>
+            $`git worktree remove ${worktree2}`
+              .cwd(tmp)
+              .quiet()
+              .catch(() => {}),
+          )
         }),
       )
       yield* Effect.promise(() => $`git worktree add ${worktree1} -b branch-${Date.now()}`.cwd(tmp).quiet())
@@ -439,7 +466,9 @@ describe("Project.update", () => {
       expect(Exit.isFailure(exit)).toBe(true)
       if (Exit.isFailure(exit)) {
         const error = Cause.squash(exit.cause)
-        expect(error instanceof Error ? error.message : String(error)).toContain("Project not found: nonexistent-project-id")
+        expect(error instanceof Error ? error.message : String(error)).toContain(
+          "Project not found: nonexistent-project-id",
+        )
       }
     }),
   )
@@ -577,7 +606,9 @@ describe("Project.fromDirectory with bare repos", () => {
       const parentDir = path.dirname(tmp)
       const barePath = path.join(parentDir, `bare-${Date.now()}.git`)
       const worktreePath = path.join(parentDir, `worktree-${Date.now()}`)
-      yield* Effect.addFinalizer(() => Effect.promise(() => $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()).pipe(Effect.ignore))
+      yield* Effect.addFinalizer(() =>
+        Effect.promise(() => $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()).pipe(Effect.ignore),
+      )
 
       yield* Effect.promise(() => $`git clone --bare ${tmp} ${barePath}`.quiet())
       yield* Effect.promise(() => $`git worktree add ${worktreePath} HEAD`.cwd(barePath).quiet())
@@ -638,7 +669,9 @@ describe("Project.fromDirectory with bare repos", () => {
       const parentDir = path.dirname(tmp)
       const barePath = path.join(parentDir, `bare-no-suffix-${Date.now()}`)
       const worktreePath = path.join(parentDir, `worktree-${Date.now()}`)
-      yield* Effect.addFinalizer(() => Effect.promise(() => $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()).pipe(Effect.ignore))
+      yield* Effect.addFinalizer(() =>
+        Effect.promise(() => $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()).pipe(Effect.ignore),
+      )
 
       yield* Effect.promise(() => $`git clone --bare ${tmp} ${barePath}`.quiet())
       yield* Effect.promise(() => $`git worktree add ${worktreePath} HEAD`.cwd(barePath).quiet())
