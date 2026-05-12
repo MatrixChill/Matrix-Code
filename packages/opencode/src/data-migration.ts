@@ -66,7 +66,10 @@ export const layer = Layer.effect(
                     .from(MessageTable)
                     .where(
                       and(
-                        inArray(MessageTable.session_id, sessions.map((session) => session.id)),
+                        inArray(
+                          MessageTable.session_id,
+                          sessions.map((session) => session.id),
+                        ),
                         sql`json_extract(${MessageTable.data}, '$.role') = 'assistant'`,
                       ),
                     )
