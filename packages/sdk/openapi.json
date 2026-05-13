@@ -4217,11 +4217,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "ProviderAuthError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/ProviderAuthError1"
                 }
               }
             }
@@ -4303,11 +4303,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "ProviderAuthError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/ProviderAuthError1"
                 }
               }
             }
@@ -13783,6 +13783,41 @@
           }
         },
         "required": ["url", "method", "instructions"],
+        "additionalProperties": false
+      },
+      "ProviderAuthError1": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "BadRequest",
+              "ProviderAuthOauthMissing",
+              "ProviderAuthOauthCodeMissing",
+              "ProviderAuthOauthCallbackFailed",
+              "ProviderAuthValidationFailed"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "providerID": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": ["name", "data"],
         "additionalProperties": false
       },
       "TextPartInput": {

@@ -81,12 +81,7 @@ export class ValidationFailed extends Schema.TaggedErrorClass<ValidationFailed>(
   message: Schema.String,
 }) {}
 
-export type Error =
-  | Auth.AuthError
-  | OauthMissing
-  | OauthCodeMissing
-  | OauthCallbackFailed
-  | ValidationFailed
+export type Error = Auth.AuthError | OauthMissing | OauthCodeMissing | OauthCallbackFailed | ValidationFailed
 
 type Hook = NonNullable<Hooks["auth"]>
 
