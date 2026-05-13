@@ -507,7 +507,11 @@ export type Patch = Types.DeepMutable<SyncEvent.Event<typeof Event.Updated>["dat
 const db = <T>(fn: (d: Parameters<typeof Database.use>[0] extends (trx: infer D) => any ? D : never) => T) =>
   Effect.sync(() => Database.use(fn))
 
-export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | SyncEvent.Service | RuntimeFlags.Service> = Layer.effect(
+export const layer: Layer.Layer<
+  Service,
+  never,
+  Bus.Service | Storage.Service | SyncEvent.Service | RuntimeFlags.Service
+> = Layer.effect(
   Service,
   Effect.gen(function* () {
     const bus = yield* Bus.Service
@@ -571,7 +575,9 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
 
     const list = Effect.fn("Session.list")(function* (input?: ListInput) {
       const ctx = yield* InstanceState.context
-      return Array.from(listByProject({ projectID: ctx.project.id, experimentalWorkspaces: flags.experimentalWorkspaces, ...input }))
+      return Array.from(
+        listByProject({ projectID: ctx.project.id, experimentalWorkspaces: flags.experimentalWorkspaces, ...input }),
+      )
     })
 
     const children = Effect.fn("Session.children")(function* (parentID: SessionID) {
