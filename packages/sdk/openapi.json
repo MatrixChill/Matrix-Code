@@ -12407,18 +12407,7 @@
             "$ref": "#/components/schemas/LayoutConfig"
           },
           "permission": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PermissionConfig"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/PermissionConfig"
-                }
-              }
-            ],
-            "description": "Permission configuration. Accepts a single object (per-tool action map) or an array of layered configs; arrays are merged in order so later layers override earlier ones."
+            "$ref": "#/components/schemas/PermissionConfig"
           },
           "tools": {
             "type": "object",
