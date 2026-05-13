@@ -135,7 +135,7 @@ const modelLowTpsQuery = (product: "go" | "zen") => {
       },
     ],
     formulas: [{ name: "LOW_TPS", expression: "IF(GTE($TOTAL, 100), $TPS, 999)" }],
-    timeRange: 900,
+    timeRange: 1800,
   }).json
 }
 
@@ -178,13 +178,12 @@ new honeycomb.Trigger("IncreasedModelHttpErrorsZen", {
 })
 
 new honeycomb.Trigger("LowModelTpsGo", {
-  disabled: true,
   name: "Low Model TPS [Go]",
   description,
   queryJson: modelLowTpsQuery("go"),
   alertType: "on_change",
-  frequency: 300,
-  thresholds: [{ op: "<", value: 20, exceededLimit: 1 }],
+  frequency: 600,
+  thresholds: [{ op: "<=", value: 10, exceededLimit: 1 }],
   recipients: [
     {
       id: webhookRecipient.id,
@@ -198,13 +197,12 @@ new honeycomb.Trigger("LowModelTpsGo", {
 })
 
 new honeycomb.Trigger("LowModelTpsZen", {
-  disabled: true,
   name: "Low Model TPS [Zen]",
   description,
   queryJson: modelLowTpsQuery("zen"),
   alertType: "on_change",
-  frequency: 300,
-  thresholds: [{ op: "<", value: 20, exceededLimit: 1 }],
+  frequency: 600,
+  thresholds: [{ op: "<=", value: 10, exceededLimit: 1 }],
   recipients: [
     {
       id: webhookRecipient.id,
