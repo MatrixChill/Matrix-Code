@@ -1013,6 +1013,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "WorktreeError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorktreeError"
+                }
+              }
+            }
           }
         },
         "description": "List all sandbox worktrees for the current project.",
@@ -1057,11 +1067,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "WorktreeError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/WorktreeError"
                 }
               }
             }
@@ -1119,11 +1129,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "WorktreeError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/WorktreeError"
                 }
               }
             }
@@ -1183,11 +1193,11 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "WorktreeError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BadRequestError"
+                  "$ref": "#/components/schemas/WorktreeError"
                 }
               }
             }
@@ -12848,6 +12858,35 @@
         "items": {
           "type": "string"
         }
+      },
+      "WorktreeError": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "WorktreeNotGitError",
+              "WorktreeNameGenerationFailedError",
+              "WorktreeCreateFailedError",
+              "WorktreeStartCommandFailedError",
+              "WorktreeRemoveFailedError",
+              "WorktreeResetFailedError",
+              "WorktreeListFailedError"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": ["message"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["name", "data"],
+        "additionalProperties": false
       },
       "WorktreeCreateInput": {
         "type": "object",

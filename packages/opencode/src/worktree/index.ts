@@ -234,7 +234,9 @@ export const layer: Layer.Layer<
         { cwd: ctx.worktree },
       )
       if (created.code !== 0) {
-        return yield* new CreateFailedError({ message: created.stderr || created.text || "Failed to create git worktree" })
+        return yield* new CreateFailedError({
+          message: created.stderr || created.text || "Failed to create git worktree",
+        })
       }
 
       yield* project.addSandbox(ctx.project.id, info.directory).pipe(Effect.catch(() => Effect.void))
@@ -425,7 +427,9 @@ export const layer: Layer.Layer<
 
         const stale = yield* locateWorktree(parseWorktreeList(next.text), directory)
         if (stale?.path) {
-          return yield* new RemoveFailedError({ message: removed.stderr || removed.text || "Failed to remove git worktree" })
+          return yield* new RemoveFailedError({
+            message: removed.stderr || removed.text || "Failed to remove git worktree",
+          })
         }
       }
 
@@ -570,7 +574,9 @@ export const layer: Layer.Layer<
 
       const cleanResult = yield* sweep(worktreePath)
       if (cleanResult.code !== 0) {
-        return yield* new ResetFailedError({ message: cleanResult.stderr || cleanResult.text || "Failed to clean worktree" })
+        return yield* new ResetFailedError({
+          message: cleanResult.stderr || cleanResult.text || "Failed to clean worktree",
+        })
       }
 
       yield* gitExpect(

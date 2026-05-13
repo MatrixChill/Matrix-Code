@@ -16,9 +16,7 @@ import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery, WorktreeApiError
 
 function mapWorktreeError<A, R>(self: Effect.Effect<A, Worktree.Error, R>) {
   return self.pipe(
-    Effect.mapError(
-      (error) => new WorktreeApiError({ name: error._tag, data: { message: error.message } }),
-    ),
+    Effect.mapError((error) => new WorktreeApiError({ name: error._tag, data: { message: error.message } })),
   )
 }
 
