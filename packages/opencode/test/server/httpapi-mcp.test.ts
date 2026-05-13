@@ -30,7 +30,12 @@ const handlerScoped = Effect.acquireRelease(
   (handler) => Effect.promise(() => handler.dispose()).pipe(Effect.ignore),
 )
 
-const request = Effect.fnUntraced(function* (handler: TestHandler, route: string, directory: string, init?: RequestInit) {
+const request = Effect.fnUntraced(function* (
+  handler: TestHandler,
+  route: string,
+  directory: string,
+  init?: RequestInit,
+) {
   const headers = new Headers(init?.headers)
   headers.set("x-opencode-directory", directory)
   return yield* Effect.promise(() =>
