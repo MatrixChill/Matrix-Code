@@ -221,7 +221,8 @@ export function SessionSidePanel(props: {
         }}
         style={{ width: panelWidth() }}
       >
-        <div class="size-full flex border-l border-border-weaker-base">
+        <Show when={open()}>
+          <div class="size-full flex border-l border-border-weaker-base">
           <div
             aria-hidden={!reviewOpen()}
             inert={!reviewOpen()}
@@ -313,7 +314,7 @@ export function SessionSidePanel(props: {
 
                   <Show when={reviewTab() && props.canReview()}>
                     <Tabs.Content value="review" class="flex flex-col h-full overflow-hidden contain-strict">
-                      <Show when={activeTab() === "review"}>{props.reviewPanel()}</Show>
+                      <Show when={reviewOpen() && activeTab() === "review"}>{props.reviewPanel()}</Show>
                     </Tabs.Content>
                   </Show>
 
@@ -453,7 +454,8 @@ export function SessionSidePanel(props: {
               </Show>
             </div>
           </Show>
-        </div>
+          </div>
+        </Show>
       </aside>
     </Show>
   )
