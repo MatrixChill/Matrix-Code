@@ -66,31 +66,35 @@ const waitForEvents = (events: Queue.Queue<PtyEvent>, id: PtyID, count: number) 
 }
 
 describe("pty", () => {
-  ptyTest("publishes created, exited, deleted in order for a short-lived process", () =>
-    Effect.gen(function* () {
-      const events = yield* subscribePtyEvents()
-      const info = yield* createPty({
-        command: "/usr/bin/env",
-        args: ["sh", "-c", "sleep 0.1"],
-        title: "sleep",
-      })
+  ptyTest(
+    "publishes created, exited, deleted in order for a short-lived process",
+    () =>
+      Effect.gen(function* () {
+        const events = yield* subscribePtyEvents()
+        const info = yield* createPty({
+          command: "/usr/bin/env",
+          args: ["sh", "-c", "sleep 0.1"],
+          title: "sleep",
+        })
 
-      expect(yield* waitForEvents(events, info.id, 3)).toEqual(["created", "exited", "deleted"])
-    }),
+        expect(yield* waitForEvents(events, info.id, 3)).toEqual(["created", "exited", "deleted"])
+      }),
     { git: true },
   )
 
-  ptyTest("publishes created, exited, deleted in order for /bin/sh + remove", () =>
-    Effect.gen(function* () {
-      const pty = yield* Pty.Service
-      const events = yield* subscribePtyEvents()
-      const info = yield* createPty({ command: "/bin/sh", title: "sh" })
+  ptyTest(
+    "publishes created, exited, deleted in order for /bin/sh + remove",
+    () =>
+      Effect.gen(function* () {
+        const pty = yield* Pty.Service
+        const events = yield* subscribePtyEvents()
+        const info = yield* createPty({ command: "/bin/sh", title: "sh" })
 
-      expect(yield* waitForEvents(events, info.id, 1)).toEqual(["created"])
-      yield* pty.write(info.id, "exit\n")
-      expect(yield* waitForEvents(events, info.id, 2)).toEqual(["exited", "deleted"])
-      yield* pty.remove(info.id)
-    }),
+        expect(yield* waitForEvents(events, info.id, 1)).toEqual(["created"])
+        yield* pty.write(info.id, "exit\n")
+        expect(yield* waitForEvents(events, info.id, 2)).toEqual(["exited", "deleted"])
+        yield* pty.remove(info.id)
+      }),
     { git: true },
   )
 })
