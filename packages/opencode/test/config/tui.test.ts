@@ -475,9 +475,9 @@ it.instance("resolves keybind lookup from canonical keybinds", () =>
       expect(config.keybinds.get("dialog.mcp.toggle")?.[0]?.key).toBe("ctrl+t")
       expect(config.keybinds.get("model.dialog.favorite")?.[0]?.key).toBe("ctrl+f")
       expect(config.keybinds.get("dialog.plugins.install")?.[0]?.key).toBe("shift+i")
-      expect(config.keybinds.gather("plugins.dialog", ["dialog.plugins.install"]).map((binding) => binding.cmd)).toEqual([
-        "dialog.plugins.install",
-      ])
+      expect(
+        config.keybinds.gather("plugins.dialog", ["dialog.plugins.install"]).map((binding) => binding.cmd),
+      ).toEqual(["dialog.plugins.install"])
     }),
   ),
 )

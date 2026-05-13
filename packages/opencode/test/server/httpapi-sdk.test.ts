@@ -169,8 +169,9 @@ function firstEvent(open: (signal: AbortSignal) => Promise<{ stream: AsyncIterat
     (controller) => Effect.sync(() => controller.abort()),
   ).pipe(
     Effect.flatMap((controller) =>
-      Effect.acquireRelease(call(() => open(controller.signal)), (events) =>
-        call(async () => void (await events.stream.return?.(undefined))).pipe(Effect.ignore),
+      Effect.acquireRelease(
+        call(() => open(controller.signal)),
+        (events) => call(async () => void (await events.stream.return?.(undefined))).pipe(Effect.ignore),
       ).pipe(
         Effect.flatMap((events) =>
           call(() => events.stream.next()).pipe(
@@ -234,7 +235,7 @@ function httpapiInstance<A, E>(
     name,
     Effect.gen(function* () {
       const instance = yield* TestInstance
-      yield* (options.setup?.(instance.directory) ?? Effect.void)
+      yield* options.setup?.(instance.directory) ?? Effect.void
       return yield* run({ sdk: client(options.serverPath, instance.directory), directory: instance.directory })
     }),
     { git: options.git ?? true, config: { formatter: false, lsp: false, ...options.config } },
@@ -255,17 +256,27 @@ function serverPathParity<A, E>(name: string, scenario: (serverPath: ServerPath)
 
 function withProject<A, E, E2 = never>(
   serverPath: ServerPath,
-  options: { git?: boolean; config?: Partial<Config.Info>; setup?: (dir: string) => Effect.Effect<void, E2, TestServices> },
+  options: {
+    git?: boolean
+    config?: Partial<Config.Info>
+    setup?: (dir: string) => Effect.Effect<void, E2, TestServices>
+  },
   run: (input: ProjectFixture) => Effect.Effect<A, E, TestScope>,
 ) {
   return Effect.gen(function* () {
-    const directory = yield* tmpdirScoped({ git: options.git ?? true, config: { formatter: false, lsp: false, ...options.config } })
-    yield* (options.setup?.(directory) ?? Effect.void)
+    const directory = yield* tmpdirScoped({
+      git: options.git ?? true,
+      config: { formatter: false, lsp: false, ...options.config },
+    })
+    yield* options.setup?.(directory) ?? Effect.void
     return yield* run({ sdk: client(serverPath, directory), directory })
   })
 }
 
-function withStandardProject<A, E>(serverPath: ServerPath, run: (input: ProjectFixture) => Effect.Effect<A, E, TestScope>) {
+function withStandardProject<A, E>(
+  serverPath: ServerPath,
+  run: (input: ProjectFixture) => Effect.Effect<A, E, TestScope>,
+) {
   return withProject(serverPath, { setup: writeStandardFiles }, run)
 }
 
