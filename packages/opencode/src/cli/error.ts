@@ -33,7 +33,11 @@ function configIssues(input: Record<string, unknown>): ConfigIssue[] {
   return Array.isArray(input.issues)
     ? input.issues.filter((issue): issue is ConfigIssue => {
         if (!isRecord(issue)) return false
-        return typeof issue.message === "string" && Array.isArray(issue.path) && issue.path.every((x) => typeof x === "string")
+        return (
+          typeof issue.message === "string" &&
+          Array.isArray(issue.path) &&
+          issue.path.every((x) => typeof x === "string")
+        )
       })
     : []
 }
