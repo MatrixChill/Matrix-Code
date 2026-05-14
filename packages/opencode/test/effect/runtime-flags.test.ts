@@ -35,6 +35,7 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalScout).toBe(true)
       expect(flags.experimentalBackgroundSubagents).toBe(true)
       expect(flags.experimentalLspTool).toBe(true)
+      expect(flags.experimentalOxfmt).toBe(true)
       expect(flags.experimentalPlanMode).toBe(true)
       expect(flags.experimentalEventSystem).toBe(true)
       expect(flags.experimentalWorkspaces).toBe(true)
@@ -52,9 +53,46 @@ describe("RuntimeFlags", () => {
       expect(flags.disableDefaultPlugins).toBe(true)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
+      expect(flags.experimentalOxfmt).toBe(false)
       expect(flags.bashDefaultTimeoutMs).toBe(1_000)
       expect(flags.enableExperimentalModels).toBe(false)
       expect(flags.client).toBe("cli")
+    }),
+  )
+
+  it.effect("experimentalOxfmt defaults to false", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(Effect.provide(fromConfig({})))
+
+      expect(flags.experimentalOxfmt).toBe(false)
+    }),
+  )
+
+  it.effect("experimentalOxfmt is enabled by OPENCODE_EXPERIMENTAL_OXFMT", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(
+        Effect.provide(
+          fromConfig({
+            OPENCODE_EXPERIMENTAL_OXFMT: "true",
+          }),
+        ),
+      )
+
+      expect(flags.experimentalOxfmt).toBe(true)
+    }),
+  )
+
+  it.effect("experimentalOxfmt inherits OPENCODE_EXPERIMENTAL", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(
+        Effect.provide(
+          fromConfig({
+            OPENCODE_EXPERIMENTAL: "true",
+          }),
+        ),
+      )
+
+      expect(flags.experimentalOxfmt).toBe(true)
     }),
   )
 
@@ -109,6 +147,7 @@ describe("RuntimeFlags", () => {
       expect(flags.disableDefaultPlugins).toBe(false)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
+      expect(flags.experimentalOxfmt).toBe(false)
       expect(flags.bashDefaultTimeoutMs).toBeUndefined()
       expect(flags.client).toBe("cli")
     }),
