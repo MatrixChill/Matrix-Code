@@ -147,7 +147,7 @@ shapes and sometimes collapse rich errors into opaque strings.
       decide which mappings stay inline vs. shared helper.
 - [ ] `ERR-4` Sweep remaining `NamedError.create(...)` and
       `Effect.die(...)` callsites for expected failures — re-run `git
-      grep` to build a current inventory.
+    grep` to build a current inventory.
 - [ ] `RENDER-2` Audit CLI and TUI surfaces for any remaining opaque
       `Error: Name` rendering of typed errors.
 
