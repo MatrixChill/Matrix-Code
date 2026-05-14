@@ -346,7 +346,9 @@ export function StatusPopoverBody(props: { shown: Accessor<boolean> }) {
                             <span class="text-14-regular text-text-base truncate">{name}</span>
                           </span>
                           <Show when={status() === "needs_auth"}>
-                            <span class="text-11-regular text-text-weaker truncate">{language.t("mcp.auth.clickToAuthenticate")}</span>
+                            <span class="text-11-regular text-text-weaker truncate">
+                              {language.t("mcp.auth.clickToAuthenticate")}
+                            </span>
                           </Show>
                         </span>
                         <div onClick={(event) => event.stopPropagation()}>
