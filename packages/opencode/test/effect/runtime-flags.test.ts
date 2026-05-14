@@ -39,6 +39,7 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalPlanMode).toBe(true)
       expect(flags.experimentalEventSystem).toBe(true)
       expect(flags.experimentalWorkspaces).toBe(true)
+      expect(flags.experimentalIconDiscovery).toBe(true)
       expect(flags.client).toBe("desktop")
     }),
   )
@@ -53,10 +54,37 @@ describe("RuntimeFlags", () => {
       expect(flags.disableDefaultPlugins).toBe(true)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
+      expect(flags.experimentalIconDiscovery).toBe(false)
       expect(flags.experimentalOxfmt).toBe(false)
       expect(flags.bashDefaultTimeoutMs).toBe(1_000)
       expect(flags.enableExperimentalModels).toBe(false)
       expect(flags.client).toBe("cli")
+    }),
+  )
+
+  it.effect("experimentalIconDiscovery defaults to false", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(Effect.provide(fromConfig({})))
+
+      expect(flags.experimentalIconDiscovery).toBe(false)
+    }),
+  )
+
+  it.effect("experimentalIconDiscovery reads OPENCODE_EXPERIMENTAL_ICON_DISCOVERY", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(
+        Effect.provide(fromConfig({ OPENCODE_EXPERIMENTAL_ICON_DISCOVERY: "true" })),
+      )
+
+      expect(flags.experimentalIconDiscovery).toBe(true)
+    }),
+  )
+
+  it.effect("experimentalIconDiscovery inherits OPENCODE_EXPERIMENTAL", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(Effect.provide(fromConfig({ OPENCODE_EXPERIMENTAL: "true" })))
+
+      expect(flags.experimentalIconDiscovery).toBe(true)
     }),
   )
 
@@ -147,6 +175,7 @@ describe("RuntimeFlags", () => {
       expect(flags.disableDefaultPlugins).toBe(false)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
+      expect(flags.experimentalIconDiscovery).toBe(false)
       expect(flags.experimentalOxfmt).toBe(false)
       expect(flags.bashDefaultTimeoutMs).toBeUndefined()
       expect(flags.client).toBe("cli")
