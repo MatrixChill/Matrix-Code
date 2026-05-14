@@ -180,20 +180,21 @@ Wait on a **published readiness signal**, not wall-clock time. Available afforda
 
 ```ts
 // Antipattern — race
-yield* prompt.shell({ command: "sleep 30" }).pipe(Effect.forkChild)
-yield* Effect.sleep(50)
-yield* prompt.cancel(chat.id)
+yield * prompt.shell({ command: "sleep 30" }).pipe(Effect.forkChild)
+yield * Effect.sleep(50)
+yield * prompt.cancel(chat.id)
 
 // Fix — wait for a published readiness signal
-yield* prompt.shell({ command: "sleep 30" }).pipe(Effect.forkChild)
-yield* pollWithTimeout(
-  Effect.gen(function* () {
-    const s = yield* (yield* SessionStatus.Service).get(chat.id)
-    return s.type === "busy" ? (true as const) : undefined
-  }),
-  "session never became busy",
-)
-yield* prompt.cancel(chat.id)
+yield * prompt.shell({ command: "sleep 30" }).pipe(Effect.forkChild)
+yield *
+  pollWithTimeout(
+    Effect.gen(function* () {
+      const s = yield* (yield* SessionStatus.Service).get(chat.id)
+      return s.type === "busy" ? (true as const) : undefined
+    }),
+    "session never became busy",
+  )
+yield * prompt.cancel(chat.id)
 ```
 
 ### When Fixed Sleeps Are OK
