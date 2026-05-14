@@ -410,7 +410,8 @@ describe("acp.agent event subscription", () => {
         } as any)
 
         await pollUntil(
-          () => sessionUpdates.some((u) => u.sessionId === sessionId && u.update.sessionUpdate === "agent_message_chunk"),
+          () =>
+            sessionUpdates.some((u) => u.sessionId === sessionId && u.update.sessionUpdate === "agent_message_chunk"),
           "marker event was never processed",
         )
 
