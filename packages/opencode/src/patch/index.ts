@@ -633,11 +633,13 @@ export const maybeParseApplyPatchVerified = Effect.fn("Patch.maybeParseApplyPatc
 
           case "update": {
             const updatePath = path.resolve(effectiveCwd, hunk.path)
-            const originalText = yield* fs.readFileString(updatePath).pipe(
-              Effect.catch((cause) =>
-                Effect.succeed(new Error(`Failed to read file ${updatePath}: ${cause}`, { cause })),
-              ),
-            )
+            const originalText = yield* fs
+              .readFileString(updatePath)
+              .pipe(
+                Effect.catch((cause) =>
+                  Effect.succeed(new Error(`Failed to read file ${updatePath}: ${cause}`, { cause })),
+                ),
+              )
             if (originalText instanceof Error) {
               return {
                 type: MaybeApplyPatchVerified.CorrectnessError,

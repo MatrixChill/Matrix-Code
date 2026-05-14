@@ -101,10 +101,7 @@ describe("AppProcess", () => {
       "truncates stderr when maxErrorBytes is set",
       Effect.gen(function* () {
         const svc = yield* AppProcess.Service
-        const result = yield* svc.run(
-          cmd("-e", "process.stderr.write('0123456789')"),
-          { maxErrorBytes: 5 },
-        )
+        const result = yield* svc.run(cmd("-e", "process.stderr.write('0123456789')"), { maxErrorBytes: 5 })
         expect(result.exitCode).toBe(0)
         expect(result.stdoutTruncated).toBe(false)
         expect(result.stderrTruncated).toBe(true)
