@@ -358,7 +358,7 @@ describe("ProviderTransform.options - gpt-5 reasoningEffort", () => {
       headers: {},
     }) as any
 
-  test('gpt-5-chat should NOT set reasoningEffort', () => {
+  test("gpt-5-chat should NOT set reasoningEffort", () => {
     const result = ProviderTransform.options({
       model: createModel("gpt-5-chat"),
       sessionID,

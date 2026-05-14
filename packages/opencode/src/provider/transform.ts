@@ -1128,7 +1128,7 @@ export function options(input: {
 
   if (input.model.api.npm === "@ai-sdk/azure" && input.model.api.id.includes("gpt-5.5")) {
     result["reasoningSummary"] = "auto"
-    return result;
+    return result
   }
 
   if (input.model.api.id.includes("gpt-5") && !input.model.api.id.includes("gpt-5-chat")) {
