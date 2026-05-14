@@ -34,6 +34,7 @@ describe("RuntimeFlags", () => {
       expect(flags.enableQuestionTool).toBe(true)
       expect(flags.experimentalScout).toBe(true)
       expect(flags.experimentalBackgroundSubagents).toBe(true)
+      expect(flags.experimentalLspTy).toBe(false)
       expect(flags.experimentalLspTool).toBe(true)
       expect(flags.experimentalOxfmt).toBe(true)
       expect(flags.experimentalPlanMode).toBe(true)
@@ -41,6 +42,20 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalWorkspaces).toBe(true)
       expect(flags.experimentalIconDiscovery).toBe(true)
       expect(flags.client).toBe("desktop")
+    }),
+  )
+
+  it.effect("defaultLayer parses OPENCODE_EXPERIMENTAL_LSP_TY", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(
+        Effect.provide(
+          fromConfig({
+            OPENCODE_EXPERIMENTAL_LSP_TY: "true",
+          }),
+        ),
+      )
+
+      expect(flags.experimentalLspTy).toBe(true)
     }),
   )
 
