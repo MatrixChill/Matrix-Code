@@ -16,6 +16,7 @@ describe("RuntimeFlags", () => {
           fromConfig({
             OPENCODE_PURE: "true",
             OPENCODE_DISABLE_DEFAULT_PLUGINS: "true",
+            OPENCODE_DISABLE_EMBEDDED_WEB_UI: "true",
             OPENCODE_EXPERIMENTAL: "true",
             OPENCODE_ENABLE_EXA: "true",
             OPENCODE_ENABLE_PARALLEL: "true",
@@ -28,6 +29,7 @@ describe("RuntimeFlags", () => {
 
       expect(flags.pure).toBe(true)
       expect(flags.disableDefaultPlugins).toBe(true)
+      expect(flags.disableEmbeddedWebUi).toBe(true)
       expect(flags.enableExa).toBe(true)
       expect(flags.enableParallel).toBe(true)
       expect(flags.enableExperimentalModels).toBe(true)
@@ -67,6 +69,7 @@ describe("RuntimeFlags", () => {
 
       expect(flags.pure).toBe(false)
       expect(flags.disableDefaultPlugins).toBe(true)
+      expect(flags.disableEmbeddedWebUi).toBe(false)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
       expect(flags.experimentalIconDiscovery).toBe(false)
@@ -186,6 +189,7 @@ describe("RuntimeFlags", () => {
 
       expect(flags.pure).toBe(false)
       expect(flags.disableDefaultPlugins).toBe(false)
+      expect(flags.disableEmbeddedWebUi).toBe(false)
       expect(flags.disableClaudeCodeSkills).toBe(false)
       expect(flags.enableExa).toBe(false)
       expect(flags.experimentalIconDiscovery).toBe(false)

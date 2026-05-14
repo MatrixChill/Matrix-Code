@@ -14,6 +14,7 @@ const enabledByExperimental = (name: string) =>
 export class Service extends ConfigService.Service<Service>()("@opencode/RuntimeFlags", {
   pure: bool("OPENCODE_PURE"),
   disableDefaultPlugins: bool("OPENCODE_DISABLE_DEFAULT_PLUGINS"),
+  disableEmbeddedWebUi: bool("OPENCODE_DISABLE_EMBEDDED_WEB_UI"),
   disableClaudeCodeSkills: Config.all({
     broad: bool("OPENCODE_DISABLE_CLAUDE_CODE"),
     direct: bool("OPENCODE_DISABLE_CLAUDE_CODE_SKILLS"),
