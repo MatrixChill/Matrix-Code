@@ -87,10 +87,7 @@ const failureIt = (failArg: string) =>
   testEffect(Layer.mergeAll(projectLayerWithFailure(failArg), CrossSpawnSpawner.defaultLayer))
 
 const iconDiscoveryIt = testEffect(
-  Layer.provideMerge(
-    projectLayerWithRuntimeFlags({ experimentalIconDiscovery: true }),
-    CrossSpawnSpawner.defaultLayer,
-  ),
+  Layer.provideMerge(projectLayerWithRuntimeFlags({ experimentalIconDiscovery: true }), CrossSpawnSpawner.defaultLayer),
 )
 
 function waitForProjectIcon(id: ProjectID, attempts = 50): Effect.Effect<Project.Info> {
