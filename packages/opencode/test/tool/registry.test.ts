@@ -111,9 +111,11 @@ describe("tool.registry", () => {
       const agent = yield* Agent.Service
       const build = yield* agent.get("build")
       if (!build) throw new Error("build agent not found")
-      const task = (
-        yield* registry.tools({ providerID: ProviderID.opencode, modelID: ModelID.make("test"), agent: build })
-      ).find((tool) => tool.id === "task")
+      const task = (yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: build,
+      })).find((tool) => tool.id === "task")
 
       expect(task?.jsonSchema).toBeDefined()
       expect((task?.jsonSchema?.properties as Record<string, unknown> | undefined)?.background).toBeUndefined()

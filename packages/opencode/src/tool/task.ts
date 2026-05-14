@@ -71,7 +71,12 @@ function backgroundOutput(sessionID: SessionID) {
   ].join("\n")
 }
 
-function backgroundMessage(input: { sessionID: SessionID; description: string; state: "completed" | "error"; text: string }) {
+function backgroundMessage(input: {
+  sessionID: SessionID
+  description: string
+  state: "completed" | "error"
+  text: string
+}) {
   const tag = input.state === "completed" ? "task_result" : "task_error"
   const title =
     input.state === "completed"
@@ -106,7 +111,9 @@ export const TaskTool = Tool.define(
       const cfg = yield* config.get()
       const runInBackground = params.background === true
       if (runInBackground && !flags.experimentalBackgroundSubagents) {
-        return yield* Effect.fail(new Error("Background subagents require OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true"))
+        return yield* Effect.fail(
+          new Error("Background subagents require OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true"),
+        )
       }
 
       if (!ctx.extra?.bypassAgentCheck) {
@@ -196,27 +203,30 @@ export const TaskTool = Tool.define(
         return result.parts.findLast((item) => item.type === "text")?.text ?? ""
       })
 
-      const resumeWhenIdle: (input: { userID: MessageID; state: "completed" | "error" }) => Effect.Effect<void> = Effect.fn(
-        "TaskTool.resumeWhenIdle",
-      )(function* (input: { userID: MessageID; state: "completed" | "error" }) {
-        const latest = yield* sessions.findMessage(ctx.sessionID, (item) => item.info.role === "user").pipe(Effect.orDie)
-        if (Option.isNone(latest)) return
-        if (latest.value.info.id !== input.userID) return
-        if ((yield* status.get(ctx.sessionID)).type !== "idle") {
-          yield* Effect.sleep("300 millis")
-          return yield* resumeWhenIdle(input)
-        }
-        yield* bus.publish(TuiEvent.ToastShow, {
-          title: input.state === "completed" ? "Background task complete" : "Background task failed",
-          message:
-            input.state === "completed"
-              ? `Background task "${params.description}" finished. Resuming the main thread.`
-              : `Background task "${params.description}" failed. Resuming the main thread.`,
-          variant: input.state === "completed" ? "success" : "error",
-          duration: 5000,
+      const resumeWhenIdle: (input: { userID: MessageID; state: "completed" | "error" }) => Effect.Effect<void> =
+        Effect.fn("TaskTool.resumeWhenIdle")(function* (input: { userID: MessageID; state: "completed" | "error" }) {
+          const latest = yield* sessions
+            .findMessage(ctx.sessionID, (item) => item.info.role === "user")
+            .pipe(Effect.orDie)
+          if (Option.isNone(latest)) return
+          if (latest.value.info.id !== input.userID) return
+          if ((yield* status.get(ctx.sessionID)).type !== "idle") {
+            yield* Effect.sleep("300 millis")
+            return yield* resumeWhenIdle(input)
+          }
+          yield* bus.publish(TuiEvent.ToastShow, {
+            title: input.state === "completed" ? "Background task complete" : "Background task failed",
+            message:
+              input.state === "completed"
+                ? `Background task "${params.description}" finished. Resuming the main thread.`
+                : `Background task "${params.description}" failed. Resuming the main thread.`,
+            variant: input.state === "completed" ? "success" : "error",
+            duration: 5000,
+          })
+          yield* ops
+            .loop({ sessionID: ctx.sessionID })
+            .pipe(Effect.ignore, Effect.forkIn(scope, { startImmediately: true }))
         })
-        yield* ops.loop({ sessionID: ctx.sessionID }).pipe(Effect.ignore, Effect.forkIn(scope, { startImmediately: true }))
-      })
 
       const continueIfIdle = Effect.fn("TaskTool.continueIfIdle")(function* (input: {
         userID: MessageID
@@ -225,7 +235,10 @@ export const TaskTool = Tool.define(
         yield* resumeWhenIdle(input).pipe(Effect.ignore, Effect.forkIn(scope, { startImmediately: true }))
       })
 
-      const inject = Effect.fn("TaskTool.injectBackgroundResult")(function* (state: "completed" | "error", text: string) {
+      const inject = Effect.fn("TaskTool.injectBackgroundResult")(function* (
+        state: "completed" | "error",
+        text: string,
+      ) {
         const currentParent = yield* sessions.get(ctx.sessionID)
         const message = yield* ops.prompt({
           sessionID: ctx.sessionID,
@@ -249,7 +262,9 @@ export const TaskTool = Tool.define(
 
       const existing = yield* background.get(nextSession.id)
       if (existing?.status === "running") {
-        return yield* Effect.fail(new Error(`Task ${nextSession.id} is already running. Use task_status to check progress.`))
+        return yield* Effect.fail(
+          new Error(`Task ${nextSession.id} is already running. Use task_status to check progress.`),
+        )
       }
 
       if (runInBackground) {

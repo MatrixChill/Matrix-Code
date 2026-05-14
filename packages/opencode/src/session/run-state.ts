@@ -107,7 +107,10 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(BackgroundJob.defaultLayer), Layer.provide(SessionStatus.defaultLayer))
+export const defaultLayer = layer.pipe(
+  Layer.provide(BackgroundJob.defaultLayer),
+  Layer.provide(SessionStatus.defaultLayer),
+)
 
 const cancelBackgroundJobs = Effect.fn("SessionRunState.cancelBackgroundJobs")(function* (
   background: BackgroundJob.Interface,

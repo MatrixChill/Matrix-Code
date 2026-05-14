@@ -1738,7 +1738,10 @@ ToolRegistry.register({
     const title = createMemo(() => agent().name ?? i18n.t("ui.tool.agent.default"))
     const tone = createMemo(() => agent().color)
     const subtitle = createMemo(() => {
-      const value = typeof props.input.description === "string" && props.input.description ? props.input.description : childSessionId()
+      const value =
+        typeof props.input.description === "string" && props.input.description
+          ? props.input.description
+          : childSessionId()
       if (!value) return value
       if (props.metadata.background === true) return `${value} (background)`
       return value

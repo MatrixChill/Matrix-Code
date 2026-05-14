@@ -14,7 +14,9 @@ const POLL_MS = 300
 
 const Parameters = Schema.Struct({
   task_id: SessionID.annotate({ description: "The task_id returned by the task tool" }),
-  wait: Schema.optional(Schema.Boolean).annotate({ description: "When true, wait until the task reaches a terminal state or timeout" }),
+  wait: Schema.optional(Schema.Boolean).annotate({
+    description: "When true, wait until the task reaches a terminal state or timeout",
+  }),
   timeout_ms: Schema.optional(PositiveInt).annotate({
     description: "Maximum milliseconds to wait when wait=true (default: 60000)",
   }),
@@ -39,7 +41,8 @@ function inspectMessage(message: MessageV2.WithParts): InspectResult | undefined
   if (message.info.role !== "assistant") return
   const text = message.parts.findLast((part) => part.type === "text")?.text ?? ""
   if (message.info.error) return { state: "error", text: text || errorText(message.info.error) }
-  if (message.info.finish && !["tool-calls", "unknown"].includes(message.info.finish)) return { state: "completed", text }
+  if (message.info.finish && !["tool-calls", "unknown"].includes(message.info.finish))
+    return { state: "completed", text }
   return { state: "running", text: text || "Task is still running." }
 }
 
@@ -51,7 +54,9 @@ export const TaskStatusTool = Tool.define(
     const status = yield* SessionStatus.Service
     const flags = yield* RuntimeFlags.Service
 
-    const inspect: (taskID: SessionID) => Effect.Effect<InspectResult> = Effect.fn("TaskStatusTool.inspect")(function* (taskID: SessionID) {
+    const inspect: (taskID: SessionID) => Effect.Effect<InspectResult> = Effect.fn("TaskStatusTool.inspect")(function* (
+      taskID: SessionID,
+    ) {
       const job = yield* jobs.get(taskID)
       if (job) {
         return {
@@ -75,26 +80,32 @@ export const TaskStatusTool = Tool.define(
         }
       }
 
-      const latestAssistant = yield* sessions.findMessage(taskID, (item) => item.info.role === "assistant").pipe(Effect.orDie)
+      const latestAssistant = yield* sessions
+        .findMessage(taskID, (item) => item.info.role === "assistant")
+        .pipe(Effect.orDie)
       if (Option.isSome(latestAssistant)) {
         const latest = inspectMessage(latestAssistant.value)
         if (!latest) return { state: "error", text: "Task is not running in this process." }
-        if (latest.state === "running") return { state: "error", text: "Task is not running in this process and has no final output." }
+        if (latest.state === "running")
+          return { state: "error", text: "Task is not running in this process and has no final output." }
         return latest
       }
       return { state: "error", text: "Task is not running in this process and has not produced output." }
     })
 
-    const waitForTerminal: (taskID: SessionID, timeout: number) => Effect.Effect<{ result: InspectResult; timedOut: boolean }> = Effect.fn(
-      "TaskStatusTool.waitForTerminal",
-    )(function* (taskID: SessionID, timeout: number) {
-      const result = yield* inspect(taskID)
-      if (result.state !== "running") return { result, timedOut: false }
-      if (timeout <= 0) return { result, timedOut: true }
-      const sleep = Math.min(POLL_MS, timeout)
-      yield* Effect.sleep(`${sleep} millis`)
-      return yield* waitForTerminal(taskID, timeout - sleep)
-    })
+    const waitForTerminal: (
+      taskID: SessionID,
+      timeout: number,
+    ) => Effect.Effect<{ result: InspectResult; timedOut: boolean }> = Effect.fn("TaskStatusTool.waitForTerminal")(
+      function* (taskID: SessionID, timeout: number) {
+        const result = yield* inspect(taskID)
+        if (result.state !== "running") return { result, timedOut: false }
+        if (timeout <= 0) return { result, timedOut: true }
+        const sleep = Math.min(POLL_MS, timeout)
+        yield* Effect.sleep(`${sleep} millis`)
+        return yield* waitForTerminal(taskID, timeout - sleep)
+      },
+    )
 
     const run = Effect.fn("TaskStatusTool.execute")(function* (
       params: Schema.Schema.Type<typeof Parameters>,
@@ -161,7 +172,8 @@ export const TaskStatusTool = Tool.define(
     return {
       description: DESCRIPTION,
       parameters: Parameters,
-      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) => run(params, ctx).pipe(Effect.orDie),
+      execute: (params: Schema.Schema.Type<typeof Parameters>, ctx: Tool.Context) =>
+        run(params, ctx).pipe(Effect.orDie),
     }
   }),
 )
