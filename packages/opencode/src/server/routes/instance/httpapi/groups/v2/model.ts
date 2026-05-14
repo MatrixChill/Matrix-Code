@@ -9,13 +9,15 @@ export const ModelGroup = HttpApiGroup.make("v2.model")
     HttpApiEndpoint.get("models", "/api/model", {
       query: InstanceQuery,
       success: Schema.Array(ModelV2.Info),
-    }).annotateMerge(instanceQueryOpenApi).annotateMerge(
-      OpenApi.annotations({
-        identifier: "v2.model.list",
-        summary: "List v2 models",
-        description: "Retrieve available v2 models ordered by release date.",
-      }),
-    ),
+    })
+      .annotateMerge(instanceQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.model.list",
+          summary: "List v2 models",
+          description: "Retrieve available v2 models ordered by release date.",
+        }),
+      ),
   )
   .annotateMerge(
     OpenApi.annotations({

@@ -10,13 +10,15 @@ export const ProviderGroup = HttpApiGroup.make("v2.provider")
     HttpApiEndpoint.get("providers", "/api/provider", {
       query: InstanceQuery,
       success: Schema.Array(ProviderV2.Info),
-    }).annotateMerge(instanceQueryOpenApi).annotateMerge(
-      OpenApi.annotations({
-        identifier: "v2.provider.list",
-        summary: "List v2 providers",
-        description: "Retrieve active v2 AI providers so clients can show provider availability and configuration.",
-      }),
-    ),
+    })
+      .annotateMerge(instanceQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.provider.list",
+          summary: "List v2 providers",
+          description: "Retrieve active v2 AI providers so clients can show provider availability and configuration.",
+        }),
+      ),
   )
   .add(
     HttpApiEndpoint.get("provider", "/api/provider/:providerID", {
@@ -24,13 +26,16 @@ export const ProviderGroup = HttpApiGroup.make("v2.provider")
       query: InstanceQuery,
       success: ProviderV2.Info,
       error: ApiNotFoundError,
-    }).annotateMerge(instanceQueryOpenApi).annotateMerge(
-      OpenApi.annotations({
-        identifier: "v2.provider.get",
-        summary: "Get v2 provider",
-        description: "Retrieve a single v2 AI provider so clients can inspect its availability and endpoint settings.",
-      }),
-    ),
+    })
+      .annotateMerge(instanceQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "v2.provider.get",
+          summary: "Get v2 provider",
+          description:
+            "Retrieve a single v2 AI provider so clients can inspect its availability and endpoint settings.",
+        }),
+      ),
   )
   .annotateMerge(
     OpenApi.annotations({
