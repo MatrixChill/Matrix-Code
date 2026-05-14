@@ -102,7 +102,9 @@ export const recordingLayer = (
             }
             yield* cassetteService
               .append(name, interaction, options.metadata)
-              .pipe(Effect.catchTag("UnsafeCassetteError", (error) => Effect.fail(transportError(request, error.message))))
+              .pipe(
+                Effect.catchTag("UnsafeCassetteError", (error) => Effect.fail(transportError(request, error.message))),
+              )
             return HttpClientResponse.fromWeb(
               request,
               new Response(decodeResponseBody(interaction.response), interaction.response),

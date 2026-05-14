@@ -196,8 +196,8 @@ type RecordReplayOptions = {
 
 ## Layout
 
-| File           | Purpose                                                                          |
-| -------------- | -------------------------------------------------------------------------------- |
+| File           | Purpose                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
 | `effect.ts`    | `cassetteLayer` / `recordingLayer` — the `HttpClient` adapter.              |
 | `websocket.ts` | `makeWebSocketExecutor` — WebSocket record/replay.                          |
 | `cassette.ts`  | `Cassette.Service` — `fileSystem` / `memory` adapters, error types.         |

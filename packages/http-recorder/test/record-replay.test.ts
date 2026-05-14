@@ -326,7 +326,10 @@ describe("http-recorder", () => {
 
   test("auto mode records to disk when the cassette is missing", async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "http-recorder-auto-record-"))
-    using server = Bun.serve({ port: 0, fetch: () => new Response('{"reply":"recorded"}', { headers: { "content-type": "application/json" } }) })
+    using server = Bun.serve({
+      port: 0,
+      fetch: () => new Response('{"reply":"recorded"}', { headers: { "content-type": "application/json" } }),
+    })
     const url = `http://127.0.0.1:${server.port}/echo`
     // CI=true forces replay; clear it so we exercise the local-dev auto-record path.
     const previous = process.env.CI
@@ -370,10 +373,18 @@ describe("http-recorder", () => {
   test("Cassette.list enumerates recorded cassette names", async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "http-recorder-list-"))
     await seedCassetteDirectory(directory, "alpha/one", [
-      { transport: "http", request: { method: "GET", url: "https://x.test/a", headers: {}, body: "" }, response: { status: 200, headers: {}, body: "a" } },
+      {
+        transport: "http",
+        request: { method: "GET", url: "https://x.test/a", headers: {}, body: "" },
+        response: { status: 200, headers: {}, body: "a" },
+      },
     ])
     await seedCassetteDirectory(directory, "beta", [
-      { transport: "http", request: { method: "GET", url: "https://x.test/b", headers: {}, body: "" }, response: { status: 200, headers: {}, body: "b" } },
+      {
+        transport: "http",
+        request: { method: "GET", url: "https://x.test/b", headers: {}, body: "" },
+        response: { status: 200, headers: {}, body: "b" },
+      },
     ])
 
     const names = await Effect.runPromise(
@@ -415,7 +426,9 @@ describe("http-recorder", () => {
                   transport: "websocket",
                   open: { url: "wss://example.test/binary", headers: {} },
                   client: [],
-                  server: [{ kind: "binary", body: Buffer.from(binaryServer).toString("base64"), bodyEncoding: "base64" }],
+                  server: [
+                    { kind: "binary", body: Buffer.from(binaryServer).toString("base64"), bodyEncoding: "base64" },
+                  ],
                 },
               ],
             }),

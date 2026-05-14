@@ -120,7 +120,12 @@ export const fileSystem = (
             Effect.map((files) =>
               files
                 .filter((file) => file.endsWith(".json"))
-                .map((file) => path.relative(directory, file).replace(/\\/g, "/").replace(/\.json$/, ""))
+                .map((file) =>
+                  path
+                    .relative(directory, file)
+                    .replace(/\\/g, "/")
+                    .replace(/\.json$/, ""),
+                )
                 .toSorted((a, b) => a.localeCompare(b)),
             ),
           ),
