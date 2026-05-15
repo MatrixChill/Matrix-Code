@@ -227,6 +227,16 @@ export function reset() {
 
 export function init(input: { projectors: Array<[Definition, ProjectorFunc]>; convertEvent?: ConvertEvent }) {
   projectors = new Map(input.projectors)
+  for (let entry of EventV2.registry.values()) {
+    if (!entry.version || !entry.aggregate) continue
+    register({
+      type: entry.type,
+      version: entry.version,
+      aggregate: entry.aggregate,
+      properties: entry.data,
+      schema: entry.data,
+    })
+  }
 
   // Install all the latest event defs to the bus. We only ever emit
   // latest versions from code, and keep around old versions for
