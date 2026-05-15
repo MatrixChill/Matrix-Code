@@ -42,8 +42,42 @@ export type Event =
   | EventPtyDeleted
   | EventInstallationUpdated
   | EventInstallationUpdateAvailable
+  | EventMessageUpdated
+  | EventMessageRemoved
+  | EventMessagePartUpdated
+  | EventMessagePartRemoved
+  | EventSessionCreated
+  | EventSessionUpdated
+  | EventSessionDeleted
+  | EventSessionNextAgentSwitched
+  | EventSessionNextModelSwitched
+  | EventSessionNextPrompted
+  | EventSessionNextSynthetic
+  | EventSessionNextShellStarted
+  | EventSessionNextShellEnded
+  | EventSessionNextStepStarted
+  | EventSessionNextStepEnded
+  | EventSessionNextStepFailed
+  | EventSessionNextTextStarted
+  | EventSessionNextTextDelta
+  | EventSessionNextTextEnded
+  | EventSessionNextToolInputStarted
+  | EventSessionNextToolInputDelta
+  | EventSessionNextToolInputEnded
+  | EventSessionNextToolCalled
+  | EventSessionNextToolSuccess
+  | EventSessionNextToolFailed
+  | EventSessionNextReasoningStarted
+  | EventSessionNextReasoningDelta
+  | EventSessionNextReasoningEnded
+  | EventSessionNextRetried
+  | EventSessionNextCompactionStarted
+  | EventSessionNextCompactionDelta
+  | EventSessionNextCompactionEnded
   | EventServerConnected
   | EventGlobalDisposed
+  | EventSessionNextToolProgress
+  | EventCatalogModelUpdated
 
 export type OAuth = {
   type: "oauth"
@@ -793,8 +827,42 @@ export type GlobalEvent = {
     | EventPtyDeleted
     | EventInstallationUpdated
     | EventInstallationUpdateAvailable
+    | EventMessageUpdated
+    | EventMessageRemoved
+    | EventMessagePartUpdated
+    | EventMessagePartRemoved
+    | EventSessionCreated
+    | EventSessionUpdated
+    | EventSessionDeleted
+    | EventSessionNextAgentSwitched
+    | EventSessionNextModelSwitched
+    | EventSessionNextPrompted
+    | EventSessionNextSynthetic
+    | EventSessionNextShellStarted
+    | EventSessionNextShellEnded
+    | EventSessionNextStepStarted
+    | EventSessionNextStepEnded
+    | EventSessionNextStepFailed
+    | EventSessionNextTextStarted
+    | EventSessionNextTextDelta
+    | EventSessionNextTextEnded
+    | EventSessionNextToolInputStarted
+    | EventSessionNextToolInputDelta
+    | EventSessionNextToolInputEnded
+    | EventSessionNextToolCalled
+    | EventSessionNextToolSuccess
+    | EventSessionNextToolFailed
+    | EventSessionNextReasoningStarted
+    | EventSessionNextReasoningDelta
+    | EventSessionNextReasoningEnded
+    | EventSessionNextRetried
+    | EventSessionNextCompactionStarted
+    | EventSessionNextCompactionDelta
+    | EventSessionNextCompactionEnded
     | EventServerConnected
     | EventGlobalDisposed
+    | EventSessionNextToolProgress
+    | EventCatalogModelUpdated
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -814,20 +882,20 @@ export type GlobalEvent = {
     | SyncEventSessionNextTextStarted
     | SyncEventSessionNextTextDelta
     | SyncEventSessionNextTextEnded
-    | SyncEventSessionNextReasoningStarted
-    | SyncEventSessionNextReasoningDelta
-    | SyncEventSessionNextReasoningEnded
     | SyncEventSessionNextToolInputStarted
     | SyncEventSessionNextToolInputDelta
     | SyncEventSessionNextToolInputEnded
     | SyncEventSessionNextToolCalled
-    | SyncEventSessionNextToolProgress
     | SyncEventSessionNextToolSuccess
     | SyncEventSessionNextToolFailed
+    | SyncEventSessionNextReasoningStarted
+    | SyncEventSessionNextReasoningDelta
+    | SyncEventSessionNextReasoningEnded
     | SyncEventSessionNextRetried
     | SyncEventSessionNextCompactionStarted
     | SyncEventSessionNextCompactionDelta
     | SyncEventSessionNextCompactionEnded
+    | SyncEventSessionNextToolProgress
 }
 
 /**
@@ -2115,47 +2183,6 @@ export type SyncEventSessionNextTextEnded = {
   }
 }
 
-export type SyncEventSessionNextReasoningStarted = {
-  type: "sync"
-  name: "session.next.reasoning.started.1"
-  id: string
-  seq: number
-  aggregateID: "sessionID"
-  data: {
-    timestamp: number
-    sessionID: string
-    reasoningID: string
-  }
-}
-
-export type SyncEventSessionNextReasoningDelta = {
-  type: "sync"
-  name: "session.next.reasoning.delta.1"
-  id: string
-  seq: number
-  aggregateID: "sessionID"
-  data: {
-    timestamp: number
-    sessionID: string
-    reasoningID: string
-    delta: string
-  }
-}
-
-export type SyncEventSessionNextReasoningEnded = {
-  type: "sync"
-  name: "session.next.reasoning.ended.1"
-  id: string
-  seq: number
-  aggregateID: "sessionID"
-  data: {
-    timestamp: number
-    sessionID: string
-    reasoningID: string
-    text: string
-  }
-}
-
 export type SyncEventSessionNextToolInputStarted = {
   type: "sync"
   name: "session.next.tool.input.started.1"
@@ -2221,23 +2248,6 @@ export type SyncEventSessionNextToolCalled = {
   }
 }
 
-export type SyncEventSessionNextToolProgress = {
-  type: "sync"
-  name: "session.next.tool.progress.1"
-  id: string
-  seq: number
-  aggregateID: "sessionID"
-  data: {
-    timestamp: number
-    sessionID: string
-    callID: string
-    structured: {
-      [key: string]: unknown
-    }
-    content: Array<ToolTextContent | ToolFileContent>
-  }
-}
-
 export type SyncEventSessionNextToolSuccess = {
   type: "sync"
   name: "session.next.tool.success.1"
@@ -2278,6 +2288,47 @@ export type SyncEventSessionNextToolFailed = {
         [key: string]: unknown
       }
     }
+  }
+}
+
+export type SyncEventSessionNextReasoningStarted = {
+  type: "sync"
+  name: "session.next.reasoning.started.1"
+  id: string
+  seq: number
+  aggregateID: "sessionID"
+  data: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+  }
+}
+
+export type SyncEventSessionNextReasoningDelta = {
+  type: "sync"
+  name: "session.next.reasoning.delta.1"
+  id: string
+  seq: number
+  aggregateID: "sessionID"
+  data: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+    delta: string
+  }
+}
+
+export type SyncEventSessionNextReasoningEnded = {
+  type: "sync"
+  name: "session.next.reasoning.ended.1"
+  id: string
+  seq: number
+  aggregateID: "sessionID"
+  data: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+    text: string
   }
 }
 
@@ -2332,6 +2383,23 @@ export type SyncEventSessionNextCompactionEnded = {
     sessionID: string
     text: string
     include?: string
+  }
+}
+
+export type SyncEventSessionNextToolProgress = {
+  type: "sync"
+  name: "session.next.tool.progress.1"
+  id: string
+  seq: number
+  aggregateID: string
+  data: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    structured: {
+      [key: string]: unknown
+    }
+    content: Array<ToolTextContent | ToolFileContent>
   }
 }
 
@@ -2615,19 +2683,92 @@ export type EventInstallationUpdateAvailable = {
   }
 }
 
-export type EventServerConnected = {
+export type EventMessageUpdated = {
   id: string
-  type: "server.connected"
+  type: "message.updated"
   properties: {
-    [key: string]: unknown
+    sessionID: string
+    info: Message
   }
 }
 
-export type EventGlobalDisposed = {
+export type EventMessageRemoved = {
   id: string
-  type: "global.disposed"
+  type: "message.removed"
   properties: {
-    [key: string]: unknown
+    sessionID: string
+    messageID: string
+  }
+}
+
+export type EventMessagePartUpdated = {
+  id: string
+  type: "message.part.updated"
+  properties: {
+    sessionID: string
+    part: Part
+    time: number
+  }
+}
+
+export type EventMessagePartRemoved = {
+  id: string
+  type: "message.part.removed"
+  properties: {
+    sessionID: string
+    messageID: string
+    partID: string
+  }
+}
+
+export type EventSessionCreated = {
+  id: string
+  type: "session.created"
+  properties: {
+    sessionID: string
+    info: Session
+  }
+}
+
+export type EventSessionUpdated = {
+  id: string
+  type: "session.updated"
+  properties: {
+    sessionID: string
+    info: Session
+  }
+}
+
+export type EventSessionDeleted = {
+  id: string
+  type: "session.deleted"
+  properties: {
+    sessionID: string
+    info: Session
+  }
+}
+
+export type EventSessionNextAgentSwitched = {
+  id: string
+  type: "session.next.agent.switched"
+  properties: {
+    timestamp: number
+    sessionID: string
+    agent: string
+  }
+}
+
+export type EventSessionNextModelSwitched = {
+  id: string
+  type: "session.next.model.switched"
+  properties: {
+    timestamp: number
+    sessionID: string
+    model: {
+      id: string
+      providerID: string
+      variant: string
+    }
   }
 }
 
@@ -2662,9 +2803,180 @@ export type PromptReferenceAttachment = {
   source?: PromptSource
 }
 
+export type EventSessionNextPrompted = {
+  id: string
+  type: "session.next.prompted"
+  properties: {
+    timestamp: number
+    sessionID: string
+    prompt: Prompt
+  }
+}
+
+export type EventSessionNextSynthetic = {
+  id: string
+  type: "session.next.synthetic"
+  properties: {
+    timestamp: number
+    sessionID: string
+    text: string
+  }
+}
+
+export type EventSessionNextShellStarted = {
+  id: string
+  type: "session.next.shell.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    command: string
+  }
+}
+
+export type EventSessionNextShellEnded = {
+  id: string
+  type: "session.next.shell.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    output: string
+  }
+}
+
+export type EventSessionNextStepStarted = {
+  id: string
+  type: "session.next.step.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+    agent: string
+    model: {
+      id: string
+      providerID: string
+      variant: string
+    }
+    snapshot?: string
+  }
+}
+
+export type EventSessionNextStepEnded = {
+  id: string
+  type: "session.next.step.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    finish: string
+    cost: number
+    tokens: {
+      input: number
+      output: number
+      reasoning: number
+      cache: {
+        read: number
+        write: number
+      }
+    }
+    snapshot?: string
+  }
+}
+
 export type SessionErrorUnknown = {
   type: "unknown"
   message: string
+}
+
+export type EventSessionNextStepFailed = {
+  id: string
+  type: "session.next.step.failed"
+  properties: {
+    timestamp: number
+    sessionID: string
+    error: SessionErrorUnknown
+  }
+}
+
+export type EventSessionNextTextStarted = {
+  id: string
+  type: "session.next.text.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+  }
+}
+
+export type EventSessionNextTextDelta = {
+  id: string
+  type: "session.next.text.delta"
+  properties: {
+    timestamp: number
+    sessionID: string
+    delta: string
+  }
+}
+
+export type EventSessionNextTextEnded = {
+  id: string
+  type: "session.next.text.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    text: string
+  }
+}
+
+export type EventSessionNextToolInputStarted = {
+  id: string
+  type: "session.next.tool.input.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    name: string
+  }
+}
+
+export type EventSessionNextToolInputDelta = {
+  id: string
+  type: "session.next.tool.input.delta"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    delta: string
+  }
+}
+
+export type EventSessionNextToolInputEnded = {
+  id: string
+  type: "session.next.tool.input.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    text: string
+  }
+}
+
+export type EventSessionNextToolCalled = {
+  id: string
+  type: "session.next.tool.called"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    tool: string
+    input: {
+      [key: string]: unknown
+    }
+    provider: {
+      executed: boolean
+      metadata?: {
+        [key: string]: unknown
+      }
+    }
+  }
 }
 
 export type ToolTextContent = {
@@ -2679,6 +2991,75 @@ export type ToolFileContent = {
   name?: string
 }
 
+export type EventSessionNextToolSuccess = {
+  id: string
+  type: "session.next.tool.success"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    structured: {
+      [key: string]: unknown
+    }
+    content: Array<ToolTextContent | ToolFileContent>
+    provider: {
+      executed: boolean
+      metadata?: {
+        [key: string]: unknown
+      }
+    }
+  }
+}
+
+export type EventSessionNextToolFailed = {
+  id: string
+  type: "session.next.tool.failed"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    error: SessionErrorUnknown
+    provider: {
+      executed: boolean
+      metadata?: {
+        [key: string]: unknown
+      }
+    }
+  }
+}
+
+export type EventSessionNextReasoningStarted = {
+  id: string
+  type: "session.next.reasoning.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+  }
+}
+
+export type EventSessionNextReasoningDelta = {
+  id: string
+  type: "session.next.reasoning.delta"
+  properties: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+    delta: string
+  }
+}
+
+export type EventSessionNextReasoningEnded = {
+  id: string
+  type: "session.next.reasoning.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    reasoningID: string
+    text: string
+  }
+}
+
 export type SessionNextRetryError = {
   message: string
   statusCode?: number
@@ -2689,6 +3070,184 @@ export type SessionNextRetryError = {
   responseBody?: string
   metadata?: {
     [key: string]: string
+  }
+}
+
+export type EventSessionNextRetried = {
+  id: string
+  type: "session.next.retried"
+  properties: {
+    timestamp: number
+    sessionID: string
+    attempt: number
+    error: SessionNextRetryError
+  }
+}
+
+export type EventSessionNextCompactionStarted = {
+  id: string
+  type: "session.next.compaction.started"
+  properties: {
+    timestamp: number
+    sessionID: string
+    reason: "auto" | "manual"
+  }
+}
+
+export type EventSessionNextCompactionDelta = {
+  id: string
+  type: "session.next.compaction.delta"
+  properties: {
+    timestamp: number
+    sessionID: string
+    text: string
+  }
+}
+
+export type EventSessionNextCompactionEnded = {
+  id: string
+  type: "session.next.compaction.ended"
+  properties: {
+    timestamp: number
+    sessionID: string
+    text: string
+    include?: string
+  }
+}
+
+export type EventServerConnected = {
+  id: string
+  type: "server.connected"
+  properties: {
+    [key: string]: unknown
+  }
+}
+
+export type EventGlobalDisposed = {
+  id: string
+  type: "global.disposed"
+  properties: {
+    [key: string]: unknown
+  }
+}
+
+export type EventSessionNextToolProgress = {
+  id: string
+  type: "session.next.tool.progress"
+  properties: {
+    timestamp: number
+    sessionID: string
+    callID: string
+    structured: {
+      [key: string]: unknown
+    }
+    content: Array<ToolTextContent | ToolFileContent>
+  }
+}
+
+export type ModelV2Info = {
+  id: string
+  apiID: string
+  providerID: string
+  family?: string
+  name: string
+  endpoint:
+    | {
+        type: "unknown"
+      }
+    | {
+        type: "openai/responses"
+        url: string
+        websocket?: boolean
+      }
+    | {
+        type: "openai/completions"
+        url: string
+        reasoning?:
+          | {
+              type: "reasoning_content"
+            }
+          | {
+              type: "reasoning_details"
+            }
+      }
+    | {
+        type: "anthropic/messages"
+        url: string
+      }
+    | {
+        type: "aisdk"
+        package: string
+        url?: string
+      }
+  capabilities: {
+    tools: boolean
+    input: Array<string>
+    output: Array<string>
+  }
+  options: {
+    headers: {
+      [key: string]: string
+    }
+    body: {
+      [key: string]: unknown
+    }
+    aisdk: {
+      provider: {
+        [key: string]: unknown
+      }
+      request: {
+        [key: string]: unknown
+      }
+    }
+    variant?: string
+  }
+  variants: Array<{
+    id: string
+    headers: {
+      [key: string]: string
+    }
+    body: {
+      [key: string]: unknown
+    }
+    aisdk: {
+      provider: {
+        [key: string]: unknown
+      }
+      request: {
+        [key: string]: unknown
+      }
+    }
+  }>
+  time: {
+    released: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  }
+  cost: Array<{
+    tier?: {
+      type: "context"
+      size: number
+    }
+    input: number
+    output: number
+    cache: {
+      read: number
+      write: number
+    }
+  }>
+  status: "alpha" | "beta" | "deprecated" | "active"
+  enabled: boolean
+  limit: {
+    context: number
+    input?: number
+    output: number
+  }
+}
+
+export type EventCatalogModelUpdated = {
+  id: string
+  type: "catalog.model.updated"
+  properties: {
+    model: ModelV2Info
   }
 }
 
@@ -2927,104 +3486,6 @@ export type SessionMessage =
   | SessionMessageAssistant
   | SessionMessageCompaction
 
-export type ModelV2Info = {
-  id: string
-  apiID: string
-  providerID: string
-  family?: string
-  name: string
-  endpoint:
-    | {
-        type: "unknown"
-      }
-    | {
-        type: "openai/responses"
-        url: string
-        websocket?: boolean
-      }
-    | {
-        type: "openai/completions"
-        url: string
-        reasoning?:
-          | {
-              type: "reasoning_content"
-            }
-          | {
-              type: "reasoning_details"
-            }
-      }
-    | {
-        type: "anthropic/messages"
-        url: string
-      }
-    | {
-        type: "aisdk"
-        package: string
-        url?: string
-      }
-  capabilities: {
-    tools: boolean
-    input: Array<string>
-    output: Array<string>
-  }
-  options: {
-    headers: {
-      [key: string]: string
-    }
-    body: {
-      [key: string]: unknown
-    }
-    aisdk: {
-      provider: {
-        [key: string]: unknown
-      }
-      request: {
-        [key: string]: unknown
-      }
-    }
-    variant?: string
-  }
-  variants: Array<{
-    id: string
-    headers: {
-      [key: string]: string
-    }
-    body: {
-      [key: string]: unknown
-    }
-    aisdk: {
-      provider: {
-        [key: string]: unknown
-      }
-      request: {
-        [key: string]: unknown
-      }
-    }
-  }>
-  time: {
-    released: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
-  }
-  cost: Array<{
-    tier?: {
-      type: "context"
-      size: number
-    }
-    input: number
-    output: number
-    cache: {
-      read: number
-      write: number
-    }
-  }>
-  status: "alpha" | "beta" | "deprecated" | "active"
-  enabled: boolean
-  limit: {
-    context: number
-    input?: number
-    output: number
-  }
-}
-
 export type ProviderV2Info = {
   id: string
   name: string
@@ -3100,6 +3561,104 @@ export type EventTuiToastShow1 = {
     message: string
     variant: "info" | "success" | "warning" | "error"
     duration?: number
+  }
+}
+
+export type ModelV2Info1 = {
+  id: string
+  apiID: string
+  providerID: string
+  family?: string
+  name: string
+  endpoint:
+    | {
+        type: "unknown"
+      }
+    | {
+        type: "openai/responses"
+        url: string
+        websocket?: boolean
+      }
+    | {
+        type: "openai/completions"
+        url: string
+        reasoning?:
+          | {
+              type: "reasoning_content"
+            }
+          | {
+              type: "reasoning_details"
+            }
+      }
+    | {
+        type: "anthropic/messages"
+        url: string
+      }
+    | {
+        type: "aisdk"
+        package: string
+        url?: string
+      }
+  capabilities: {
+    tools: boolean
+    input: Array<string>
+    output: Array<string>
+  }
+  options: {
+    headers: {
+      [key: string]: string
+    }
+    body: {
+      [key: string]: unknown
+    }
+    aisdk: {
+      provider: {
+        [key: string]: unknown
+      }
+      request: {
+        [key: string]: unknown
+      }
+    }
+    variant?: string
+  }
+  variants: Array<{
+    id: string
+    headers: {
+      [key: string]: string
+    }
+    body: {
+      [key: string]: unknown
+    }
+    aisdk: {
+      provider: {
+        [key: string]: unknown
+      }
+      request: {
+        [key: string]: unknown
+      }
+    }
+  }>
+  time: {
+    released: number | "NaN" | "Infinity" | "-Infinity"
+  }
+  cost: Array<{
+    tier?: {
+      type: "context"
+      size: number
+    }
+    input: number
+    output: number
+    cache: {
+      read: number
+      write: number
+    }
+  }>
+  status: "alpha" | "beta" | "deprecated" | "active"
+  enabled: boolean
+  limit: {
+    context: number
+    input?: number
+    output: number
   }
 }
 
@@ -6223,7 +6782,7 @@ export type V2ModelListData = {
   body?: never
   path?: never
   query?: {
-    instance?: {
+    location?: {
       directory?: string
       workspace?: string
     }
@@ -6244,7 +6803,7 @@ export type V2ProviderListData = {
   body?: never
   path?: never
   query?: {
-    instance?: {
+    location?: {
       directory?: string
       workspace?: string
     }
@@ -6267,7 +6826,7 @@ export type V2ProviderGetData = {
     providerID: string
   }
   query?: {
-    instance?: {
+    location?: {
       directory?: string
       workspace?: string
     }
