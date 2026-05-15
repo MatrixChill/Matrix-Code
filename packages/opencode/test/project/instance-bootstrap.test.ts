@@ -88,9 +88,9 @@ it.live("CLI bootstrap disposes the instance when the callback rejects", () =>
     const tmp = yield* bootstrapFixture
     const disposed = yield* waitDisposed(tmp.directory).pipe(Effect.forkScoped)
 
-    const exit = yield* Effect.promise(() => cliBootstrap(tmp.directory, async () => Promise.reject(new Error("boom")))).pipe(
-      Effect.exit,
-    )
+    const exit = yield* Effect.promise(() =>
+      cliBootstrap(tmp.directory, async () => Promise.reject(new Error("boom"))),
+    ).pipe(Effect.exit)
 
     expect(Exit.isFailure(exit)).toBe(true)
     if (Exit.isFailure(exit)) expect(Cause.squash(exit.cause)).toMatchObject({ message: "boom" })
