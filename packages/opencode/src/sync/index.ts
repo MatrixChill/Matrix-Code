@@ -233,7 +233,6 @@ export function init(input: { projectors: Array<[Definition, ProjectorFunc]>; co
   // replaying. Replaying does not go through the bus, and it
   // simplifies the bus to only use unversioned latest events
   for (let [type, version] of versions.entries()) {
-    console.log(type)
     let def = registry.get(versionedType(type, version))!
     BusEvent.define(def.type, def.properties)
   }

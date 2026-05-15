@@ -6,7 +6,6 @@ import { Database } from "@/storage/db"
 import { eq } from "drizzle-orm"
 
 export function initProjectors() {
-  console.log("initProjectors")
   SyncEvent.init({
     projectors: sessionProjectors,
     convertEvent: (type, data) => {
