@@ -214,7 +214,7 @@ export const defaultLayer = layer.pipe(Layer.provide(RuntimeFlags.defaultLayer))
 export const use = serviceUse(Service)
 
 export const registry = new Map<string, Definition>()
-let projectors: Map<Definition, ProjectorFunc> | undefined
+let projectors: Map<string, ProjectorFunc> | undefined
 const versions = new Map<string, number>()
 let frozen = false
 let convertEvent: ConvertEvent
@@ -226,7 +226,7 @@ export function reset() {
 }
 
 export function init(input: { projectors: Array<[Definition, ProjectorFunc]>; convertEvent?: ConvertEvent }) {
-  projectors = new Map(input.projectors)
+  projectors = new Map(input.projectors.map(([def, func]) => [versionedType(def.type, def.version), func]))
   for (let entry of EventV2.registry.values()) {
     if (!entry.version || !entry.aggregate) continue
     register({
@@ -309,7 +309,7 @@ function process<Def extends Definition>(
     throw new Error("No projectors available. Call `SyncEvent.init` to install projectors")
   }
 
-  const projector = projectors.get(def)
+  const projector = projectors.get(versionedType(def.type, def.version))
   if (!projector) {
     if (!def.type.includes("next")) throw new Error(`Projector not found for event: ${def.type}`)
     return
