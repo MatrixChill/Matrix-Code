@@ -35,8 +35,8 @@ function captureSync() {
         if (!(err instanceof LocalContext.NotFound)) throw err
       }
     })()
-  const workspace = (fiber ? Context.getReferenceUnsafe(fiber.context, WorkspaceRef) : undefined) ??
-    WorkspaceContext.workspaceID
+  const workspace =
+    (fiber ? Context.getReferenceUnsafe(fiber.context, WorkspaceRef) : undefined) ?? WorkspaceContext.workspaceID
   return { instance, workspace }
 }
 
