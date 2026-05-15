@@ -311,7 +311,8 @@ function process<Def extends Definition>(
 
   const projector = projectors.get(def)
   if (!projector) {
-    throw new Error(`Projector not found for event: ${def.type}`)
+    if (!def.type.includes("next")) throw new Error(`Projector not found for event: ${def.type}`)
+    return
   }
 
   Database.transaction((tx) => {
