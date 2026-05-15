@@ -132,10 +132,13 @@ export const layer = Layer.effect(
               cwd: ctx.worktree,
             })
             const resolved = result.exitCode === 0 ? path.resolve(ctx.worktree, result.text().trim()) : undefined
-            const vcsDir = resolved
-              ? yield* Effect.promise(() => realpath(resolved).catch(() => resolved))
-              : undefined
-            if (vcsDir && !cfgIgnores.includes(".git") && !cfgIgnores.includes(vcsDir) && (!resolved || !cfgIgnores.includes(resolved))) {
+            const vcsDir = resolved ? yield* Effect.promise(() => realpath(resolved).catch(() => resolved)) : undefined
+            if (
+              vcsDir &&
+              !cfgIgnores.includes(".git") &&
+              !cfgIgnores.includes(vcsDir) &&
+              (!resolved || !cfgIgnores.includes(resolved))
+            ) {
               const ignore = (yield* Effect.promise(() => readdir(vcsDir).catch(() => []))).filter(
                 (entry) => entry !== "HEAD",
               )

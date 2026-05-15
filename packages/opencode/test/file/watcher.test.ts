@@ -285,9 +285,10 @@ describeWatcher("FileWatcher", () => {
             ),
           )
 
-          yield* Effect.acquireRelease(
-            Effect.succeed(actualGit),
-            (p) => Effect.promise(() => import("fs").then((f) => f.promises.rm(p, { recursive: true, force: true }).catch(() => undefined))),
+          yield* Effect.acquireRelease(Effect.succeed(actualGit), (p) =>
+            Effect.promise(() =>
+              import("fs").then((f) => f.promises.rm(p, { recursive: true, force: true }).catch(() => undefined)),
+            ),
           )
 
           const head = path.join(dir, ".git", "HEAD")
