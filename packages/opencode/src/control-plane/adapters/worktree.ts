@@ -50,22 +50,21 @@ export const WorktreeAdapter: WorkspaceAdapter = {
           directory: config.directory,
           ...(config.branch ? { branch: config.branch } : {}),
         }),
-      ).pipe(
-        Effect.provideService(InstanceRef, ctx),
-        Effect.provideService(WorkspaceRef, workspaceID),
-      ),
+      ).pipe(Effect.provideService(InstanceRef, ctx), Effect.provideService(WorkspaceRef, workspaceID)),
     )
   },
   async list() {
     const { AppRuntime, Instance, Worktree } = await loadWorktree()
     const ctx = Instance.current
     const workspaceID = WorkspaceContext.workspaceID
-    return (await AppRuntime.runPromise(
-      Worktree.Service.use((svc) => svc.list()).pipe(
-        Effect.provideService(InstanceRef, ctx),
-        Effect.provideService(WorkspaceRef, workspaceID),
-      ),
-    )).map((info) => ({
+    return (
+      await AppRuntime.runPromise(
+        Worktree.Service.use((svc) => svc.list()).pipe(
+          Effect.provideService(InstanceRef, ctx),
+          Effect.provideService(WorkspaceRef, workspaceID),
+        ),
+      )
+    ).map((info) => ({
       type: "worktree",
       name: info.name,
       branch: info.branch,
