@@ -1,3 +1,6 @@
+import { initProjectors } from "@/server/projectors"
+initProjectors()
+
 import { Schema } from "effect"
 import { HttpApi } from "effect/unstable/httpapi"
 import { BusEvent } from "@/bus/bus-event"

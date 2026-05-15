@@ -226,9 +226,6 @@ export function reset() {
 }
 
 export function init(input: { projectors: Array<[Definition, ProjectorFunc]>; convertEvent?: ConvertEvent }) {
-  for (const [def] of input.projectors) {
-    register(def)
-  }
   projectors = new Map(input.projectors)
 
   // Install all the latest event defs to the bus. We only ever emit
@@ -236,8 +233,8 @@ export function init(input: { projectors: Array<[Definition, ProjectorFunc]>; co
   // replaying. Replaying does not go through the bus, and it
   // simplifies the bus to only use unversioned latest events
   for (let [type, version] of versions.entries()) {
+    console.log(type)
     let def = registry.get(versionedType(type, version))!
-
     BusEvent.define(def.type, def.properties)
   }
 
@@ -286,7 +283,6 @@ export function project<Def extends Definition>(
   def: Def,
   func: (db: Database.TxOrDb, data: Event<Def>["data"], event: Event<Def>) => void,
 ): [Definition, ProjectorFunc] {
-  register(def)
   return [def, func as ProjectorFunc]
 }
 
@@ -393,7 +389,7 @@ export function effectPayloads() {
           name: EffectSchema.Literal(versionedType(definition.type, definition.version!)),
           id: EffectSchema.String,
           seq: EffectSchema.Finite,
-          aggregateID: EffectSchema.String,
+          aggregateID: EffectSchema.Literal(definition.aggregate!),
           data: definition.data,
         }).annotate({ identifier: `SyncEvent.${definition.type}` }),
       )
