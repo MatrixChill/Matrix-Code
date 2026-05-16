@@ -19,6 +19,8 @@ const MAX_BYTES_LABEL = `${MAX_BYTES / 1024} KB`
 const SAMPLE_BYTES = 4096
 const SUPPORTED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"])
 
+class ReadStop extends Schema.TaggedErrorClass<ReadStop>()("ReadStop", {}) {}
+
 // `offset` and `limit` were originally `z.coerce.number()` — the runtime
 // coercion was useful when the tool was called from a shell but serves no
 // purpose in the LLM tool-call path (the model emits typed JSON). The JSON
@@ -111,37 +113,41 @@ export const ReadTool = Tool.define(
       // Note: prefer manual TextDecoder over Stream.decodeText — when the source stream
       // ends without flushing, decodeText drops the final unterminated line. We also
       // avoid Stream.runForEachWhile (it currently swallows the final unterminated
-      // line of the upstream splitLines pipeline) and instead toggle a `done` flag
-      // and ignore subsequent lines.
+      // line of the upstream splitLines pipeline) and use a tagged error to stop the
+      // upstream file stream as soon as the byte cap is reached.
       const decoder = new TextDecoder("utf-8")
-      yield* fs.stream(filepath).pipe(
-        Stream.map((bytes) => decoder.decode(bytes, { stream: true })),
-        Stream.splitLines,
-        Stream.runForEach((text) =>
-          Effect.sync(() => {
-            if (flags.done) return
-            flags.count += 1
-            if (flags.count <= start) return
+      yield* fs
+        .stream(filepath)
+        .pipe(
+          Stream.map((bytes) => decoder.decode(bytes, { stream: true })),
+          Stream.splitLines,
+          Stream.runForEach((text) =>
+            Effect.gen(function* () {
+              if (flags.done) return yield* new ReadStop()
+              flags.count += 1
+              if (flags.count <= start) return
 
-            if (raw.length >= opts.limit) {
-              flags.more = true
-              return
-            }
+              if (raw.length >= opts.limit) {
+                flags.more = true
+                return
+              }
 
-            const line = text.length > MAX_LINE_LENGTH ? text.substring(0, MAX_LINE_LENGTH) + MAX_LINE_SUFFIX : text
-            const size = Buffer.byteLength(line, "utf-8") + (raw.length > 0 ? 1 : 0)
-            if (flags.bytes + size > MAX_BYTES) {
+              const line = text.length > MAX_LINE_LENGTH ? text.substring(0, MAX_LINE_LENGTH) + MAX_LINE_SUFFIX : text
+              const size = Buffer.byteLength(line, "utf-8") + (raw.length > 0 ? 1 : 0)
+              if (flags.bytes + size <= MAX_BYTES) {
+                raw.push(line)
+                flags.bytes += size
+                return
+              }
+
               flags.cut = true
               flags.more = true
               flags.done = true
-              return
-            }
-
-            raw.push(line)
-            flags.bytes += size
-          }),
-        ),
-      )
+              return yield* new ReadStop()
+            }),
+          ),
+          Effect.catchTag("ReadStop", () => Effect.void),
+        )
 
       return { raw, count: flags.count, cut: flags.cut, more: flags.more, offset: opts.offset }
     })
