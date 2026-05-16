@@ -116,38 +116,36 @@ export const ReadTool = Tool.define(
       // line of the upstream splitLines pipeline) and use a tagged error to stop the
       // upstream file stream as soon as the byte cap is reached.
       const decoder = new TextDecoder("utf-8")
-      yield* fs
-        .stream(filepath)
-        .pipe(
-          Stream.map((bytes) => decoder.decode(bytes, { stream: true })),
-          Stream.splitLines,
-          Stream.runForEach((text) =>
-            Effect.gen(function* () {
-              if (flags.done) return yield* new ReadStop()
-              flags.count += 1
-              if (flags.count <= start) return
+      yield* fs.stream(filepath).pipe(
+        Stream.map((bytes) => decoder.decode(bytes, { stream: true })),
+        Stream.splitLines,
+        Stream.runForEach((text) =>
+          Effect.gen(function* () {
+            if (flags.done) return yield* new ReadStop()
+            flags.count += 1
+            if (flags.count <= start) return
 
-              if (raw.length >= opts.limit) {
-                flags.more = true
-                return
-              }
-
-              const line = text.length > MAX_LINE_LENGTH ? text.substring(0, MAX_LINE_LENGTH) + MAX_LINE_SUFFIX : text
-              const size = Buffer.byteLength(line, "utf-8") + (raw.length > 0 ? 1 : 0)
-              if (flags.bytes + size <= MAX_BYTES) {
-                raw.push(line)
-                flags.bytes += size
-                return
-              }
-
-              flags.cut = true
+            if (raw.length >= opts.limit) {
               flags.more = true
-              flags.done = true
-              return yield* new ReadStop()
-            }),
-          ),
-          Effect.catchTag("ReadStop", () => Effect.void),
-        )
+              return
+            }
+
+            const line = text.length > MAX_LINE_LENGTH ? text.substring(0, MAX_LINE_LENGTH) + MAX_LINE_SUFFIX : text
+            const size = Buffer.byteLength(line, "utf-8") + (raw.length > 0 ? 1 : 0)
+            if (flags.bytes + size <= MAX_BYTES) {
+              raw.push(line)
+              flags.bytes += size
+              return
+            }
+
+            flags.cut = true
+            flags.more = true
+            flags.done = true
+            return yield* new ReadStop()
+          }),
+        ),
+        Effect.catchTag("ReadStop", () => Effect.void),
+      )
 
       return { raw, count: flags.count, cut: flags.cut, more: flags.more, offset: opts.offset }
     })
