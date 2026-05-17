@@ -55,7 +55,13 @@ const sessionCursor = {
     filters: Pick<SessionCursor, "directory" | "path" | "workspaceID" | "roots" | "start" | "search">,
   ) {
     return Buffer.from(
-      JSON.stringify({ ...filters, id: session.id, time: DateTime.toEpochMillis(session.time.updated), order, direction }),
+      JSON.stringify({
+        ...filters,
+        id: session.id,
+        time: DateTime.toEpochMillis(session.time.updated),
+        order,
+        direction,
+      }),
     ).toString("base64url")
   },
   decode(input: string) {
