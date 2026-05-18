@@ -181,19 +181,17 @@ const ensureWithServices = Effect.fn("RepositoryCache.ensureWithServices")(funct
     ),
     () =>
       Effect.gen(function* () {
-        yield* services.fs
-          .ensureDir(path.dirname(localPath))
-          .pipe(
-            Effect.catch((error: unknown) =>
-              Effect.fail(
-                new CacheOperationError({
-                  operation: "ensure cache directory",
-                  path: localPath,
-                  message: errorMessage(error),
-                }),
-              ),
+        yield* services.fs.ensureDir(path.dirname(localPath)).pipe(
+          Effect.catch((error: unknown) =>
+            Effect.fail(
+              new CacheOperationError({
+                operation: "ensure cache directory",
+                path: localPath,
+                message: errorMessage(error),
+              }),
             ),
-          )
+          ),
+        )
 
         const exists = yield* services.fs.existsSafe(localPath)
         const hasGitDir = yield* services.fs.existsSafe(path.join(localPath, ".git"))
@@ -203,19 +201,17 @@ const ensureWithServices = Effect.fn("RepositoryCache.ensureWithServices")(funct
         const originReference = origin?.exitCode === 0 ? parseRepositoryReference(origin.text().trim()) : undefined
         const reuse = hasGitDir && Boolean(originReference && sameRepositoryReference(originReference, cloneTarget))
         if (exists && !reuse) {
-          yield* services.fs
-            .remove(localPath, { recursive: true })
-            .pipe(
-              Effect.catch((error: unknown) =>
-                Effect.fail(
-                  new CacheOperationError({
-                    operation: "remove stale cache",
-                    path: localPath,
-                    message: errorMessage(error),
-                  }),
-                ),
+          yield* services.fs.remove(localPath, { recursive: true }).pipe(
+            Effect.catch((error: unknown) =>
+              Effect.fail(
+                new CacheOperationError({
+                  operation: "remove stale cache",
+                  path: localPath,
+                  message: errorMessage(error),
+                }),
               ),
-            )
+            ),
+          )
         }
 
         const currentBranch = hasGitDir ? yield* services.git.branch(localPath) : undefined
