@@ -114,10 +114,7 @@ export function withRunFixture<A, E>(
     const configJson = JSON.stringify(testProviderConfig(llm.url))
     const env = isolatedEnv(home, configJson)
 
-    const spawn = (
-      args: string[],
-      opts?: SpawnOpts,
-    ): Effect.Effect<RunResult> =>
+    const spawn = (args: string[], opts?: SpawnOpts): Effect.Effect<RunResult> =>
       Effect.promise(async () => {
         const start = Date.now()
         // Process.run pipes stdout/stderr by default and returns them as Buffers.
@@ -167,9 +164,7 @@ function expectExit(result: RunResult, expected: number, label = "opencode") {
   if (result.exitCode === expected) return
   const tail = (s: string, n: number) => (s.length > n ? "..." + s.slice(-n) : s)
   // eslint-disable-next-line no-console
-  console.error(
-    `[${label}] expected exit ${expected}, got ${result.exitCode} after ${result.durationMs}ms`,
-  )
+  console.error(`[${label}] expected exit ${expected}, got ${result.exitCode} after ${result.durationMs}ms`)
   // eslint-disable-next-line no-console
   console.error(`[${label}] stderr (last 2000):\n${tail(result.stderr, 2000)}`)
   // eslint-disable-next-line no-console
@@ -185,9 +180,6 @@ function expectExit(result: RunResult, expected: number, label = "opencode") {
 // clock — a TestClock-paused environment can't drive a child process. If you
 // need `.only` or `.skip`, fall back to `it.live` + `withRunFixture` directly.
 export const runIt = {
-  live: <A, E>(
-    name: string,
-    body: (input: RunFixture) => Effect.Effect<A, E>,
-    opts?: number | TestOptions,
-  ) => it.live(name, () => withRunFixture(body), opts),
+  live: <A, E>(name: string, body: (input: RunFixture) => Effect.Effect<A, E>, opts?: number | TestOptions) =>
+    it.live(name, () => withRunFixture(body), opts),
 }
