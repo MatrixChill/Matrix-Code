@@ -111,7 +111,13 @@ function reasoningPart(index: number, partIndex: number, length: number): Messag
   }
 }
 
-function toolPart(index: number, partIndex: number, tool: string, input: Record<string, unknown>, outputLength = 160): MessagePart {
+function toolPart(
+  index: number,
+  partIndex: number,
+  tool: string,
+  input: Record<string, unknown>,
+  outputLength = 160,
+): MessagePart {
   const metadata =
     tool === "apply_patch"
       ? { files: [patchFile(index, "update"), patchFile(index + 1, index % 2 === 0 ? "add" : "delete")] }
@@ -168,7 +174,9 @@ function patch(seed: number, length: number) {
 }
 
 function code(seed: number, lines: number) {
-  return Array.from({ length: lines }, (_, index) => `export const value${index} = "${lorem(seed + index, 32)}"`).join("\n")
+  return Array.from({ length: lines }, (_, index) => `export const value${index} = "${lorem(seed + index, 32)}"`).join(
+    "\n",
+  )
 }
 
 function turn(index: number): Message[] {
@@ -189,12 +197,14 @@ function turn(index: number): Message[] {
     ...(index % 6 === 0
       ? [toolPart(index, 7, "write", { filePath: `src/generated/write-${index}.ts`, content: code(index, 28) }, 560)]
       : []),
-    ...(index % 8 === 0 ? [toolPart(index, 8, "apply_patch", { files: [`src/generated/patch-${index}.ts`] }, 620)] : []),
-    ...(index % 7 === 0 ? [toolPart(index, 4, "bash", { command: "bun typecheck", description: "Verify generated output" }, 620)] : []),
-    ...(index % 10 === 0 ? [toolPart(index, 9, "webfetch", { url: "https://example.com/docs/sample" }, 120)] : []),
-    ...(index % 11 === 0
-      ? [toolPart(index, 10, "websearch", { query: "sample movement notes" }, 240)]
+    ...(index % 8 === 0
+      ? [toolPart(index, 8, "apply_patch", { files: [`src/generated/patch-${index}.ts`] }, 620)]
       : []),
+    ...(index % 7 === 0
+      ? [toolPart(index, 4, "bash", { command: "bun typecheck", description: "Verify generated output" }, 620)]
+      : []),
+    ...(index % 10 === 0 ? [toolPart(index, 9, "webfetch", { url: "https://example.com/docs/sample" }, 120)] : []),
+    ...(index % 11 === 0 ? [toolPart(index, 10, "websearch", { query: "sample movement notes" }, 240)] : []),
     ...(index % 13 === 0
       ? [
           toolPart(
@@ -232,7 +242,14 @@ function orderedParts(message: Message) {
 
 export const fixture = {
   directory,
-  project: { id: projectID, worktree: directory, vcs: "git", name: "smoke-project", time: { created: 1700000000000, updated: 1700000000000 }, sandboxes: [] },
+  project: {
+    id: projectID,
+    worktree: directory,
+    vcs: "git",
+    name: "smoke-project",
+    time: { created: 1700000000000, updated: 1700000000000 },
+    sandboxes: [],
+  },
   provider: {
     all: [
       {
@@ -245,8 +262,24 @@ export const fixture = {
     default: { providerID: "opencode", modelID: "claude-opus-4-6" },
   },
   sessions: [
-    { id: sourceID, slug: "source", projectID, directory, title: "Uncommitted changes inquiry", version: "dev", time: { created: 1700000000000, updated: 1700000000000 } },
-    { id: targetID, slug: "target", projectID, directory, title: "Example Game: sample jump movement & sample physics analysis", version: "dev", time: { created: 1700000001000, updated: 1700000001000 } },
+    {
+      id: sourceID,
+      slug: "source",
+      projectID,
+      directory,
+      title: "Uncommitted changes inquiry",
+      version: "dev",
+      time: { created: 1700000000000, updated: 1700000000000 },
+    },
+    {
+      id: targetID,
+      slug: "target",
+      projectID,
+      directory,
+      title: "Example Game: sample jump movement & sample physics analysis",
+      version: "dev",
+      time: { created: 1700000001000, updated: 1700000001000 },
+    },
   ],
   sourceID,
   targetID,
@@ -254,14 +287,25 @@ export const fixture = {
   expected: {
     sourceTitle: "Uncommitted changes inquiry",
     targetTitle: "Example Game: sample jump movement & sample physics analysis",
-    targetMessageIDs: targetMessages.filter((message) => message.info.role === "user").map((message) => message.info.id),
-    targetPartIDs: targetMessages.flatMap((message) => orderedParts(message).filter(renderable).map((part) => part.id)),
+    targetMessageIDs: targetMessages
+      .filter((message) => message.info.role === "user")
+      .map((message) => message.info.id),
+    targetPartIDs: targetMessages.flatMap((message) =>
+      orderedParts(message)
+        .filter(renderable)
+        .map((part) => part.id),
+    ),
   },
 }
 
 export function pageMessages(sessionID: string, limit: number, before?: string) {
   const messages = fixture.messages[sessionID as keyof typeof fixture.messages] ?? []
-  const end = before ? Math.max(0, messages.findIndex((message) => message.info.id === before)) : messages.length
+  const end = before
+    ? Math.max(
+        0,
+        messages.findIndex((message) => message.info.id === before),
+      )
+    : messages.length
   const start = Math.max(0, end - limit)
   return {
     items: messages.slice(start, end),

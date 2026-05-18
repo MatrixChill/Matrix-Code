@@ -1,6 +1,15 @@
 import type { Page, Route } from "@playwright/test"
 
-const emptyList = new Set(["/skill", "/command", "/lsp", "/formatter", "/permission", "/question", "/vcs/status", "/vcs/diff"])
+const emptyList = new Set([
+  "/skill",
+  "/command",
+  "/lsp",
+  "/formatter",
+  "/permission",
+  "/question",
+  "/vcs/status",
+  "/vcs/diff",
+])
 const emptyObject = new Set(["/global/config", "/config", "/provider/auth", "/mcp", "/session/status"])
 
 export interface MockServerConfig {

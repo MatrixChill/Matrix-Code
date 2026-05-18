@@ -172,7 +172,12 @@ async function configureSmokePage(page: Page) {
   })
 }
 
-async function expectCanScrollToStart(page: Page, expectedPartIDs: string[], expectedMessageIDs: string[], errors: string[]) {
+async function expectCanScrollToStart(
+  page: Page,
+  expectedPartIDs: string[],
+  expectedMessageIDs: string[],
+  errors: string[],
+) {
   await pointAtTimeline(page)
   const seenParts = new Set<string>()
   const seenMessages = new Set<string>()
@@ -189,7 +194,11 @@ async function expectCanScrollToStart(page: Page, expectedPartIDs: string[], exp
     expectOrderedIDs(expectedMessageIDs, unique(current.messageIds), "mounted message")
     expectOrderedIDs(expectedMessageIDs, unique(current.visibleMessageIds), "visible message")
 
-    if (current.scrollTop <= 1 && seenParts.size === expectedPartIDs.length && seenMessages.size === expectedMessageIDs.length) {
+    if (
+      current.scrollTop <= 1 &&
+      seenParts.size === expectedPartIDs.length &&
+      seenMessages.size === expectedMessageIDs.length
+    ) {
       expectCompleteScroll(current, expectedPartIDs, expectedMessageIDs, seenParts, seenMessages, samples)
       return
     }
@@ -345,7 +354,12 @@ async function waitForTimelineStable(page: Page) {
   )
 }
 
-async function expectSessionTimelineReady(page: Page, expectedPartIDs: string[], expectedMessageIDs: string[], errors: string[]) {
+async function expectSessionTimelineReady(
+  page: Page,
+  expectedPartIDs: string[],
+  expectedMessageIDs: string[],
+  errors: string[],
+) {
   await waitForTimelineStable(page)
   for (const text of forbiddenText) await expect(page.getByText(text)).toHaveCount(0)
   const currentState = await timelineState(page)
@@ -365,8 +379,14 @@ function expectCompleteScroll(
   samples: TraversalSample[],
 ) {
   expect(state.scrollTop, `timeline should reach the start\n${sampleSummary(samples)}`).toBeLessThanOrEqual(1)
-  expect(expectedPartIDs.filter((id) => !seenParts.has(id)), `missing visible timeline parts\n${sampleSummary(samples)}`).toEqual([])
-  expect(expectedMessageIDs.filter((id) => !seenMessages.has(id)), `missing visible messages\n${sampleSummary(samples)}`).toEqual([])
+  expect(
+    expectedPartIDs.filter((id) => !seenParts.has(id)),
+    `missing visible timeline parts\n${sampleSummary(samples)}`,
+  ).toEqual([])
+  expect(
+    expectedMessageIDs.filter((id) => !seenMessages.has(id)),
+    `missing visible messages\n${sampleSummary(samples)}`,
+  ).toEqual([])
   expect(new Set(expectedPartIDs).size).toBe(expectedPartIDs.length)
   expect(new Set(expectedMessageIDs).size).toBe(expectedMessageIDs.length)
   expect(expectedPartIDs.length).toBe(331)
@@ -379,7 +399,10 @@ async function openProject(page: Page, projectName: string) {
 
 async function navigateToSession(page: Page, sessionId: string, expectedTitle: string) {
   // Use evaluate to click to avoid strict visibility/animation issues during rapid e2e navigation
-  await page.locator(`a[href*="${sessionId}"]`).first().evaluate((el) => (el as HTMLElement).click())
+  await page
+    .locator(`a[href*="${sessionId}"]`)
+    .first()
+    .evaluate((el) => (el as HTMLElement).click())
   await expect(page.getByRole("heading", { name: expectedTitle })).toBeVisible()
 }
 
