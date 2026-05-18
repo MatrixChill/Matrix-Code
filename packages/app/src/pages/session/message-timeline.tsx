@@ -463,7 +463,8 @@ export function MessageTimeline(props: {
           if (part.type === "text" || part.type === "reasoning") return `${part.id}:${part.type}:${part.text.length}`
           if (part.type === "tool") {
             const metadata = "metadata" in part.state ? part.state.metadata : undefined
-            const output = "output" in part.state && typeof part.state.output === "string" ? part.state.output.length : 0
+            const output =
+              "output" in part.state && typeof part.state.output === "string" ? part.state.output.length : 0
             const metadataOutput =
               metadata && typeof metadata === "object" && "output" in metadata && typeof metadata.output === "string"
                 ? metadata.output.length
@@ -1128,7 +1129,11 @@ export function MessageTimeline(props: {
               {(message) => (
                 <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
                   <div data-slot="session-turn-message-content" aria-live="off">
-                    <Message message={message()} parts={getMsgParts(userMessageRow().userMessageID)} actions={props.actions} />
+                    <Message
+                      message={message()}
+                      parts={getMsgParts(userMessageRow().userMessageID)}
+                      actions={props.actions}
+                    />
                   </div>
                 </div>
               )}
@@ -1157,7 +1162,10 @@ export function MessageTimeline(props: {
         return (
           <TimelineRowFrame row={assistantPartRow}>
             <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
-              <div data-slot="session-turn-assistant-content" aria-hidden={workingTurn(assistantPartRow().userMessageID)}>
+              <div
+                data-slot="session-turn-assistant-content"
+                aria-hidden={workingTurn(assistantPartRow().userMessageID)}
+              >
                 {renderAssistantPartGroup(assistantPartRow)}
               </div>
             </div>
@@ -1215,11 +1223,7 @@ export function MessageTimeline(props: {
   }
 
   function TimelineRowView(props: { rowKey: string }) {
-    return (
-      <Show when={timelineRowByKey().get(props.rowKey)}>
-        {(item) => renderTimelineRow(item)}
-      </Show>
-    )
+    return <Show when={timelineRowByKey().get(props.rowKey)}>{(item) => renderTimelineRow(item)}</Show>
   }
 
   return (

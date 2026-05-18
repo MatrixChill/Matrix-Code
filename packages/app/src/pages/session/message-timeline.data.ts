@@ -136,15 +136,19 @@ export namespace Timeline {
     const assistantItems =
       interrupted && !compaction
         ? [
-            ...groupParts(assistantPartRefs.filter((ref) => ref.messageIndex <= interruptedMessageIndex)).map((group) => ({
-              type: "part" as const,
-              group,
-            })),
+            ...groupParts(assistantPartRefs.filter((ref) => ref.messageIndex <= interruptedMessageIndex)).map(
+              (group) => ({
+                type: "part" as const,
+                group,
+              }),
+            ),
             { type: "interrupted" as const },
-            ...groupParts(assistantPartRefs.filter((ref) => ref.messageIndex > interruptedMessageIndex)).map((group) => ({
-              type: "part" as const,
-              group,
-            })),
+            ...groupParts(assistantPartRefs.filter((ref) => ref.messageIndex > interruptedMessageIndex)).map(
+              (group) => ({
+                type: "part" as const,
+                group,
+              }),
+            ),
           ]
         : groupParts(assistantPartRefs).map((group) => ({ type: "part" as const, group }))
     const assistantGroupCount = assistantItems.filter((item) => item.type === "part").length
