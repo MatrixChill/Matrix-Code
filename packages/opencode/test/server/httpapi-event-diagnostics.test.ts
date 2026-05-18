@@ -207,11 +207,7 @@ describe("/event SSE delivery diagnostics", () => {
           .pipe(Effect.provideService(InstanceRef, ctx)),
       )
 
-      const collected = await collectUntil(
-        reader,
-        (event) => event.type === MessageV2.Event.PartUpdated.type,
-        4_000,
-      )
+      const collected = await collectUntil(reader, (event) => event.type === MessageV2.Event.PartUpdated.type, 4_000)
       const updated = collected.find((event) => event.type === MessageV2.Event.PartUpdated.type)
       expect(updated).toBeDefined()
       expect((updated as any).properties.part.id).toBe(partID)
@@ -325,8 +321,7 @@ describe("/event SSE delivery diagnostics", () => {
       ])
 
       const sseSaw =
-        Array.isArray(sseCollected) &&
-        sseCollected.some((event) => event.type === MessageV2.Event.PartUpdated.type)
+        Array.isArray(sseCollected) && sseCollected.some((event) => event.type === MessageV2.Event.PartUpdated.type)
       const callbackSaw = callbackResult !== "timeout"
 
       // Both should see it. The reason we use a single assert with the boolean
@@ -371,11 +366,7 @@ describe("/event SSE delivery diagnostics", () => {
           .pipe(Effect.provideService(InstanceRef, ctx)),
       )
 
-      const collected = await collectUntil(
-        reader,
-        (event) => event.type === MessageV2.Event.PartUpdated.type,
-        4_000,
-      )
+      const collected = await collectUntil(reader, (event) => event.type === MessageV2.Event.PartUpdated.type, 4_000)
       const updated = collected.find((event) => event.type === MessageV2.Event.PartUpdated.type)
       expect(updated).toBeDefined()
     } finally {
@@ -439,8 +430,7 @@ describe("/event SSE delivery diagnostics", () => {
         ])
 
         const sseSaw =
-          Array.isArray(sseCollected) &&
-          sseCollected.some((event) => event.type === MessageV2.Event.PartUpdated.type)
+          Array.isArray(sseCollected) && sseCollected.some((event) => event.type === MessageV2.Event.PartUpdated.type)
         const callbackSaw = callbackResult !== "timeout"
         expect({ sseSaw, callbackSaw }).toEqual({ sseSaw: true, callbackSaw: true })
       } finally {

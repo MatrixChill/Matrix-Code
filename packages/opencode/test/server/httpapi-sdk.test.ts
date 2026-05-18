@@ -672,11 +672,11 @@ describe("HttpApi SDK", () => {
   )
 
   // Regression: SyncEvent must publish on the same ProjectBus the /event handler
-// subscribes to, AND the /event stream must forward handler ALS/context into the
-// body-pump fiber. Drives the full SDK → /event → Session.updatePart → sync.run →
-// bus.publish → SDK subscriber path. Goes red if either the publisher uses a
-// different bus instance (Bug 2 / pre-#27825) or the stream loses context (Bug 1 /
-// pre-#27425).
+  // subscribes to, AND the /event stream must forward handler ALS/context into the
+  // body-pump fiber. Drives the full SDK → /event → Session.updatePart → sync.run →
+  // bus.publish → SDK subscriber path. Goes red if either the publisher uses a
+  // different bus instance (Bug 2 / pre-#27825) or the stream loses context (Bug 1 /
+  // pre-#27425).
   serverPathParity("streams sync-backed part updates to /event subscribers", (serverPath) =>
     withStandardProject(serverPath, ({ sdk, directory }) =>
       Effect.gen(function* () {
