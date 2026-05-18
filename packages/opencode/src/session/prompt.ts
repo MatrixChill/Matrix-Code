@@ -63,6 +63,7 @@ import * as Database from "@/storage/db"
 import { SessionTable } from "./session.sql"
 import { referencePromptMetadata, referenceTextPart } from "./prompt/reference"
 import { SessionReminders } from "./reminders"
+import { LLMEvent } from "@opencode-ai/llm"
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -283,7 +284,7 @@ export const layer = Layer.effect(
           messages: [{ role: "user", content: "Generate a title for this conversation:\n" }, ...msgs],
         })
         .pipe(
-          Stream.filter((e): e is Extract<LLM.Event, { type: "text-delta" }> => e.type === "text-delta"),
+          Stream.filter(LLMEvent.is.textDelta),
           Stream.map((e) => e.text),
           Stream.mkString,
           Effect.orDie,
