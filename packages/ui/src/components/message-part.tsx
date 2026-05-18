@@ -76,7 +76,10 @@ async function writeClipboard(text: string): Promise<boolean> {
 
   const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard
   if (!clipboard?.writeText) return false
-  return clipboard.writeText(text).then(() => true, () => false)
+  return clipboard.writeText(text).then(
+    () => true,
+    () => false,
+  )
 }
 
 function ShellSubmessage(props: { text: string; animate?: boolean }) {
