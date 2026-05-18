@@ -6,7 +6,13 @@ export function collapseToolOutput(output: string, maxLines: number, maxChars: n
 
   const preview = lines.slice(0, maxLines).join("\n")
   if (Array.from(preview).length > maxChars) {
-    return { output: Array.from(preview).slice(0, Math.max(0, maxChars - 1)).join("") + "…", overflow: true }
+    return {
+      output:
+        Array.from(preview)
+          .slice(0, Math.max(0, maxChars - 1))
+          .join("") + "…",
+      overflow: true,
+    }
   }
 
   return { output: [...lines.slice(0, maxLines), "…"].join("\n"), overflow: true }
