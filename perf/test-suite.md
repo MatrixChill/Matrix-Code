@@ -71,6 +71,7 @@ Repeated setup work, long sleeps/timeouts, serial integration tests, filesystem/
 | First provider config/env/filtering block can use Effect-aware instance fixtures                          | Migrated six `tmpdir` + `withTestInstance` cases to `it.instance`                              | 6.06s     | 6.07s   | keep     | Neutral timing, but removes manual config file writes and instance plumbing; use as the pattern for later provider slices.  |
 | Custom provider/model config cases can use Effect-aware instance fixtures                                 | Migrated three more config-heavy provider cases to `it.instance`                               | 6.07s     | 6.12s   | keep     | Neutral timing within noise, but continues removing manual config file writes on top of the first provider fixture PR.      |
 | Provider env precedence and model lookup cases can use Effect-aware instance fixtures                     | Migrated four more provider lookup/default-model cases to `it.instance`                        | 6.12s     | 6.36s   | keep     | Noisy 5-run median; kept as a small stacked cleanup slice but do not claim speedup from this migration.                     |
+| Simple config load cases can use Effect-aware instance fixtures                                           | Migrated JSON, shell, formatter, and lsp config load cases to `it.instance`                    | 14.18s    | 3.93s   | keep     | Three-run medians before/after; removes manual `tmpdir` + `withTestInstance` setup from the first simple config block.      |
 
 ## Profiling Results
 

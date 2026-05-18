@@ -94,14 +94,6 @@ const listDirs = (ctx: InstanceContext) =>
       Effect.provide(layer),
     ),
   )
-const ready = (ctx: InstanceContext) =>
-  Effect.runPromise(
-    Config.Service.use((svc) => provideCurrentInstance(svc.waitForDependencies(), ctx)).pipe(
-      Effect.scoped,
-      Effect.provide(layer),
-    ),
-  )
-
 // Get managed config directory from environment (set in preload.ts)
 const managedConfigDir = process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR!
 
@@ -210,43 +202,24 @@ test("does not create global config when OPENCODE_CONFIG_DIR is set", async () =
   }
 })
 
-test("loads JSON config file", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await writeConfig(dir, {
-        $schema: "https://opencode.ai/config.json",
-        model: "test/model",
-        username: "testuser",
-      })
-    },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const config = await load(ctx)
-      expect(config.model).toBe("test/model")
-      expect(config.username).toBe("testuser")
-    },
-  })
-})
+it.instance(
+  "loads JSON config file",
+  Effect.gen(function* () {
+    const config = yield* Config.Service.use((svc) => svc.get())
+    expect(config.model).toBe("test/model")
+    expect(config.username).toBe("testuser")
+  }),
+  { config: { model: "test/model", username: "testuser" } },
+)
 
-test("loads shell config field", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await writeConfig(dir, {
-        $schema: "https://opencode.ai/config.json",
-        shell: "bash",
-      })
-    },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const config = await load(ctx)
-      expect(config.shell).toBe("bash")
-    },
-  })
-})
+it.instance(
+  "loads shell config field",
+  Effect.gen(function* () {
+    const config = yield* Config.Service.use((svc) => svc.get())
+    expect(config.shell).toBe("bash")
+  }),
+  { config: { shell: "bash" } },
+)
 
 test("updates config and preserves empty shell sentinel", async () => {
   await using tmp = await tmpdir({
@@ -330,41 +303,23 @@ test("updates global config and omits empty shell key in jsonc", async () => {
   }
 })
 
-test("loads formatter boolean config", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await writeConfig(dir, {
-        $schema: "https://opencode.ai/config.json",
-        formatter: true,
-      })
-    },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const config = await load(ctx)
-      expect(config.formatter).toBe(true)
-    },
-  })
-})
+it.instance(
+  "loads formatter boolean config",
+  Effect.gen(function* () {
+    const config = yield* Config.Service.use((svc) => svc.get())
+    expect(config.formatter).toBe(true)
+  }),
+  { config: { formatter: true } },
+)
 
-test("loads lsp boolean config", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await writeConfig(dir, {
-        $schema: "https://opencode.ai/config.json",
-        lsp: true,
-      })
-    },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const config = await load(ctx)
-      expect(config.lsp).toBe(true)
-    },
-  })
-})
+it.instance(
+  "loads lsp boolean config",
+  Effect.gen(function* () {
+    const config = yield* Config.Service.use((svc) => svc.get())
+    expect(config.lsp).toBe(true)
+  }),
+  { config: { lsp: true } },
+)
 
 test("loads project config from Git Bash and MSYS2 paths on Windows", async () => {
   // Git Bash and MSYS2 both use /<drive>/... paths on Windows.
