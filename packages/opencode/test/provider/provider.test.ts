@@ -228,81 +228,65 @@ it.instance(
   },
 )
 
-test("custom model alias via config", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
-          provider: {
-            anthropic: {
-              models: {
-                "my-alias": {
-                  id: "claude-sonnet-4-20250514",
-                  name: "My Custom Alias",
-                },
-              },
+it.instance(
+  "custom model alias via config",
+  Effect.gen(function* () {
+    yield* setProcessEnv("ANTHROPIC_API_KEY", "test-api-key")
+    const providers = yield* Provider.Service.use((provider) => provider.list())
+    expect(providers[ProviderID.anthropic]).toBeDefined()
+    expect(providers[ProviderID.anthropic].models["my-alias"]).toBeDefined()
+    expect(providers[ProviderID.anthropic].models["my-alias"].name).toBe("My Custom Alias")
+  }),
+  {
+    config: {
+      provider: {
+        anthropic: {
+          models: {
+            "my-alias": {
+              id: "claude-sonnet-4-20250514",
+              name: "My Custom Alias",
             },
           },
-        }),
-      )
+        },
+      },
     },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      await set(ctx, "ANTHROPIC_API_KEY", "test-api-key")
-      const providers = await list(ctx)
-      expect(providers[ProviderID.anthropic]).toBeDefined()
-      expect(providers[ProviderID.anthropic].models["my-alias"]).toBeDefined()
-      expect(providers[ProviderID.anthropic].models["my-alias"].name).toBe("My Custom Alias")
-    },
-  })
-})
+  },
+)
 
-test("custom provider with npm package", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
-          provider: {
-            "custom-provider": {
-              name: "Custom Provider",
-              npm: "@ai-sdk/openai-compatible",
-              api: "https://api.custom.com/v1",
-              env: ["CUSTOM_API_KEY"],
-              models: {
-                "custom-model": {
-                  name: "Custom Model",
-                  tool_call: true,
-                  limit: {
-                    context: 128000,
-                    output: 4096,
-                  },
-                },
-              },
-              options: {
-                apiKey: "custom-key",
+it.instance(
+  "custom provider with npm package",
+  Effect.gen(function* () {
+    const providers = yield* Provider.Service.use((provider) => provider.list())
+    expect(providers[ProviderID.make("custom-provider")]).toBeDefined()
+    expect(providers[ProviderID.make("custom-provider")].name).toBe("Custom Provider")
+    expect(providers[ProviderID.make("custom-provider")].models["custom-model"]).toBeDefined()
+  }),
+  {
+    config: {
+      provider: {
+        "custom-provider": {
+          name: "Custom Provider",
+          npm: "@ai-sdk/openai-compatible",
+          api: "https://api.custom.com/v1",
+          env: ["CUSTOM_API_KEY"],
+          models: {
+            "custom-model": {
+              name: "Custom Model",
+              tool_call: true,
+              limit: {
+                context: 128000,
+                output: 4096,
               },
             },
           },
-        }),
-      )
+          options: {
+            apiKey: "custom-key",
+          },
+        },
+      },
     },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const providers = await list(ctx)
-      expect(providers[ProviderID.make("custom-provider")]).toBeDefined()
-      expect(providers[ProviderID.make("custom-provider")].name).toBe("Custom Provider")
-      expect(providers[ProviderID.make("custom-provider")].models["custom-model"]).toBeDefined()
-    },
-  })
-})
+  },
+)
 
 it.instance(
   "filters alpha provider models by default",
@@ -324,66 +308,58 @@ experimentalModels.instance(
   { config: alphaProviderConfig },
 )
 
-test("custom DeepSeek openai-compatible model defaults interleaved reasoning field", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await Bun.write(
-        path.join(dir, "opencode.json"),
-        JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
-          provider: {
-            "custom-provider": {
-              name: "Custom Provider",
-              npm: "@ai-sdk/openai-compatible",
-              api: "https://api.custom.com/v1",
-              models: {
-                "deepseek-r1": {
-                  name: "DeepSeek R1",
-                },
-                "deepseek-details": {
-                  name: "DeepSeek Details",
-                  interleaved: { field: "reasoning_details" },
-                },
-                "custom-model": {
-                  name: "Custom Model",
-                },
-              },
-              options: {
-                apiKey: "custom-key",
-              },
+it.instance(
+  "custom DeepSeek openai-compatible model defaults interleaved reasoning field",
+  Effect.gen(function* () {
+    const providers = yield* Provider.Service.use((provider) => provider.list())
+    const provider = providers[ProviderID.make("custom-provider")]
+    expect(provider.models["deepseek-r1"].capabilities.interleaved).toEqual({ field: "reasoning_content" })
+    expect(provider.models["deepseek-details"].capabilities.interleaved).toEqual({ field: "reasoning_details" })
+    expect(provider.models["custom-model"].capabilities.interleaved).toBe(false)
+    expect(providers[ProviderID.make("custom-anthropic-provider")].models["deepseek-r1"].capabilities.interleaved).toBe(
+      false,
+    )
+  }),
+  {
+    config: {
+      provider: {
+        "custom-provider": {
+          name: "Custom Provider",
+          npm: "@ai-sdk/openai-compatible",
+          api: "https://api.custom.com/v1",
+          models: {
+            "deepseek-r1": {
+              name: "DeepSeek R1",
             },
-            "custom-anthropic-provider": {
-              name: "Custom Anthropic Provider",
-              npm: "@ai-sdk/anthropic",
-              api: "https://api.custom.com/v1",
-              models: {
-                "deepseek-r1": {
-                  name: "DeepSeek R1",
-                },
-              },
-              options: {
-                apiKey: "custom-key",
-              },
+            "deepseek-details": {
+              name: "DeepSeek Details",
+              interleaved: { field: "reasoning_details" },
+            },
+            "custom-model": {
+              name: "Custom Model",
             },
           },
-        }),
-      )
+          options: {
+            apiKey: "custom-key",
+          },
+        },
+        "custom-anthropic-provider": {
+          name: "Custom Anthropic Provider",
+          npm: "@ai-sdk/anthropic",
+          api: "https://api.custom.com/v1",
+          models: {
+            "deepseek-r1": {
+              name: "DeepSeek R1",
+            },
+          },
+          options: {
+            apiKey: "custom-key",
+          },
+        },
+      },
     },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const providers = await list(ctx)
-      const provider = providers[ProviderID.make("custom-provider")]
-      expect(provider.models["deepseek-r1"].capabilities.interleaved).toEqual({ field: "reasoning_content" })
-      expect(provider.models["deepseek-details"].capabilities.interleaved).toEqual({ field: "reasoning_details" })
-      expect(provider.models["custom-model"].capabilities.interleaved).toBe(false)
-      expect(
-        providers[ProviderID.make("custom-anthropic-provider")].models["deepseek-r1"].capabilities.interleaved,
-      ).toBe(false)
-    },
-  })
-})
+  },
+)
 
 test("env variable takes precedence, config merges options", async () => {
   await using tmp = await tmpdir({
