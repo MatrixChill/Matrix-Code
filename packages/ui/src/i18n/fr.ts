@@ -47,10 +47,12 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Ajouter des crédits",
 
   "dialog.usageExceeded.freeTier.title": "Limite gratuite atteinte",
-  "dialog.usageExceeded.freeTier.description": "Abonnez-vous à OpenCode Go pour un accès fiable aux meilleurs modèles open source, à partir de $5/mois.",
+  "dialog.usageExceeded.freeTier.description":
+    "Abonnez-vous à OpenCode Go pour un accès fiable aux meilleurs modèles open source, à partir de $5/mois.",
   "dialog.usageExceeded.freeTier.actionLabel": "S'abonner",
   "dialog.usageExceeded.accountRateLimit.title": "Limite Go atteinte",
-  "dialog.usageExceeded.accountRateLimit.description": "Limite d'utilisation atteinte. Pour continuer à utiliser ce modèle maintenant, activez l'utilisation depuis votre solde disponible",
+  "dialog.usageExceeded.accountRateLimit.description":
+    "Limite d'utilisation atteinte. Pour continuer à utiliser ce modèle maintenant, activez l'utilisation depuis votre solde disponible",
   "dialog.usageExceeded.accountRateLimit.actionLabel": "Ouvrir les paramètres",
 
   "ui.sessionTurn.status.delegating": "Délégation du travail",
