@@ -68,13 +68,6 @@ const load = (ctx: InstanceContext) =>
   Effect.runPromise(
     Config.Service.use((svc) => provideCurrentInstance(svc.get(), ctx)).pipe(Effect.scoped, Effect.provide(layer)),
   )
-const save = (config: Config.Info, ctx: InstanceContext) =>
-  Effect.runPromise(
-    Config.Service.use((svc) => provideCurrentInstance(svc.update(config), ctx)).pipe(
-      Effect.scoped,
-      Effect.provide(layer),
-    ),
-  )
 const saveGlobal = (config: Config.Info) =>
   Effect.runPromise(
     Config.Service.use((svc) => svc.updateGlobal(config)).pipe(
@@ -240,29 +233,23 @@ it.instance(
   { config: { shell: "bash" } },
 )
 
-test("updates config and preserves empty shell sentinel", async () => {
-  await using tmp = await tmpdir({
-    init: async (dir) => {
-      await writeConfig(
-        dir,
-        {
-          $schema: "https://opencode.ai/config.json",
-          shell: "bash",
-        },
-        "config.json",
-      )
-    },
-  })
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      await save({ shell: "" }, ctx)
+it.instance("updates config and preserves empty shell sentinel", () =>
+  Effect.gen(function* () {
+    const test = yield* TestInstance
+    yield* writeConfigEffect(
+      test.directory,
+      { $schema: "https://opencode.ai/config.json", shell: "bash" },
+      "config.json",
+    )
 
-      const writtenConfig = await Filesystem.readJson<{ shell?: string }>(path.join(tmp.path, "config.json"))
-      expect(writtenConfig.shell).toBe("")
-    },
-  })
-})
+    yield* Config.Service.use((svc) => svc.update(ConfigParse.schema(Config.Info, { shell: "" }, "test:config")))
+
+    const writtenConfig = yield* Effect.promise(() =>
+      Filesystem.readJson<{ shell?: string }>(path.join(test.directory, "config.json")),
+    )
+    expect(writtenConfig.shell).toBe("")
+  }),
+)
 
 test("updates global config and omits empty shell key in json", async () => {
   await using tmp = await tmpdir({
@@ -884,30 +871,26 @@ Nested command template`,
   })
 })
 
-test("updates config and writes to file", async () => {
-  await using tmp = await tmpdir()
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const newConfig = { model: "updated/model" }
-      await save(newConfig as any, ctx)
+it.instance("updates config and writes to file", () =>
+  Effect.gen(function* () {
+    const test = yield* TestInstance
+    yield* Config.Service.use((svc) =>
+      svc.update(ConfigParse.schema(Config.Info, { model: "updated/model" }, "test:config")),
+    )
 
-      const writtenConfig = await Filesystem.readJson<{ model: string }>(path.join(tmp.path, "config.json"))
-      expect(writtenConfig.model).toBe("updated/model")
-    },
-  })
-})
+    const writtenConfig = yield* Effect.promise(() =>
+      Filesystem.readJson<{ model: string }>(path.join(test.directory, "config.json")),
+    )
+    expect(writtenConfig.model).toBe("updated/model")
+  }),
+)
 
-test("gets config directories", async () => {
-  await using tmp = await tmpdir()
-  await withTestInstance({
-    directory: tmp.path,
-    fn: async (ctx) => {
-      const dirs = await listDirs(ctx)
-      expect(dirs.length).toBeGreaterThanOrEqual(1)
-    },
-  })
-})
+it.instance("gets config directories", () =>
+  Effect.gen(function* () {
+    const dirs = yield* Config.Service.use((svc) => svc.directories())
+    expect(dirs.length).toBeGreaterThanOrEqual(1)
+  }),
+)
 
 test("does not try to install dependencies in read-only OPENCODE_CONFIG_DIR", async () => {
   if (process.platform === "win32") return
