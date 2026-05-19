@@ -408,12 +408,7 @@ export function withCliFixture<A, E>(
     // and hit endpoints on `opencode.serve()` without rolling their own fetch.
   }).pipe(
     Effect.provide(
-      Layer.mergeAll(
-        TestLLMServer.layer,
-        FetchHttpClient.layer,
-        AppFileSystem.defaultLayer,
-        AppProcess.defaultLayer,
-      ),
+      Layer.mergeAll(TestLLMServer.layer, FetchHttpClient.layer, AppFileSystem.defaultLayer, AppProcess.defaultLayer),
     ),
   )
 }
