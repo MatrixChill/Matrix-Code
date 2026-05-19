@@ -5,12 +5,7 @@ import {
   formatCommandBindings as formatCommandBindingsExtra,
   formatKeySequence as formatKeySequenceExtra,
 } from "@opentui/keymap/extras"
-import {
-  KeymapProvider,
-  useKeymap,
-  useKeymapSelector,
-  useBindings,
-} from "@opentui/keymap/solid"
+import { KeymapProvider, useKeymap, useKeymapSelector, useBindings } from "@opentui/keymap/solid"
 import { createMemo, type Accessor } from "solid-js"
 import type { TuiConfig } from "./config/tui"
 import { useTuiConfig } from "./context/tui-config"
@@ -248,12 +243,11 @@ export function useLeaderActive(): Accessor<boolean> {
 export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
   const keymap = useOpencodeKeymap()
   const entries = useKeymapSelector((keymap: OpenTuiKeymap) =>
-    keymap
-      .getCommandEntries({
-        visibility: "reachable",
-        namespace: "palette",
-        filter: isVisiblePaletteCommand,
-      })
+    keymap.getCommandEntries({
+      visibility: "reachable",
+      namespace: "palette",
+      filter: isVisiblePaletteCommand,
+    }),
   )
 
   return createMemo<CommandSlashEntry[]>(() =>

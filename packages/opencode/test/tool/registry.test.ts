@@ -78,7 +78,8 @@ const brokenPluginLayer = Layer.succeed(
   Plugin.Service,
   Plugin.Service.of({
     init: () => Effect.void,
-    trigger: ((_name: unknown, _input: unknown, output: unknown) => Effect.succeed(output)) as Plugin.Interface["trigger"],
+    trigger: ((_name: unknown, _input: unknown, output: unknown) =>
+      Effect.succeed(output)) as Plugin.Interface["trigger"],
     list: () =>
       Effect.succeed([
         {
@@ -95,7 +96,9 @@ const brokenPluginLayer = Layer.succeed(
 )
 
 const it = testEffect(Layer.mergeAll(registryLayer(), node, Agent.defaultLayer))
-const scout = testEffect(Layer.mergeAll(registryLayer({ flags: { experimentalScout: true } }), node, Agent.defaultLayer))
+const scout = testEffect(
+  Layer.mergeAll(registryLayer({ flags: { experimentalScout: true } }), node, Agent.defaultLayer),
+)
 const background = testEffect(
   Layer.mergeAll(registryLayer({ flags: { experimentalBackgroundSubagents: true } }), node, Agent.defaultLayer),
 )
