@@ -168,7 +168,9 @@ function recordedNativeLLMLayer(spec: ProviderSpec) {
       Layer.provide(Provider.defaultLayer),
       Layer.provide(Plugin.defaultLayer),
       Layer.provide(recordedClient),
-      Layer.provide(HttpRecorder.Cassette.fileSystem({ directory: FIXTURES_DIR }).pipe(Layer.provide(NodeFileSystem.layer))),
+      Layer.provide(
+        HttpRecorder.Cassette.fileSystem({ directory: FIXTURES_DIR }).pipe(Layer.provide(NodeFileSystem.layer)),
+      ),
       Layer.provide(RuntimeFlags.layer({ experimentalNativeLlm: true })),
     ),
   )
@@ -206,7 +208,9 @@ const toolRoundtrip = (
   { role: "assistant", content: [{ type: "tool-call", toolCallId: call.id, toolName: call.name, input: call.input }] },
   {
     role: "tool",
-    content: [{ type: "tool-result", toolCallId: call.id, toolName: call.name, output: { type: "json", value: result } }],
+    content: [
+      { type: "tool-result", toolCallId: call.id, toolName: call.name, output: { type: "json", value: result } },
+    ],
   },
 ]
 
