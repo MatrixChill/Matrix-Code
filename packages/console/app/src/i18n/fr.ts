@@ -682,9 +682,11 @@ export const dict = {
   "workspace.referral.overview.subtitle": "Gagnez $5 lorsqu'un ami s'abonne. Il recevra également $5.",
   "workspace.referral.instructions.share": "Partagez votre lien de parrainage",
   "workspace.referral.instructions.subscribe": "Votre ami rejoint et s'abonne à Go",
-  "workspace.referral.instructions.claim": "Vous recevez tous les deux un crédit d'utilisation de $5 à appliquer à vos limites d'utilisation Go",
+  "workspace.referral.instructions.claim":
+    "Vous recevez tous les deux un crédit d'utilisation de $5 à appliquer à vos limites d'utilisation Go",
   "workspace.referral.rewards.title": "Récompenses de parrainage",
-  "workspace.referral.rewards.description": "Utilisez les crédits de parrainage disponibles pour votre utilisation de Go.",
+  "workspace.referral.rewards.description":
+    "Utilisez les crédits de parrainage disponibles pour votre utilisation de Go.",
   "workspace.referral.rewards.subtitle": "{{applied}} / {{total}} récompenses utilisées.",
   "workspace.referral.rewards.empty": "Aucune récompense de parrainage pour l'instant.",
   "workspace.referral.table.reward": "Récompense",

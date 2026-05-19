@@ -680,7 +680,8 @@ export const dict = {
   "workspace.referral.overview.subtitle": "Получите $5, когда друг оформит подписку. Он тоже получит $5.",
   "workspace.referral.instructions.share": "Поделитесь своей реферальной ссылкой",
   "workspace.referral.instructions.subscribe": "Ваш друг присоединяется и оформляет подписку на Go",
-  "workspace.referral.instructions.claim": "Вы оба получаете кредит на использование $5, который можно применить к лимитам использования Go",
+  "workspace.referral.instructions.claim":
+    "Вы оба получаете кредит на использование $5, который можно применить к лимитам использования Go",
   "workspace.referral.rewards.title": "Реферальные награды",
   "workspace.referral.rewards.description": "Используйте доступные реферальные кредиты для оплаты использования Go.",
   "workspace.referral.rewards.subtitle": "Использовано {{applied}} / {{total}} наград.",
@@ -704,7 +705,8 @@ export const dict = {
   "workspace.referral.apply.preview": "Посмотреть награду",
   "workspace.referral.apply.action": "Применить",
   "workspace.referral.apply.confirmTitle": "Применить награду",
-  "workspace.referral.apply.confirmBody": "Используйте {{amount}}, чтобы уменьшить текущее использование этого workspace.",
+  "workspace.referral.apply.confirmBody":
+    "Используйте {{amount}}, чтобы уменьшить текущее использование этого workspace.",
   "workspace.referral.apply.confirmAction": "Применить",
 
   "download.title": "OpenCode | Скачать",

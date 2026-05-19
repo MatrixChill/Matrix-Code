@@ -111,10 +111,7 @@ export namespace Referral {
               isNull(UserTable.timeDeleted),
             ),
           )
-          .leftJoin(
-            AuthTable,
-            and(eq(AuthTable.accountID, UserTable.accountID), eq(AuthTable.provider, "email")),
-          )
+          .leftJoin(AuthTable, and(eq(AuthTable.accountID, UserTable.accountID), eq(AuthTable.provider, "email")))
           .where(and(eq(ReferralTable.inviteeAccountID, accountID), isNull(ReferralTable.timeDeleted)))
           .orderBy(asc(UserTable.timeCreated))
           .then((rows) => rows.find((row) => row.inviterEmail) ?? rows[0]),
