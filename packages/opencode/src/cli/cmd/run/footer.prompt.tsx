@@ -283,9 +283,7 @@ export function createPromptState(input: PromptInput): PromptState {
   const [shell, setShell] = createSignal(false)
   const placeholder = createMemo(() => {
     if (shell()) {
-      return new StyledText([
-        bg(input.theme().surface)(fg(input.theme().muted)('Run a command... "git status"')),
-      ])
+      return new StyledText([bg(input.theme().surface)(fg(input.theme().muted)('Run a command... "git status"'))])
     }
 
     if (!input.state().first) {
@@ -1087,7 +1085,8 @@ export function createPromptState(input: PromptInput): PromptState {
       return
     }
 
-    const parsed = next.mode === "shell" || isNewCommand(next.text) ? undefined : parseSlashCommand(next.text, input.commands())
+    const parsed =
+      next.mode === "shell" || isNewCommand(next.text) ? undefined : parseSlashCommand(next.text, input.commands())
     if (parsed?.type === "pending") {
       input.onStatus("loading commands")
       return
