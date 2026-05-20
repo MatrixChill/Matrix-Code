@@ -76,28 +76,22 @@ describe("diff viewer file tree utilities", () => {
 
   test("flattens all-expanded rows depth-first with depths and file references", () => {
     const rows = flattenFileTree(
-      buildFileTree([
-        { file: "src/config/tui.ts" },
-        { file: "src/config/keybind.ts" },
-        { file: "README.md" },
-      ]),
+      buildFileTree([{ file: "src/config/tui.ts" }, { file: "src/config/keybind.ts" }, { file: "README.md" }]),
     )
 
-    expect(rows.map((row) => ({ name: row.name, kind: row.kind, depth: row.depth, fileIndex: row.fileIndex }))).toEqual([
-      { name: "src", kind: "directory", depth: 0, fileIndex: undefined },
-      { name: "config", kind: "directory", depth: 1, fileIndex: undefined },
-      { name: "keybind.ts", kind: "file", depth: 2, fileIndex: 1 },
-      { name: "tui.ts", kind: "file", depth: 2, fileIndex: 0 },
-      { name: "README.md", kind: "file", depth: 0, fileIndex: 2 },
-    ])
+    expect(rows.map((row) => ({ name: row.name, kind: row.kind, depth: row.depth, fileIndex: row.fileIndex }))).toEqual(
+      [
+        { name: "src", kind: "directory", depth: 0, fileIndex: undefined },
+        { name: "config", kind: "directory", depth: 1, fileIndex: undefined },
+        { name: "keybind.ts", kind: "file", depth: 2, fileIndex: 1 },
+        { name: "tui.ts", kind: "file", depth: 2, fileIndex: 0 },
+        { name: "README.md", kind: "file", depth: 0, fileIndex: 2 },
+      ],
+    )
   })
 
   test("flattens only expanded directory descendants when expansion is provided", () => {
-    const tree = buildFileTree([
-      { file: "src/config/tui.ts" },
-      { file: "src/session/index.ts" },
-      { file: "README.md" },
-    ])
+    const tree = buildFileTree([{ file: "src/config/tui.ts" }, { file: "src/session/index.ts" }, { file: "README.md" }])
     const src = tree.nodes.find((node) => node.kind === "directory" && node.name === "src")!
     const config = tree.nodes.find((node) => node.kind === "directory" && node.name === "config")!
 
@@ -129,11 +123,7 @@ describe("diff viewer file tree utilities", () => {
 
   test("moves file selection relative to the highlighted row", () => {
     const rows = flattenFileTree(
-      buildFileTree([
-        { file: "src/config/tui.ts" },
-        { file: "src/session/index.ts" },
-        { file: "README.md" },
-      ]),
+      buildFileTree([{ file: "src/config/tui.ts" }, { file: "src/session/index.ts" }, { file: "README.md" }]),
     )
     const config = rows.find((row) => row.kind === "directory" && row.name === "config")!
     const session = rows.find((row) => row.kind === "directory" && row.name === "session")!

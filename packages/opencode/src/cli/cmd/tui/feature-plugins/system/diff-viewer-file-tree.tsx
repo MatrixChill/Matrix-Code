@@ -74,7 +74,13 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
                       {`${"  ".repeat(row.depth)}${row.kind === "directory" ? (props.expandedNodes && !props.expandedNodes.has(row.id) ? "▸ " : "▾ ") : "  "}`}
                     </text>
                     <text
-                      fg={highlighted() ? props.theme.background : row.kind === "directory" ? props.theme.textMuted : props.theme.text}
+                      fg={
+                        highlighted()
+                          ? props.theme.background
+                          : row.kind === "directory"
+                            ? props.theme.textMuted
+                            : props.theme.text
+                      }
                       bg={highlighted() ? props.theme.primary : undefined}
                       wrapMode="none"
                     >

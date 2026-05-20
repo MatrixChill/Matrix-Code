@@ -20,7 +20,9 @@ export type InternalTuiPlugin = Omit<TuiPluginModule, "id"> & {
   enabled?: boolean
 }
 
-export function internalTuiPlugins(flags: Pick<RuntimeFlags.Info, "diffViewer" | "experimentalEventSystem">): InternalTuiPlugin[] {
+export function internalTuiPlugins(
+  flags: Pick<RuntimeFlags.Info, "diffViewer" | "experimentalEventSystem">,
+): InternalTuiPlugin[] {
   return [
     HomeFooter,
     HomeTips,
