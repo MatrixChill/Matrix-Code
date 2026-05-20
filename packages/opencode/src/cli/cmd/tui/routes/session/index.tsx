@@ -1531,13 +1531,7 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
       <Switch>
         <Match when={!inMinimal() || expanded()}>
           {/* Full markdown block: `show` mode, or `hide` after the user opens it. */}
-          <box
-            id={"text-" + props.part.id}
-            paddingLeft={3}
-            marginTop={1}
-            flexDirection="column"
-            onMouseUp={toggle}
-          >
+          <box id={"text-" + props.part.id} paddingLeft={3} marginTop={1} flexDirection="column" onMouseUp={toggle}>
             <code
               filetype="markdown"
               drawUnstyledText={false}
@@ -1550,13 +1544,7 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
           </box>
         </Match>
         <Match when={isDone()}>
-          <box
-            id={"text-" + props.part.id}
-            paddingLeft={3}
-            marginTop={1}
-            flexShrink={0}
-            onMouseUp={toggle}
-          >
+          <box id={"text-" + props.part.id} paddingLeft={3} marginTop={1} flexShrink={0} onMouseUp={toggle}>
             <CollapsedReasoningText title={title()} duration={duration()} />
           </box>
         </Match>
