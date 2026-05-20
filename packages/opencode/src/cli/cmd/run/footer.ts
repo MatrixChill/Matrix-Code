@@ -569,9 +569,9 @@ export class RunFooter implements FooterApi {
                 ? 1 + VARIANT_ROWS
                 : this.promptRoute.type === "subagent-menu"
                   ? 1 + this.subagentMenuRows
-                : this.promptRoute.type === "subagent"
-                  ? this.base + SUBAGENT_INSPECTOR_ROWS
-                  : Math.max(base + TEXTAREA_MIN_ROWS, Math.min(base + PROMPT_MAX_ROWS, base + this.rows))
+                  : this.promptRoute.type === "subagent"
+                    ? this.base + SUBAGENT_INSPECTOR_ROWS
+                    : Math.max(base + TEXTAREA_MIN_ROWS, Math.min(base + PROMPT_MAX_ROWS, base + this.rows))
 
     if (height !== this.renderer.footerHeight) {
       this.renderer.footerHeight = height

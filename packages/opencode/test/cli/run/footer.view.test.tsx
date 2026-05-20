@@ -124,7 +124,12 @@ function provider() {
   } satisfies RunProvider
 }
 
-function subagent(input: { sessionID: string; label: string; description: string; status?: FooterSubagentTab["status"] }) {
+function subagent(input: {
+  sessionID: string
+  label: string
+  description: string
+  status?: FooterSubagentTab["status"]
+}) {
   return {
     sessionID: input.sessionID,
     partID: `part-${input.sessionID}`,

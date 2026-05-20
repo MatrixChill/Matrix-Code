@@ -323,7 +323,8 @@ export function RunCommandMenuBody(props: {
               category: "Suggested",
               display: "View subagents",
               footer: `${props.subagents().length} active`,
-              keywords: props.subagents()
+              keywords: props
+                .subagents()
                 .map((item) => `${item.label} ${item.description} ${item.title ?? ""}`)
                 .join(" "),
             },
