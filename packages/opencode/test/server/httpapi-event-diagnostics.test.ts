@@ -76,9 +76,8 @@ const publishPartUpdated = (partID: ReturnType<typeof PartID.ascending>) => {
 }
 
 const subscribeAllCallback = (handler: (event: BusEvent) => void) =>
-  Effect.acquireRelease(
-    inApp(Bus.Service.use((svc) => svc.subscribeAllCallback(handler))),
-    (dispose) => Effect.sync(dispose),
+  Effect.acquireRelease(inApp(Bus.Service.use((svc) => svc.subscribeAllCallback(handler))), (dispose) =>
+    Effect.sync(dispose),
   )
 
 const openEventStream = (directory: string) =>
@@ -117,10 +116,7 @@ const readNextEvent = (reader: ReadableStreamDefaultReader<Uint8Array>) =>
     }),
   )
 
-const collectUntilEvent = (
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-  predicate: (event: SseEvent) => boolean,
-) =>
+const collectUntilEvent = (reader: ReadableStreamDefaultReader<Uint8Array>, predicate: (event: SseEvent) => boolean) =>
   Effect.gen(function* () {
     const events: SseEvent[] = []
     while (true) {
