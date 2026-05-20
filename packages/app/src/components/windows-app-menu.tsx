@@ -7,7 +7,10 @@ import { useCommand } from "@/context/command"
 import { DESKTOP_MENU, desktopMenuVisible, type DesktopMenuAction, type DesktopMenuEntry } from "@/desktop-menu"
 import { usePlatform } from "@/context/platform"
 
-export function WindowsAppMenu(props: { command: ReturnType<typeof useCommand>; platform: ReturnType<typeof usePlatform> }) {
+export function WindowsAppMenu(props: {
+  command: ReturnType<typeof useCommand>
+  platform: ReturnType<typeof usePlatform>
+}) {
   let lastFocused: HTMLElement | undefined
 
   const rememberFocus = () => {
@@ -57,18 +60,20 @@ export function WindowsAppMenu(props: { command: ReturnType<typeof useCommand>; 
             <DropdownMenu.GroupLabel class="desktop-app-menu-heading">OpenCode</DropdownMenu.GroupLabel>
             {DESKTOP_MENU.filter((menu) => desktopMenuVisible(menu, "windows")).map((menu) => (
               <DesktopMenuSubmenu label={menu.label}>
-                {menu.items?.filter((entry) => desktopMenuVisible(entry, "windows")).map((entry) =>
-                  entry.type === "separator" ? (
-                    <DropdownMenu.Separator />
-                  ) : (
-                    <DesktopMenuItem
-                      label={entry.label ?? ""}
-                      keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
-                      disabled={entry.command ? commandDisabled(entry.command) : false}
-                      onSelect={() => runEntry(entry)}
-                    />
-                  ),
-                )}
+                {menu.items
+                  ?.filter((entry) => desktopMenuVisible(entry, "windows"))
+                  .map((entry) =>
+                    entry.type === "separator" ? (
+                      <DropdownMenu.Separator />
+                    ) : (
+                      <DesktopMenuItem
+                        label={entry.label ?? ""}
+                        keybind={entry.command ? props.command.keybind(entry.command) : entry.accelerator?.windows}
+                        disabled={entry.command ? commandDisabled(entry.command) : false}
+                        onSelect={() => runEntry(entry)}
+                      />
+                    ),
+                  )}
               </DesktopMenuSubmenu>
             ))}
           </DropdownMenu.Group>

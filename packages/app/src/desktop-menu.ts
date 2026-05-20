@@ -202,8 +202,16 @@ export const DESKTOP_MENU: DesktopMenu[] = [
       { type: "item", label: "OpenCode Documentation", href: "https://opencode.ai/docs" },
       { type: "item", label: "Support Forum", href: "https://discord.com/invite/opencode" },
       { type: "separator" },
-      { type: "item", label: "Share Feedback", href: "https://github.com/anomalyco/opencode/issues/new?template=feature_request.yml" },
-      { type: "item", label: "Report a Bug", href: "https://github.com/anomalyco/opencode/issues/new?template=bug_report.yml" },
+      {
+        type: "item",
+        label: "Share Feedback",
+        href: "https://github.com/anomalyco/opencode/issues/new?template=feature_request.yml",
+      },
+      {
+        type: "item",
+        label: "Report a Bug",
+        href: "https://github.com/anomalyco/opencode/issues/new?template=bug_report.yml",
+      },
     ],
   },
 ]
