@@ -416,9 +416,7 @@ function wireZoom(win: BrowserWindow) {
   win.webContents.on("zoom-changed", (event, zoomDirection) => {
     event.preventDefault()
     if (pinchZoomEnabled.get(win)) {
-      win.webContents.setZoomFactor(
-        clampZoom(win.webContents.getZoomFactor() + (zoomDirection === "in" ? 0.2 : -0.2)),
-      )
+      win.webContents.setZoomFactor(clampZoom(win.webContents.getZoomFactor() + (zoomDirection === "in" ? 0.2 : -0.2)))
       updateZoom(win)
       return
     }

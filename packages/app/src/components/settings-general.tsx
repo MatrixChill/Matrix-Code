@@ -753,10 +753,7 @@ export const SettingsGeneral: Component = () => {
             description={language.t("settings.general.row.pinchZoom.description")}
           >
             <div data-action="settings-pinch-zoom">
-              <Switch
-                checked={pinchZoom.latest}
-                onChange={onPinchZoomChange}
-              />
+              <Switch checked={pinchZoom.latest} onChange={onPinchZoomChange} />
             </div>
           </SettingsRow>
 
