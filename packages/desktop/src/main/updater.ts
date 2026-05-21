@@ -4,6 +4,9 @@ import { UPDATER_ENABLED } from "./constants"
 import { getLogger } from "./logging"
 
 const { autoUpdater } = pkg
+type UpdateCheckResult = { updateAvailable: boolean; version?: string; failed?: boolean }
+let downloadedVersion: string | undefined
+let pendingCheck: Promise<UpdateCheckResult> | undefined
 
 export function setupAutoUpdater() {
   if (!UPDATER_ENABLED) return
@@ -22,8 +25,18 @@ export function setupAutoUpdater() {
   })
 }
 
-export async function checkUpdate() {
+export async function checkUpdate(): Promise<UpdateCheckResult> {
   if (!UPDATER_ENABLED) return { updateAvailable: false }
+  if (downloadedVersion) return { updateAvailable: true, version: downloadedVersion }
+  if (pendingCheck) return pendingCheck
+
+  pendingCheck = checkAndDownloadUpdate().finally(() => {
+    pendingCheck = undefined
+  })
+  return pendingCheck
+}
+
+async function checkAndDownloadUpdate(): Promise<UpdateCheckResult> {
   const logger = getLogger()
   logger.log("checking for updates", {
     currentVersion: app.getVersion(),
@@ -49,6 +62,7 @@ export async function checkUpdate() {
     }
     logger.log("update available", { version })
     await autoUpdater.downloadUpdate()
+    downloadedVersion = version
     logger.log("update download completed", { version })
     return { updateAvailable: true, version }
   } catch (error) {
@@ -58,9 +72,9 @@ export async function checkUpdate() {
 }
 
 export async function installUpdate(killSidecar: () => Promise<void>) {
-  const result = await checkUpdate()
+  const result = downloadedVersion ? { updateAvailable: true, version: downloadedVersion } : await checkUpdate()
   const logger = getLogger()
-  if (!result.updateAvailable) {
+  if (!result.updateAvailable || !downloadedVersion) {
     logger.log("install update skipped", {
       reason: result.failed ? "update check failed" : "no update available",
     })
