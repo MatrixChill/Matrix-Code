@@ -442,9 +442,7 @@ function CollapsedReasoningText(props: { title: string | null }) {
 
   return (
     <text fg={theme.warning} wrapMode="none">
-      <span style={{ fg: theme.warning, italic: true }}>
-        {props.title ? "+ Thought: " + props.title : "+ Thought"}
-      </span>
+      <span style={{ fg: theme.warning, italic: true }}>{props.title ? "+ Thought: " + props.title : "+ Thought"}</span>
     </text>
   )
 }
