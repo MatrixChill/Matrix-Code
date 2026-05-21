@@ -491,9 +491,7 @@ describe("workspace CRUD", () => {
         )
 
         yield* Workspace.use.remove(workspaceID)
-        expect(
-          (yield* Workspace.use.status()).find((item) => item.workspaceID === workspaceID)?.status,
-        ).toBeUndefined()
+        expect((yield* Workspace.use.status()).find((item) => item.workspaceID === workspaceID)?.status).toBeUndefined()
       }),
     { git: true },
   )
