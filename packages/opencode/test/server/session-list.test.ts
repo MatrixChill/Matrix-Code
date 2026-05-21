@@ -27,9 +27,8 @@ const it = testEffect(
 )
 
 const withSession = (input?: Parameters<SessionNs.Interface["create"]>[0]) =>
-  Effect.acquireRelease(
-    SessionNs.use.create(input),
-    (created) => SessionNs.Service.use((session) => session.remove(created.id).pipe(Effect.ignore)),
+  Effect.acquireRelease(SessionNs.use.create(input), (created) =>
+    SessionNs.Service.use((session) => session.remove(created.id).pipe(Effect.ignore)),
   )
 
 afterEach(async () => {

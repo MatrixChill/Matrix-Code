@@ -163,9 +163,7 @@ describe("ShareNext", () => {
             return Effect.succeed(json(req, { ok: true }))
           })
 
-          const result = yield* ShareNext.use.create(session.id).pipe(
-            Effect.provide(live(client)),
-          )
+          const result = yield* ShareNext.use.create(session.id).pipe(Effect.provide(live(client)))
 
           expect(result.id).toBe("shr_abc")
           expect(result.url).toBe("https://legacy-share.example.com/share/abc")

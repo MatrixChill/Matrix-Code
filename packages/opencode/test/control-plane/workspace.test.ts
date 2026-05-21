@@ -151,10 +151,8 @@ const runWorkspace = <A, E>(effect: Effect.Effect<A, E, Workspace.Service>) => {
   const ctx = currentInstance()
   return AppRuntime.runPromise(ctx ? effect.pipe(Effect.provideService(InstanceRef, ctx)) : effect)
 }
-const createWorkspace = (input: Workspace.CreateInput) =>
-  runWorkspace(Workspace.use.create(input))
-const warpWorkspaceSession = (input: Workspace.SessionWarpInput) =>
-  runWorkspace(Workspace.use.sessionWarp(input))
+const createWorkspace = (input: Workspace.CreateInput) => runWorkspace(Workspace.use.create(input))
+const warpWorkspaceSession = (input: Workspace.SessionWarpInput) => runWorkspace(Workspace.use.sessionWarp(input))
 const listWorkspaces = (project: Parameters<Workspace.Interface["list"]>[0]) =>
   runWorkspace(Workspace.use.list(project))
 const syncListWorkspaces = (project: Parameters<Workspace.Interface["syncList"]>[0]) =>
@@ -162,16 +160,13 @@ const syncListWorkspaces = (project: Parameters<Workspace.Interface["syncList"]>
 const getWorkspace = (id: WorkspaceID) => runWorkspace(Workspace.use.get(id))
 const removeWorkspace = (id: WorkspaceID) => runWorkspace(Workspace.use.remove(id))
 const workspaceStatus = () => runWorkspace(Workspace.use.status())
-const isWorkspaceSyncing = (id: WorkspaceID) =>
-  runWorkspace(Workspace.use.isSyncing(id))
+const isWorkspaceSyncing = (id: WorkspaceID) => runWorkspace(Workspace.use.isSyncing(id))
 const startWorkspaceSyncing = (projectID: ProjectID) => {
   void runWorkspace(Workspace.use.startWorkspaceSyncing(projectID))
 }
 const startWorkspaceSyncingWithFlag = (projectID: ProjectID, experimentalWorkspaces: boolean) =>
   Effect.runPromise(
-    Workspace.use.startWorkspaceSyncing(projectID).pipe(
-      Effect.provide(workspaceLayer(experimentalWorkspaces)),
-    ),
+    Workspace.use.startWorkspaceSyncing(projectID).pipe(Effect.provide(workspaceLayer(experimentalWorkspaces))),
   )
 const waitForWorkspaceSync = (
   workspaceID: WorkspaceID,
@@ -937,9 +932,7 @@ describe("workspace CRUD", () => {
       )
       attachSessionToWorkspace(session.id, previous.id)
 
-      const workspaceCtx = await AppRuntime.runPromise(
-        InstanceStore.use.load({ directory: workspaceTmp.path }),
-      )
+      const workspaceCtx = await AppRuntime.runPromise(InstanceStore.use.load({ directory: workspaceTmp.path }))
       const workspaceProjectID = await context.provide(workspaceCtx, async () => {
         const id = workspaceCtx.project.id
         expect(id).not.toBe(projectID)

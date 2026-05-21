@@ -1680,7 +1680,8 @@ it.effect("opencode loader keeps paid models when config apiKey is present", () 
     })
 
     const listIn = (directory: string) =>
-      Provider.use.list()
+      Provider.use
+        .list()
         .pipe(provideInstanceEffect(directory))
         .pipe(Effect.provide(InstanceLayer.layer), Effect.provide(CrossSpawnSpawner.defaultLayer))
 
@@ -1698,7 +1699,8 @@ it.effect("opencode loader keeps paid models when auth exists", () =>
     const keyedDir = yield* tmpdirScoped()
 
     const listIn = (directory: string) =>
-      Provider.use.list()
+      Provider.use
+        .list()
         .pipe(provideInstanceEffect(directory))
         .pipe(Effect.provide(InstanceLayer.layer), Effect.provide(CrossSpawnSpawner.defaultLayer))
 

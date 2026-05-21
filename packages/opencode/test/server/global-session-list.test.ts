@@ -12,9 +12,8 @@ void Log.init({ print: false })
 const it = testEffect(Layer.mergeAll(SessionNs.defaultLayer, Project.defaultLayer, CrossSpawnSpawner.defaultLayer))
 
 const withSession = (input?: Parameters<SessionNs.Interface["create"]>[0]) =>
-  Effect.acquireRelease(
-    SessionNs.use.create(input),
-    (created) => SessionNs.Service.use((session) => session.remove(created.id).pipe(Effect.ignore)),
+  Effect.acquireRelease(SessionNs.use.create(input), (created) =>
+    SessionNs.Service.use((session) => session.remove(created.id).pipe(Effect.ignore)),
   )
 
 describe("session.listGlobal", () => {

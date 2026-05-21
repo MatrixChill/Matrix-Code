@@ -88,9 +88,7 @@ it.live("login normalizes trailing slashes in the provided server URL", () =>
       }),
     )
 
-    const result = yield* Account.use.login("https://one.example.com/").pipe(
-      Effect.provide(live(client)),
-    )
+    const result = yield* Account.use.login("https://one.example.com/").pipe(Effect.provide(live(client)))
 
     expect(seen).toEqual(["POST https://one.example.com/auth/device/code"])
     expect(result.server).toBe("https://one.example.com")
@@ -108,9 +106,7 @@ it.live("login maps transport failures to account transport errors", () =>
       ),
     )
 
-    const error = yield* Effect.flip(
-      Account.use.login("https://one.example.com").pipe(Effect.provide(live(client))),
-    )
+    const error = yield* Effect.flip(Account.use.login("https://one.example.com").pipe(Effect.provide(live(client))))
 
     expect(error).toBeInstanceOf(AccountTransportError)
     if (error instanceof AccountTransportError) {
