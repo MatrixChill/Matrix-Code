@@ -77,7 +77,7 @@ const publishPartUpdated = (partID: ReturnType<typeof PartID.ascending>) => {
 
 const subscribeAllCallback = (handler: (event: BusEvent) => void) =>
   Effect.acquireRelease(inApp(Bus.Service.use((svc) => svc.subscribeAllCallback(handler))), (dispose) =>
-    Effect.sync(dispose),
+    Effect.sync(() => dispose()),
   )
 
 const openEventStream = (directory: string) =>
