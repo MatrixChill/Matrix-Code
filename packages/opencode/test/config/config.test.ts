@@ -126,10 +126,7 @@ function withProcessEnv<A, E, R>(key: string, value: string | undefined, effect:
   return withProcessEnvs({ [key]: value }, effect)
 }
 
-function withProcessEnvs<A, E, R>(
-  entries: Record<string, string | undefined>,
-  effect: Effect.Effect<A, E, R>,
-) {
+function withProcessEnvs<A, E, R>(entries: Record<string, string | undefined>, effect: Effect.Effect<A, E, R>) {
   return Effect.acquireUseRelease(
     Effect.sync(() => {
       const originals: Record<string, string | undefined> = {}
@@ -1960,17 +1957,19 @@ describe("OPENCODE_DISABLE_PROJECT_CONFIG", () => {
     { config: { instructions: ["./CUSTOM.md"] } },
   )
 
-  it.instance("OPENCODE_CONFIG_DIR still works when flag is set", () =>
-    Effect.gen(function* () {
-      const configDir = yield* tmpdirScoped({ config: { model: "configdir/model" } })
-      yield* withProcessEnvs(
-        { OPENCODE_DISABLE_PROJECT_CONFIG: "true", OPENCODE_CONFIG_DIR: configDir },
-        Effect.gen(function* () {
-          const config = yield* Config.use.get()
-          expect(config.model).toBe("configdir/model")
-        }),
-      )
-    }),
+  it.instance(
+    "OPENCODE_CONFIG_DIR still works when flag is set",
+    () =>
+      Effect.gen(function* () {
+        const configDir = yield* tmpdirScoped({ config: { model: "configdir/model" } })
+        yield* withProcessEnvs(
+          { OPENCODE_DISABLE_PROJECT_CONFIG: "true", OPENCODE_CONFIG_DIR: configDir },
+          Effect.gen(function* () {
+            const config = yield* Config.use.get()
+            expect(config.model).toBe("configdir/model")
+          }),
+        )
+      }),
     { config: { model: "project/model" } },
   )
 })
