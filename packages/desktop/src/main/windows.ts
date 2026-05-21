@@ -204,12 +204,17 @@ export function registerRendererProtocol() {
     try {
       const response = await net.fetch(pathToFileURL(file).toString())
       if (response.status >= 400) {
-        writeLog("protocol", "fetch failed", {
-          url: request.url,
-          file,
-          status: response.status,
-          statusText: response.statusText,
-        }, "error")
+        writeLog(
+          "protocol",
+          "fetch failed",
+          {
+            url: request.url,
+            file,
+            status: response.status,
+            statusText: response.statusText,
+          },
+          "error",
+        )
       }
       return addDocumentPolicy(response, file)
     } catch (error) {
@@ -282,15 +287,20 @@ function wireWindowRecovery(win: BrowserWindow, name: string) {
     validatedURL: string,
     isMainFrame: boolean,
   ) => {
-    writeLog("window", "renderer load failed", {
-      window: name,
-      event,
-      errorCode,
-      errorDescription,
-      validatedURL,
-      currentURL: win.webContents.getURL(),
-      isMainFrame,
-    }, "error")
+    writeLog(
+      "window",
+      "renderer load failed",
+      {
+        window: name,
+        event,
+        errorCode,
+        errorDescription,
+        validatedURL,
+        currentURL: win.webContents.getURL(),
+        isMainFrame,
+      },
+      "error",
+    )
 
     if (!isMainFrame || errorCode === -3) return
     void show(
@@ -308,7 +318,12 @@ function wireWindowRecovery(win: BrowserWindow, name: string) {
   })
   win.webContents.on("render-process-gone", (_event, details) => {
     sampler.stopAndFlush()
-    writeLog("window", "renderer process gone", { window: name, currentURL: win.webContents.getURL(), details }, "error")
+    writeLog(
+      "window",
+      "renderer process gone",
+      { window: name, currentURL: win.webContents.getURL(), details },
+      "error",
+    )
     void show(
       "OpenCode window terminated unexpectedly",
       [`Window: ${name}`, `Reason: ${details.reason}`, `Code: ${details.exitCode ?? "<unknown>"}`].join("\n"),
