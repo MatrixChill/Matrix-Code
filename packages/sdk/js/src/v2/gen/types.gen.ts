@@ -78,6 +78,10 @@ export type Event =
   | EventSessionNextCompactionDelta
   | EventSessionNextCompactionEnded
   | EventCatalogModelUpdated
+  | EventModelsDevRefreshed
+  | EventAccountAdded
+  | EventAccountRemoved
+  | EventAccountSwitched
 
 export type OAuth = {
   type: "oauth"
@@ -874,6 +878,7 @@ export type GlobalEvent = {
     | EventSessionNextCompactionDelta
     | EventSessionNextCompactionEnded
     | EventCatalogModelUpdated
+    | EventModelsDevRefreshed
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -3284,6 +3289,14 @@ export type EventCatalogModelUpdated = {
   }
 }
 
+export type EventModelsDevRefreshed = {
+  id: string
+  type: "models-dev.refreshed"
+  properties: {
+    [key: string]: unknown
+  }
+}
+
 export type SessionInfo = {
   id: string
   parentID?: string
@@ -3692,6 +3705,56 @@ export type ModelV2Info1 = {
     context: number
     input?: number
     output: number
+  }
+}
+
+export type AccountV2oAuthCredential = {
+  type: "oauth"
+  refresh: string
+  access: string
+  expires: number
+}
+
+export type AccountV2ApiKeyCredential = {
+  type: "api"
+  key: string
+  metadata?: {
+    [key: string]: string
+  }
+}
+
+export type AccountV2Credential = AccountV2oAuthCredential | AccountV2ApiKeyCredential
+
+export type AccountV2Info = {
+  id: string
+  serviceID: string
+  description: string
+  credential: AccountV2Credential
+}
+
+export type EventAccountAdded = {
+  id: string
+  type: "account.added"
+  properties: {
+    account: AccountV2Info
+  }
+}
+
+export type EventAccountRemoved = {
+  id: string
+  type: "account.removed"
+  properties: {
+    account: AccountV2Info
+  }
+}
+
+export type EventAccountSwitched = {
+  id: string
+  type: "account.switched"
+  properties: {
+    serviceID: string
+    from?: string
+    to?: string
   }
 }
 

@@ -24,7 +24,9 @@ describe("ZenmuxPlugin", () => {
       yield* plugin.add(ZenmuxPlugin)
       const load = yield* catalog.loader()
       yield* load((catalog) => {
-        const item = provider("zenmux", { endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://zenmux.ai/api/v1" } })
+        const item = provider("zenmux", {
+          endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://zenmux.ai/api/v1" },
+        })
         catalog.provider.update(item.id, (draft) => {
           draft.endpoint = item.endpoint
         })

@@ -10,8 +10,8 @@ export const AnthropicPlugin = PluginV2.define({
           if (item.provider.endpoint.type !== "aisdk") continue
           if (item.provider.endpoint.package !== "@ai-sdk/anthropic") continue
           evt.provider.update(item.provider.id, (provider) => {
-          provider.options.headers["anthropic-beta"] =
-            "interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14"
+            provider.options.headers["anthropic-beta"] =
+              "interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14"
           })
         }
       }),

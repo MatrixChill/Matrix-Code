@@ -58,7 +58,9 @@ describe("LLMGatewayPlugin", () => {
       yield* plugin.add(LLMGatewayPlugin)
       const load = yield* catalog.loader()
       yield* load((catalog) => {
-        const item = provider("llmgateway", { endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://api.llmgateway.io/v1" } })
+        const item = provider("llmgateway", {
+          endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://api.llmgateway.io/v1" },
+        })
         catalog.provider.update(item.id, (draft) => {
           draft.endpoint = item.endpoint
         })

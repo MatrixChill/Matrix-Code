@@ -26,7 +26,11 @@ describe("CatalogV2", () => {
 
       yield* load((catalog) =>
         catalog.provider.update(providerID, (provider) => {
-          provider.endpoint = { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://default.example.com" }
+          provider.endpoint = {
+            type: "aisdk",
+            package: "@ai-sdk/openai-compatible",
+            url: "https://default.example.com",
+          }
           provider.options.aisdk.provider.baseURL = "https://override.example.com"
         }),
       )
@@ -48,7 +52,11 @@ describe("CatalogV2", () => {
 
       yield* load((catalog) => {
         catalog.provider.update(providerID, (provider) => {
-          provider.endpoint = { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://provider.example.com" }
+          provider.endpoint = {
+            type: "aisdk",
+            package: "@ai-sdk/openai-compatible",
+            url: "https://provider.example.com",
+          }
         })
         catalog.model.update(providerID, modelID, (model) => {
           model.endpoint = { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://model.example.com" }
@@ -73,7 +81,11 @@ describe("CatalogV2", () => {
 
       yield* load((catalog) => {
         catalog.provider.update(providerID, (provider) => {
-          provider.endpoint = { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://provider.example.com" }
+          provider.endpoint = {
+            type: "aisdk",
+            package: "@ai-sdk/openai-compatible",
+            url: "https://provider.example.com",
+          }
         })
         catalog.model.update(providerID, modelID, () => {})
       })
@@ -125,11 +137,20 @@ describe("CatalogV2", () => {
       const providerID = ProviderV2.ID.make("test")
       const load = yield* catalog.loader()
 
-      yield* load((catalog) => catalog.provider.update(providerID, (provider) => { provider.name = "Before" }))
+      yield* load((catalog) =>
+        catalog.provider.update(providerID, (provider) => {
+          provider.name = "Before"
+        }),
+      )
       yield* plugin.add({
         id: PluginV2.ID.make("test-transform"),
         effect: Effect.succeed({
-          "catalog.transform": (evt) => Effect.sync(() => evt.provider.update(providerID, (provider) => { provider.name = "After" })),
+          "catalog.transform": (evt) =>
+            Effect.sync(() =>
+              evt.provider.update(providerID, (provider) => {
+                provider.name = "After"
+              }),
+            ),
         }),
       })
       yield* Effect.yieldNow
@@ -176,9 +197,15 @@ describe("CatalogV2", () => {
       const load = yield* catalog.loader()
 
       yield* load((catalog) => {
-        catalog.provider.update(providerID, (provider) => { provider.enabled = { via: "custom", data: {} } })
-        catalog.model.update(providerID, ModelV2.ID.make("old"), (model) => { model.time.released = DateTime.makeUnsafe(1000) })
-        catalog.model.update(providerID, ModelV2.ID.make("new"), (model) => { model.time.released = DateTime.makeUnsafe(2000) })
+        catalog.provider.update(providerID, (provider) => {
+          provider.enabled = { via: "custom", data: {} }
+        })
+        catalog.model.update(providerID, ModelV2.ID.make("old"), (model) => {
+          model.time.released = DateTime.makeUnsafe(1000)
+        })
+        catalog.model.update(providerID, ModelV2.ID.make("new"), (model) => {
+          model.time.released = DateTime.makeUnsafe(2000)
+        })
       })
 
       expect(Option.getOrUndefined(yield* catalog.model.default())?.id).toMatch("new")

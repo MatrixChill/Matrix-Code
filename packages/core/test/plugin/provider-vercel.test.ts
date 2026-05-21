@@ -43,7 +43,9 @@ describe("VercelPlugin", () => {
           draft.endpoint = item.endpoint
         })
       })
-      expect((yield* catalog.provider.get(ProviderV2.ID.make("vercel"))).options.headers).not.toHaveProperty("HTTP-Referer")
+      expect((yield* catalog.provider.get(ProviderV2.ID.make("vercel"))).options.headers).not.toHaveProperty(
+        "HTTP-Referer",
+      )
       expect((yield* catalog.provider.get(ProviderV2.ID.make("vercel"))).options.headers).not.toHaveProperty("X-Title")
     }),
   )

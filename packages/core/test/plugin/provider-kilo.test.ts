@@ -50,7 +50,9 @@ describe("KiloPlugin", () => {
       yield* plugin.add(KiloPlugin)
       const load = yield* catalog.loader()
       yield* load((catalog) => {
-        const item = provider("kilo", { endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://api.kilo.ai/api/gateway" } })
+        const item = provider("kilo", {
+          endpoint: { type: "aisdk", package: "@ai-sdk/openai-compatible", url: "https://api.kilo.ai/api/gateway" },
+        })
         catalog.provider.update(item.id, (draft) => {
           draft.endpoint = item.endpoint
         })

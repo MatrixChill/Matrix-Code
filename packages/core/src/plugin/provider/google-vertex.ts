@@ -60,7 +60,11 @@ export const GoogleVertexPlugin = PluginV2.define({
       "catalog.transform": Effect.fn(function* (evt) {
         for (const item of evt.data) {
           if (item.provider.endpoint.type !== "aisdk") continue
-          if (item.provider.endpoint.package !== "@ai-sdk/google-vertex" && !item.provider.endpoint.package.includes("@ai-sdk/openai-compatible")) continue
+          if (
+            item.provider.endpoint.package !== "@ai-sdk/google-vertex" &&
+            !item.provider.endpoint.package.includes("@ai-sdk/openai-compatible")
+          )
+            continue
           const project = resolveProject(item.provider.options.aisdk.provider)
           const location = String(resolveLocation(item.provider.options.aisdk.provider))
           evt.provider.update(item.provider.id, (provider) => {

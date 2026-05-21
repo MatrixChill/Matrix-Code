@@ -102,7 +102,9 @@ describe("OpenAIPlugin", () => {
         catalog.provider.update(item.id, () => {})
         catalog.model.update(item.id, ModelV2.ID.make("gpt-5-chat-latest"), () => {})
       })
-      expect((yield* catalog.model.get(ProviderV2.ID.make("custom-openai"), ModelV2.ID.make("gpt-5-chat-latest"))).enabled).toBe(true)
+      expect(
+        (yield* catalog.model.get(ProviderV2.ID.make("custom-openai"), ModelV2.ID.make("gpt-5-chat-latest"))).enabled,
+      ).toBe(true)
     }),
   )
 })

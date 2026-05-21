@@ -132,9 +132,14 @@ export const layer = Layer.effect(
     }
 
     const clone = (input: HashMap.HashMap<ProviderV2.ID, ProviderRecord>) =>
-      HashMap.fromIterable(HashMap.toEntries(input).map(([key, value]) => [key, { ...value, models: new Map(value.models) }] as const))
+      HashMap.fromIterable(
+        HashMap.toEntries(input).map(([key, value]) => [key, { ...value, models: new Map(value.models) }] as const),
+      )
 
-    const context = (draft: { records: HashMap.HashMap<ProviderV2.ID, ProviderRecord>; data: ProviderRecord[] }): Context => {
+    const context = (draft: {
+      records: HashMap.HashMap<ProviderV2.ID, ProviderRecord>
+      data: ProviderRecord[]
+    }): Context => {
       const result: Context = {
         data: draft.data,
         updateProvider: (providerID, fn) => result.provider.update(providerID, fn),
@@ -164,13 +169,10 @@ export const layer = Layer.effect(
         model: {
           update: (providerID, modelID, fn) => {
             const current = Option.getOrThrow(HashMap.get(draft.records, providerID))
-            const model = produce(
-              current.models.get(modelID) ?? ModelV2.Info.empty(providerID, modelID),
-              (draft) => {
-                fn(draft)
-                normalizeEndpoint(draft)
-              },
-            )
+            const model = produce(current.models.get(modelID) ?? ModelV2.Info.empty(providerID, modelID), (draft) => {
+              fn(draft)
+              normalizeEndpoint(draft)
+            })
             const next = {
               provider: current.provider,
               models: new Map(current.models).set(modelID, new ModelV2.Info({ ...model, id: modelID, providerID })),
@@ -226,9 +228,12 @@ export const layer = Layer.effect(
         const loader = { update: (_ctx: Context) => {} }
         loaders = [...loaders, loader]
         const scope = yield* Scope.Scope
-        yield* Scope.addFinalizer(scope, Effect.sync(() => {
-          loaders = loaders.filter((item) => item !== loader)
-        }).pipe(Effect.andThen(rebuild())))
+        yield* Scope.addFinalizer(
+          scope,
+          Effect.sync(() => {
+            loaders = loaders.filter((item) => item !== loader)
+          }).pipe(Effect.andThen(rebuild())),
+        )
         return Effect.fnUntraced(function* (update) {
           loader.update = update
           yield* rebuild()
@@ -349,7 +354,4 @@ export const layer = Layer.effect(
 
 const SMALL_MODEL_RE = /\b(nano|flash|lite|mini|haiku|small|fast)\b/
 
-export const defaultLayer = layer.pipe(
-  Layer.provide(EventV2.defaultLayer),
-  Layer.provide(PluginV2.defaultLayer),
-)
+export const defaultLayer = layer.pipe(Layer.provide(EventV2.defaultLayer), Layer.provide(PluginV2.defaultLayer))
