@@ -1836,6 +1836,12 @@ export type ServiceUnavailableError = {
   service?: string
 }
 
+export type UnknownError1 = {
+  _tag: "UnknownError"
+  message: string
+  ref?: string
+}
+
 export type V2SessionMessagesResponse = {
   items: Array<SessionMessage>
   cursor: {
@@ -7311,6 +7317,10 @@ export type V2SessionContextErrors = {
    * SessionNotFoundError
    */
   404: SessionNotFoundError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
 }
 
 export type V2SessionContextError = V2SessionContextErrors[keyof V2SessionContextErrors]
@@ -7355,6 +7365,10 @@ export type V2SessionMessagesErrors = {
    * SessionNotFoundError
    */
   404: SessionNotFoundError
+  /**
+   * UnknownError
+   */
+  500: UnknownError1
 }
 
 export type V2SessionMessagesError = V2SessionMessagesErrors[keyof V2SessionMessagesErrors]

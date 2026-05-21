@@ -110,7 +110,9 @@ export interface Interface {
       direction: "previous" | "next"
     }
   }) => Effect.Effect<SessionMessage.Message[], NotFoundError | MessageDecodeError>
-  readonly context: (sessionID: SessionID) => Effect.Effect<SessionMessage.Message[], NotFoundError | MessageDecodeError>
+  readonly context: (
+    sessionID: SessionID,
+  ) => Effect.Effect<SessionMessage.Message[], NotFoundError | MessageDecodeError>
   readonly prompt: (input: {
     id?: EventV2.ID
     sessionID: SessionID

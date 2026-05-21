@@ -4,7 +4,13 @@ import { Prompt } from "@opencode-ai/core/session-prompt"
 import { SessionV2 } from "@/v2/session"
 import { Schema } from "effect"
 import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
-import { InvalidCursorError, InvalidRequestError, ServiceUnavailableError, SessionNotFoundError, UnknownError } from "../../errors"
+import {
+  InvalidCursorError,
+  InvalidRequestError,
+  ServiceUnavailableError,
+  SessionNotFoundError,
+  UnknownError,
+} from "../../errors"
 import { V2Authorization } from "../../middleware/authorization"
 import { WorkspaceRoutingQuery, WorkspaceRoutingQueryFields } from "../../middleware/workspace-routing"
 import { QueryBoolean } from "../query"

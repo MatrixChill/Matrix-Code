@@ -3,7 +3,13 @@ import { SessionV2 } from "@/v2/session"
 import { DateTime, Effect, Option, Schema } from "effect"
 import { HttpApiBuilder, HttpApiSchema } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../../api"
-import { InvalidCursorError, InvalidRequestError, ServiceUnavailableError, SessionNotFoundError, UnknownError } from "../../errors"
+import {
+  InvalidCursorError,
+  InvalidRequestError,
+  ServiceUnavailableError,
+  SessionNotFoundError,
+  UnknownError,
+} from "../../errors"
 
 const DefaultSessionsLimit = 50
 
