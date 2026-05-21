@@ -59,7 +59,10 @@ function ensureSprite() {
   svg.style.position = "absolute"
   svg.style.overflow = "hidden"
   svg.innerHTML = Object.entries(icons)
-    .map(([name, icon]) => `<symbol id="${symbol(name as keyof typeof icons)}" viewBox="${icon.viewBox}">${icon.body}</symbol>`)
+    .map(
+      ([name, icon]) =>
+        `<symbol id="${symbol(name as keyof typeof icons)}" viewBox="${icon.viewBox}">${icon.body}</symbol>`,
+    )
     .join("")
   document.body.insertBefore(svg, document.body.firstChild)
   spriteInserted = true

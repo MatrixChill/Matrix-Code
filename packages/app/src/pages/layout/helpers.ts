@@ -74,8 +74,7 @@ export function projectForSession<T extends { id?: string; worktree: string; san
   const directory = pathKey(session.directory)
   return projects.find(
     (project) =>
-      pathKey(project.worktree) === directory ||
-      project.sandboxes?.some((sandbox) => pathKey(sandbox) === directory),
+      pathKey(project.worktree) === directory || project.sandboxes?.some((sandbox) => pathKey(sandbox) === directory),
   )
 }
 

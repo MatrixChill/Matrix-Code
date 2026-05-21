@@ -411,7 +411,10 @@ function expectCompleteScroll(
 
 async function selectHomeProject(page: Page, projectName: string) {
   await page.goto("/")
-  await page.locator('[data-component="home-project-row"]').filter({ hasText: new RegExp(projectName, "i") }).click()
+  await page
+    .locator('[data-component="home-project-row"]')
+    .filter({ hasText: new RegExp(projectName, "i") })
+    .click()
   await expect(page).toHaveURL(/\/$/)
 }
 

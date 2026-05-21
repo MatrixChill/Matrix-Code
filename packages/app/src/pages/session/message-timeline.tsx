@@ -1255,11 +1255,7 @@ export function MessageTimeline(props: {
             }}
           >
             <Show when={workingStatus() !== "hidden" && settings.general.showSessionProgressBar()}>
-              <div
-                data-component="session-progress"
-                data-state={workingStatus()}
-                aria-hidden="true"
-              >
+              <div data-component="session-progress" data-state={workingStatus()} aria-hidden="true">
                 <div
                   data-component="session-progress-bar"
                   style={{

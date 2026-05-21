@@ -49,7 +49,10 @@ export function WindowsAppMenu(props: {
   return (
     <DropdownMenu gutter={4} modal={false} placement="bottom-start">
       {props.variant === "v2" ? (
-        <div data-component="desktop-icon-button" class="flex h-7 w-9 shrink-0 items-center justify-center rounded-[6px] px-1">
+        <div
+          data-component="desktop-icon-button"
+          class="flex h-7 w-9 shrink-0 items-center justify-center rounded-[6px] px-1"
+        >
           <DropdownMenu.Trigger
             as={IconButtonV2}
             variant="ghost-muted"
