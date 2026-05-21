@@ -935,11 +935,7 @@ describe("workspace CRUD", () => {
         const workspaceProjectID = yield* provideTmpdirInstance(
           (workspaceDir) =>
             Effect.gen(function* () {
-              registerAdapter(
-                projectID,
-                previousType,
-                localAdapter(workspaceDir, { createDir: false }).adapter,
-              )
+              registerAdapter(projectID, previousType, localAdapter(workspaceDir, { createDir: false }).adapter)
               const workspaceCtx = yield* requireInstance
               expect(workspaceCtx.project.id).not.toBe(projectID)
               yield* workspace.sessionWarp({ workspaceID: null, sessionID: session.id })
