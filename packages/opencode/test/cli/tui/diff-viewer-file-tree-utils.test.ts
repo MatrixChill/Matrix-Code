@@ -192,10 +192,7 @@ describe("diff viewer file tree utilities", () => {
 
   test("moves collapsed chain selection to first visible child", () => {
     const rows = flattenFileTree(
-      buildFileTree([
-        { file: "packages/opencode/src/cli/app.ts" },
-        { file: "packages/opencode/src/server/server.ts" },
-      ]),
+      buildFileTree([{ file: "packages/opencode/src/cli/app.ts" }, { file: "packages/opencode/src/server/server.ts" }]),
     )
     const packages = rows.find((row) => row.kind === "directory" && row.name === "packages/opencode/src")!
     const cli = rows.find((row) => row.kind === "directory" && row.name === "cli")!
@@ -205,10 +202,7 @@ describe("diff viewer file tree utilities", () => {
 
   test("moves file and collapsed directory selection to visible parent", () => {
     const rows = flattenFileTree(
-      buildFileTree([
-        { file: "packages/opencode/src/cli/app.ts" },
-        { file: "packages/opencode/src/server/server.ts" },
-      ]),
+      buildFileTree([{ file: "packages/opencode/src/cli/app.ts" }, { file: "packages/opencode/src/server/server.ts" }]),
     )
     const root = rows.find((row) => row.kind === "directory" && row.name === "packages/opencode/src")!
     const cli = rows.find((row) => row.kind === "directory" && row.name === "cli")!

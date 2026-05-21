@@ -82,12 +82,12 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
                     Math.max(1, props.width - FILE_TREE_HORIZONTAL_PADDING - prefix().length - status().length),
                   )
                 return (
-                  <box flexDirection="row" width="100%" backgroundColor={highlighted() ? props.theme.primary : undefined}>
-                    <text
-                      fg={highlighted() ? props.theme.background : fadedColor()}
-                      wrapMode="none"
-                      flexShrink={0}
-                    >
+                  <box
+                    flexDirection="row"
+                    width="100%"
+                    backgroundColor={highlighted() ? props.theme.primary : undefined}
+                  >
+                    <text fg={highlighted() ? props.theme.background : fadedColor()} wrapMode="none" flexShrink={0}>
                       {prefix()}
                     </text>
                     <box flexGrow={1} minWidth={0}>
@@ -108,7 +108,11 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
                         {name()}
                       </text>
                     </box>
-                    <text fg={highlighted() ? props.theme.background : props.theme.textMuted} wrapMode="none" flexShrink={0}>
+                    <text
+                      fg={highlighted() ? props.theme.background : props.theme.textMuted}
+                      wrapMode="none"
+                      flexShrink={0}
+                    >
                       {status()}
                     </text>
                   </box>
