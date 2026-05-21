@@ -209,6 +209,7 @@ export type UnknownError = {
   name: "UnknownError"
   data: {
     message: string
+    ref?: string
   }
 }
 

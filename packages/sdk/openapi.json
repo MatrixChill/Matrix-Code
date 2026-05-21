@@ -11010,6 +11010,9 @@
             "properties": {
               "message": {
                 "type": "string"
+              },
+              "ref": {
+                "type": "string"
               }
             },
             "required": ["message"],
