@@ -243,6 +243,11 @@ const logProcessor = new sst.cloudflare.Worker("LogProcessor", {
   link: [new sst.Secret("HONEYCOMB_API_KEY")],
 })
 
+const ph2 = new sst.Linkable("Placeholder2", {
+  properties: {
+    version: "1",
+  },
+})
 new sst.cloudflare.x.SolidStart("Console", {
   domain,
   path: "packages/console/app",
@@ -272,6 +277,8 @@ new sst.cloudflare.x.SolidStart("Console", {
           new sst.Secret("CLOUDFLARE_API_TOKEN", process.env.CLOUDFLARE_API_TOKEN!),
         ]
       : []),
+    ph2,
+    new sst.Secret("PLACEHOLDER"),
   ],
   environment: {
     //VITE_DOCS_URL: web.url.apply((url) => url!),
