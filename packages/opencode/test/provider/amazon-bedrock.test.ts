@@ -68,16 +68,14 @@ it.instance(
   { config: { provider: { "amazon-bedrock": { options: { region: "eu-west-1" } } } } },
 )
 
-it.instance(
-  "Bedrock: falls back to AWS_REGION env var when no config region",
-  () =>
-    Effect.gen(function* () {
-      yield* set("AWS_REGION", "eu-west-1")
-      yield* set("AWS_PROFILE", "default")
-      const providers = yield* list
-      expect(providers[ProviderID.amazonBedrock]).toBeDefined()
-      expect(providers[ProviderID.amazonBedrock].options?.region).toBe("eu-west-1")
-    }),
+it.instance("Bedrock: falls back to AWS_REGION env var when no config region", () =>
+  Effect.gen(function* () {
+    yield* set("AWS_REGION", "eu-west-1")
+    yield* set("AWS_PROFILE", "default")
+    const providers = yield* list
+    expect(providers[ProviderID.amazonBedrock]).toBeDefined()
+    expect(providers[ProviderID.amazonBedrock].options?.region).toBe("eu-west-1")
+  }),
 )
 
 it.instance(
