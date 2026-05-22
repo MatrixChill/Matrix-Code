@@ -161,9 +161,9 @@ describe("PublicApi OpenAPI v2 errors", () => {
   test("documents permission and question not-found errors", () => {
     const spec = OpenApi.fromApi(PublicApi) as OpenApiSpec
 
-    expect(componentName(responseRef(spec.paths["/permission/{requestID}/reply"]?.post?.responses?.["404"]) ?? "")).toBe(
-      "PermissionNotFoundError",
-    )
+    expect(
+      componentName(responseRef(spec.paths["/permission/{requestID}/reply"]?.post?.responses?.["404"]) ?? ""),
+    ).toBe("PermissionNotFoundError")
     for (const route of [
       ["post", "/question/{requestID}/reply"],
       ["post", "/question/{requestID}/reject"],
