@@ -773,9 +773,7 @@ export const layer = Layer.effect(
       // Resolve effective redirect URI: explicit redirectUri > callbackPort shorthand > default
       const effectiveRedirectUri =
         oauthConfig?.redirectUri ??
-        (oauthConfig?.callbackPort
-          ? `http://127.0.0.1:${oauthConfig.callbackPort}${OAUTH_CALLBACK_PATH}`
-          : undefined)
+        (oauthConfig?.callbackPort ? `http://127.0.0.1:${oauthConfig.callbackPort}${OAUTH_CALLBACK_PATH}` : undefined)
 
       // Start the callback server with custom redirectUri if configured
       yield* Effect.promise(() => McpOAuthCallback.ensureRunning(effectiveRedirectUri))
