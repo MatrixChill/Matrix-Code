@@ -60,10 +60,7 @@ const OpenAIResponsesReasoningItem = Schema.Struct({
 // `function_call_output.output` accepts either a plain string or an ordered
 // array of content items so tools can return images in addition to text.
 // https://platform.openai.com/docs/api-reference/responses/object
-const OpenAIResponsesFunctionCallOutputContent = Schema.Union([
-  OpenAIResponsesInputText,
-  OpenAIResponsesInputImage,
-])
+const OpenAIResponsesFunctionCallOutputContent = Schema.Union([OpenAIResponsesInputText, OpenAIResponsesInputImage])
 
 const OpenAIResponsesFunctionCallOutput = Schema.Union([
   Schema.String,
