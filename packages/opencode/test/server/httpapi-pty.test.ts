@@ -176,7 +176,6 @@ describe("pty HttpApi bridge", () => {
       message: `PTY session not found: ${missingID}`,
     })
   })
-
   ;(process.platform === "win32" ? effectIt.live.skip : effectIt.live)(
     "serves PTY websocket output and input through Effect routes",
     () =>

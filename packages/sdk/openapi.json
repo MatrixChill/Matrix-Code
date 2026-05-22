@@ -3964,11 +3964,11 @@
             }
           },
           "404": {
-            "description": "NotFoundError",
+            "description": "PtyNotFoundError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/PtyNotFoundError"
                 }
               }
             }
@@ -4037,6 +4037,16 @@
                       "$ref": "#/components/schemas/InvalidRequestError"
                     }
                   ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PtyNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PtyNotFoundError"
                 }
               }
             }
@@ -4134,11 +4144,11 @@
             }
           },
           "404": {
-            "description": "NotFoundError",
+            "description": "PtyNotFoundError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/PtyNotFoundError"
                 }
               }
             }
@@ -4219,21 +4229,21 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "PtyForbiddenError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/effect_HttpApiError_Forbidden"
+                  "$ref": "#/components/schemas/PtyForbiddenError"
                 }
               }
             }
           },
           "404": {
-            "description": "NotFoundError",
+            "description": "PtyNotFoundError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/PtyNotFoundError"
                 }
               }
             }
@@ -15419,34 +15429,35 @@
         "required": ["_tag", "name", "message"],
         "additionalProperties": false
       },
-      "NotFoundError": {
-        "type": "object",
-        "required": ["name", "data"],
-        "properties": {
-          "name": {
-            "type": "string",
-            "enum": ["NotFoundError"]
-          },
-          "data": {
-            "type": "object",
-            "required": ["message"],
-            "properties": {
-              "message": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "effect_HttpApiError_Forbidden": {
+      "PtyNotFoundError": {
         "type": "object",
         "properties": {
           "_tag": {
             "type": "string",
-            "enum": ["Forbidden"]
+            "enum": ["PtyNotFoundError"]
+          },
+          "ptyID": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
           }
         },
-        "required": ["_tag"],
+        "required": ["_tag", "ptyID", "message"],
+        "additionalProperties": false
+      },
+      "PtyForbiddenError": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["PtyForbiddenError"]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "message"],
         "additionalProperties": false
       },
       "QuestionNotFoundError": {
@@ -15645,6 +15656,25 @@
         },
         "required": ["name", "data"],
         "additionalProperties": false
+      },
+      "NotFoundError": {
+        "type": "object",
+        "required": ["name", "data"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["NotFoundError"]
+          },
+          "data": {
+            "type": "object",
+            "required": ["message"],
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
       },
       "TextPartInput": {
         "type": "object",
@@ -16166,6 +16196,17 @@
           }
         },
         "required": ["name", "data"],
+        "additionalProperties": false
+      },
+      "effect_HttpApiError_Forbidden": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["Forbidden"]
+          }
+        },
+        "required": ["_tag"],
         "additionalProperties": false
       },
       "SyncEventMessageUpdated": {
