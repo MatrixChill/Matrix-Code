@@ -21,7 +21,7 @@ export type InternalTuiPlugin = Omit<TuiPluginModule, "id"> & {
 }
 
 export function internalTuiPlugins(
-  flags: Pick<RuntimeFlags.Info, "diffViewer" | "experimentalEventSystem">,
+  flags: Pick<RuntimeFlags.Info, "experimentalEventSystem">,
 ): InternalTuiPlugin[] {
   return [
     HomeFooter,
@@ -35,7 +35,7 @@ export function internalTuiPlugins(
     Notifications,
     PluginManager,
     WhichKey,
-    ...(flags.diffViewer ? [DiffViewer] : []),
+    DiffViewer,
     ...(flags.experimentalEventSystem ? [SessionV2Debug] : []),
   ]
 }
