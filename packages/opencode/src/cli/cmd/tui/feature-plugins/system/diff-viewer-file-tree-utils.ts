@@ -179,11 +179,7 @@ export function orderedPatchFileIndexes(rows: readonly FileTreeRow[]) {
   return rows.flatMap((row) => (row.fileIndex === undefined ? [] : [row.fileIndex]))
 }
 
-export function movePatchFileIndex(
-  fileIndexes: readonly number[],
-  current: number | undefined,
-  offset: number,
-) {
+export function movePatchFileIndex(fileIndexes: readonly number[], current: number | undefined, offset: number) {
   if (fileIndexes.length === 0) return undefined
   const index = current === undefined ? -1 : fileIndexes.indexOf(current)
   if (index === -1) return offset < 0 ? fileIndexes[fileIndexes.length - 1] : fileIndexes[0]

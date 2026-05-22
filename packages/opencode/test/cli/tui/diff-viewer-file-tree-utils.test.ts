@@ -239,14 +239,12 @@ describe("diff viewer file tree utilities", () => {
   })
 
   test("selects a file tree node and expands its parents for a patch file", () => {
-    const tree = buildFileTree([
-      { file: "src/config/tui.ts" },
-      { file: "src/session/index.ts" },
-      { file: "README.md" },
-    ])
+    const tree = buildFileTree([{ file: "src/config/tui.ts" }, { file: "src/session/index.ts" }, { file: "README.md" }])
     const selection = fileTreeFileSelection(tree, 1)
 
-    expect(selection?.highlightedNode).toBe(tree.nodes.find((node) => node.kind === "file" && node.name === "index.ts")?.id)
+    expect(selection?.highlightedNode).toBe(
+      tree.nodes.find((node) => node.kind === "file" && node.name === "index.ts")?.id,
+    )
     expect([...selection!.expandedNodes].map((id) => tree.nodes[id]!.name)).toEqual(["session", "src"])
     expect(fileTreeFileSelection(tree, 99)).toBeUndefined()
   })
