@@ -1553,10 +1553,7 @@ it.instance("Google Vertex: uses REP endpoint for Claude continental multi-regio
     yield* set("GOOGLE_CLOUD_PROJECT", "test-project")
     yield* set("VERTEX_LOCATION", "eu")
     const provider = yield* Provider.Service
-    const model = yield* provider.getModel(
-      ProviderID.make("google-vertex"),
-      ModelID.make("claude-sonnet-4-6@default"),
-    )
+    const model = yield* provider.getModel(ProviderID.make("google-vertex"), ModelID.make("claude-sonnet-4-6@default"))
     const language = yield* provider.getLanguage(model)
     expect(languageBaseURL(language)).toBe(
       "https://aiplatform.eu.rep.googleapis.com/v1/projects/test-project/locations/eu/publishers/anthropic/models",
@@ -1585,10 +1582,7 @@ it.instance("Google Vertex: keeps regional Claude endpoints unchanged", () =>
     yield* set("GOOGLE_CLOUD_PROJECT", "test-project")
     yield* set("VERTEX_LOCATION", "europe-west1")
     const provider = yield* Provider.Service
-    const model = yield* provider.getModel(
-      ProviderID.make("google-vertex"),
-      ModelID.make("claude-sonnet-4-6@default"),
-    )
+    const model = yield* provider.getModel(ProviderID.make("google-vertex"), ModelID.make("claude-sonnet-4-6@default"))
     const language = yield* provider.getLanguage(model)
     expect(languageBaseURL(language)).toBe(
       "https://europe-west1-aiplatform.googleapis.com/v1/projects/test-project/locations/europe-west1/publishers/anthropic/models",
