@@ -3630,11 +3630,11 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "ProjectNotFoundError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/ProjectNotFoundError"
                 }
               }
             }
@@ -15427,6 +15427,23 @@
           }
         },
         "required": ["_tag", "name", "message"],
+        "additionalProperties": false
+      },
+      "ProjectNotFoundError": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["ProjectNotFoundError"]
+          },
+          "projectID": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "projectID", "message"],
         "additionalProperties": false
       },
       "PtyNotFoundError": {
