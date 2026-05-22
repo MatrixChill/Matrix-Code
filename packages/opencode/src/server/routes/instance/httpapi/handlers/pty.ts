@@ -185,11 +185,13 @@ export const ptyConnectRoute = HttpRouter.use((router) =>
             writeScoped(write(new Socket.CloseEvent(code, reason)))
           },
         }
-        const handler = yield* pty.connect(params.ptyID, adapter, cursor).pipe(
-          Effect.catchTag("Pty.NotFoundError", () =>
-            closeAccepted(new Socket.CloseEvent(4404, "session not found")).pipe(Effect.as(undefined)),
-          ),
-        )
+        const handler = yield* pty
+          .connect(params.ptyID, adapter, cursor)
+          .pipe(
+            Effect.catchTag("Pty.NotFoundError", () =>
+              closeAccepted(new Socket.CloseEvent(4404, "session not found")).pipe(Effect.as(undefined)),
+            ),
+          )
         if (!handler) return HttpServerResponse.empty()
 
         // No `pending[]`-style early-frame buffer (the legacy handler had one).
