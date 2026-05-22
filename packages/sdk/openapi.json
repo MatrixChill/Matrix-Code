@@ -10326,6 +10326,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "NotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
           }
         },
         "description": "Move a session's sync history into the target workspace, or detach it to the local project.",
