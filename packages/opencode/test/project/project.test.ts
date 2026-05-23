@@ -239,10 +239,19 @@ describe("Project.fromDirectory", () => {
       const { project } = yield* projects.fromDirectory(tmp)
 
       expect(project.id).toBe(remoteID)
-      expect(Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, rootProject.id)).get())).toBeUndefined()
-      expect(Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, sessionID)).get())?.project_id).toBe(remoteID)
-      expect(Database.use((db) => db.select().from(PermissionTable).where(eq(PermissionTable.project_id, remoteID)).get())).toBeDefined()
-      expect(Database.use((db) => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, workspaceID)).get())?.project_id).toBe(remoteID)
+      expect(
+        Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, rootProject.id)).get()),
+      ).toBeUndefined()
+      expect(
+        Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, sessionID)).get())?.project_id,
+      ).toBe(remoteID)
+      expect(
+        Database.use((db) => db.select().from(PermissionTable).where(eq(PermissionTable.project_id, remoteID)).get()),
+      ).toBeDefined()
+      expect(
+        Database.use((db) => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, workspaceID)).get())
+          ?.project_id,
+      ).toBe(remoteID)
     }),
   )
 })

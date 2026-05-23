@@ -79,7 +79,10 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(Layer.provide(AppFileSystem.defaultLayer), Layer.provide(AppProcess.defaultLayer))
+export const defaultLayer = layer.pipe(
+  Layer.provide(AppFileSystem.defaultLayer),
+  Layer.provide(AppProcess.defaultLayer),
+)
 
 interface Result {
   readonly exitCode: number
@@ -97,7 +100,7 @@ function run(cwd: string, proc: AppProcess.Interface) {
         }),
       )
       .pipe(
-        Effect.map((result) => ({ exitCode: result.exitCode, text: result.stdout.toString("utf8") } satisfies Result)),
+        Effect.map((result) => ({ exitCode: result.exitCode, text: result.stdout.toString("utf8") }) satisfies Result),
         Effect.catch(() => Effect.succeed({ exitCode: 1, text: "" } satisfies Result)),
       )
 }

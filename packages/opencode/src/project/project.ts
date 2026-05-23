@@ -180,7 +180,10 @@ export const layer = Layer.effect(
 
     const scope = yield* Scope.Scope
 
-    const migrateProjectId = Effect.fn("Project.migrateProjectId")(function* (oldID: ProjectID | undefined, newID: ProjectID) {
+    const migrateProjectId = Effect.fn("Project.migrateProjectId")(function* (
+      oldID: ProjectID | undefined,
+      newID: ProjectID,
+    ) {
       if (!oldID) return
       if (oldID === ProjectID.global) return
       if (oldID === newID) return
@@ -255,7 +258,11 @@ export const layer = Layer.effect(
         vcs: data.vcs?.type ?? fakeVcs,
         time: { ...existing.time, updated: Date.now() },
       }
-      if (projectID !== ProjectID.global && data.directory !== result.worktree && !result.sandboxes.includes(data.directory))
+      if (
+        projectID !== ProjectID.global &&
+        data.directory !== result.worktree &&
+        !result.sandboxes.includes(data.directory)
+      )
         result.sandboxes.push(data.directory)
       result.sandboxes = yield* Effect.forEach(
         result.sandboxes,
