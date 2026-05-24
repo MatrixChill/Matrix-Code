@@ -319,7 +319,10 @@ describe("LLMClient tools", () => {
           return input.respond(
             bodies.length === 1
               ? sseEvents(
-                  { type: "response.output_item.added", item: { type: "reasoning", id: "rs_1", encrypted_content: null } },
+                  {
+                    type: "response.output_item.added",
+                    item: { type: "reasoning", id: "rs_1", encrypted_content: null },
+                  },
                   { type: "response.reasoning_summary_part.added", item_id: "rs_1", summary_index: 0 },
                   { type: "response.reasoning_summary_part.done", item_id: "rs_1", summary_index: 0 },
                   {
@@ -328,7 +331,13 @@ describe("LLMClient tools", () => {
                   },
                   {
                     type: "response.output_item.added",
-                    item: { type: "function_call", id: "item_1", call_id: "call_1", name: "get_weather", arguments: "" },
+                    item: {
+                      type: "function_call",
+                      id: "item_1",
+                      call_id: "call_1",
+                      name: "get_weather",
+                      arguments: "",
+                    },
                   },
                   { type: "response.function_call_arguments.delta", item_id: "item_1", delta: '{"city":"Paris"}' },
                   {

@@ -361,7 +361,8 @@ const lowerMessages = Effect.fn("OpenAIResponses.lowerMessages")(function* (requ
           const existing = reasoningItems[reasoning.id]
           if (existing) {
             existing.summary.push(...reasoning.summary)
-            if (typeof reasoning.encrypted_content === "string") existing.encrypted_content = reasoning.encrypted_content
+            if (typeof reasoning.encrypted_content === "string")
+              existing.encrypted_content = reasoning.encrypted_content
             continue
           }
           reasoningItems[reasoning.id] = reasoning
@@ -568,9 +569,7 @@ const onReasoningDelta = (state: ParserState, event: OpenAIResponsesEvent): Step
   const events: LLMEvent[] = []
   const itemID = event.item_id ?? "reasoning-0"
   const id =
-    event.summary_index !== undefined || state.reasoningItems[itemID]
-      ? `${itemID}:${event.summary_index ?? 0}`
-      : itemID
+    event.summary_index !== undefined || state.reasoningItems[itemID] ? `${itemID}:${event.summary_index ?? 0}` : itemID
   return [
     {
       ...state,
