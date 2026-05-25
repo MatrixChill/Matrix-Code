@@ -264,13 +264,9 @@ describe("run entry body", () => {
               subagent_type: "explore",
             },
             title: "",
-            output: [
-              '<task id="child-1" state="completed">',
-              "<task_result>",
-              "",
-              "</task_result>",
-              "</task>",
-            ].join("\n"),
+            output: ['<task id="child-1" state="completed">', "<task_result>", "", "</task_result>", "</task>"].join(
+              "\n",
+            ),
             metadata: {
               sessionId: "child-1",
             },

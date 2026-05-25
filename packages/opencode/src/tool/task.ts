@@ -52,9 +52,7 @@ export const Parameters = Schema.Struct({
 })
 
 function output(sessionID: SessionID, text: string) {
-  return [`<task id="${sessionID}" state="completed">`, "<task_result>", text, "</task_result>", "</task>"].join(
-    "\n",
-  )
+  return [`<task id="${sessionID}" state="completed">`, "<task_result>", text, "</task_result>", "</task>"].join("\n")
 }
 
 function backgroundOutput(sessionID: SessionID) {
