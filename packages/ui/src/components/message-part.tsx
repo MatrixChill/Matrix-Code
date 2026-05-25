@@ -2278,7 +2278,12 @@ ToolRegistry.register({
               }
             >
               <div data-component="apply-patch-file-diff">
-                <Dynamic component={fileComponent} mode="diff" virtualize={props.virtualizeDiff} fileDiff={single()!.view.fileDiff} />
+                <Dynamic
+                  component={fileComponent}
+                  mode="diff"
+                  virtualize={props.virtualizeDiff}
+                  fileDiff={single()!.view.fileDiff}
+                />
               </div>
             </ToolFileAccordion>
           </BasicTool>

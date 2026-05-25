@@ -71,7 +71,8 @@ describe("session diff", () => {
   test("keeps capped header-only patches partial", () => {
     const fileDiff = resolveFileDiff({
       file: "a.ts",
-      patch: "Index: a.ts\n===================================================================\n--- a.ts\t\n+++ a.ts\t\n",
+      patch:
+        "Index: a.ts\n===================================================================\n--- a.ts\t\n+++ a.ts\t\n",
     })
 
     expect(fileDiff.name).toBe("a.ts")

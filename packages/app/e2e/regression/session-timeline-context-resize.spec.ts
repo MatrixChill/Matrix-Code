@@ -8,12 +8,12 @@ const model = { providerID: "opencode", modelID: "claude-opus-4-6", variant: "ma
 const contextIDs = ["prt_0100_read", "prt_0101_glob", "prt_0102_grep", "prt_0103_list"]
 const followingTextID = "prt_0104_text"
 
-type Message = { info: Record<string, unknown> & { id: string; role: "user" | "assistant" }; parts: Record<string, unknown>[] }
+type Message = {
+  info: Record<string, unknown> & { id: string; role: "user" | "assistant" }
+  parts: Record<string, unknown>[]
+}
 
-const messages = [
-  ...Array.from({ length: 8 }, (_, index) => turn(index, false)).flat(),
-  ...turn(10, true),
-]
+const messages = [...Array.from({ length: 8 }, (_, index) => turn(index, false)).flat(), ...turn(10, true)]
 
 test.describe("regression: session timeline context group resize", () => {
   test("remeasures a recent explored context group before the next paint", async ({ page }) => {
@@ -76,7 +76,8 @@ async function sampleExpansion(page: Page) {
         const trigger = context?.querySelector<HTMLElement>('[data-slot="collapsible-trigger"]')
         const contextRow = context?.closest<HTMLElement>('[data-timeline-row="AssistantPart"]')
         const textRow = text?.closest<HTMLElement>('[data-timeline-row="AssistantPart"]')
-        if (!context || !text || !scroller || !trigger || !contextRow || !textRow) throw new Error("missing regression nodes")
+        if (!context || !text || !scroller || !trigger || !contextRow || !textRow)
+          throw new Error("missing regression nodes")
 
         scroller.scrollTop = scroller.scrollHeight
         const samples: {
@@ -213,10 +214,17 @@ async function mockServer(page: Page) {
 
     const path = url.pathname
     if (path === "/global/event" || path === "/event") return sse(route)
-    if (["/global/config", "/config", "/provider/auth", "/mcp", "/session/status"].includes(path)) return json(route, {})
-    if (["/skill", "/command", "/lsp", "/formatter", "/permission", "/question", "/vcs/status", "/vcs/diff"].includes(path)) return json(route, [])
+    if (["/global/config", "/config", "/provider/auth", "/mcp", "/session/status"].includes(path))
+      return json(route, {})
+    if (
+      ["/skill", "/command", "/lsp", "/formatter", "/permission", "/question", "/vcs/status", "/vcs/diff"].includes(
+        path,
+      )
+    )
+      return json(route, [])
     if (path === "/provider") return json(route, provider())
-    if (path === "/path") return json(route, { state: directory, config: directory, worktree: directory, directory, home: "C:/OpenCode" })
+    if (path === "/path")
+      return json(route, { state: directory, config: directory, worktree: directory, directory, home: "C:/OpenCode" })
     if (path === "/project") return json(route, [project()])
     if (path === "/project/current") return json(route, project())
     if (path === "/agent") return json(route, [{ name: "build", mode: "primary" }])
@@ -238,11 +246,26 @@ function id(prefix: string, index: number) {
 }
 
 function project() {
-  return { id: projectID, worktree: directory, vcs: "git", name: "context-resize-regression", time: { created: 1700000000000, updated: 1700000000000 }, sandboxes: [] }
+  return {
+    id: projectID,
+    worktree: directory,
+    vcs: "git",
+    name: "context-resize-regression",
+    time: { created: 1700000000000, updated: 1700000000000 },
+    sandboxes: [],
+  }
 }
 
 function session() {
-  return { id: sessionID, slug: "context-resize-regression", projectID, directory, title, version: "dev", time: { created: 1700000000000, updated: 1700000000000 } }
+  return {
+    id: sessionID,
+    slug: "context-resize-regression",
+    projectID,
+    directory,
+    title,
+    version: "dev",
+    time: { created: 1700000000000, updated: 1700000000000 },
+  }
 }
 
 function provider() {

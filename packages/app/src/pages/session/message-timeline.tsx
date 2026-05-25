@@ -1018,7 +1018,9 @@ export function MessageTimeline(props: {
       return (
         <ContextToolGroup
           parts={parts()}
-          busy={workingTurn(row().userMessageID) && lastAssistantGroupKey().get(row().userMessageID) === row().group.key}
+          busy={
+            workingTurn(row().userMessageID) && lastAssistantGroupKey().get(row().userMessageID) === row().group.key
+          }
           onSizeChange={measureTimeline}
         />
       )
@@ -1149,7 +1151,11 @@ export function MessageTimeline(props: {
               {(message) => (
                 <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
                   <div data-slot="session-turn-message-content" aria-live="off">
-                    <Message message={message()} parts={getMsgParts(userMessageRow().userMessageID)} actions={props.actions} />
+                    <Message
+                      message={message()}
+                      parts={getMsgParts(userMessageRow().userMessageID)}
+                      actions={props.actions}
+                    />
                   </div>
                 </div>
               )}
@@ -1178,7 +1184,10 @@ export function MessageTimeline(props: {
         return (
           <TimelineRowFrame row={assistantPartRow}>
             <div data-slot="session-turn-message-container" class="w-full px-4 md:px-5">
-              <div data-slot="session-turn-assistant-content" aria-hidden={workingTurn(assistantPartRow().userMessageID)}>
+              <div
+                data-slot="session-turn-assistant-content"
+                aria-hidden={workingTurn(assistantPartRow().userMessageID)}
+              >
                 {renderAssistantPartGroup(assistantPartRow)}
               </div>
             </div>

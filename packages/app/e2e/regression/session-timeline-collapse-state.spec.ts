@@ -168,7 +168,9 @@ test.describe("regression: session timeline local row state", () => {
       },
     })
 
-    await expect(wrapper.locator('[data-slot="diff-changes-additions"]').filter({ hasText: "+2" }).first()).toBeVisible({ timeout: 10_000 })
+    await expect(wrapper.locator('[data-slot="diff-changes-additions"]').filter({ hasText: "+2" }).first()).toBeVisible(
+      { timeout: 10_000 },
+    )
     expect(await readDiffProbe(page)).toEqual({ fileMarker: "before", shadowRoots: 0, toolMarker: "before" })
   })
 })
@@ -194,23 +196,29 @@ async function expectExpanded(locator: Locator, expected: boolean) {
 }
 
 async function readToolState(page: Page) {
-  return page.locator(`[data-timeline-part-id="${editPartID}"]`).first().evaluate((element, textPartID) => ({
-    expanded: (() => {
-      const trigger = element.querySelector('[data-slot="collapsible-trigger"]')
-      const aria = trigger?.getAttribute("aria-expanded")
-      if (aria === "true") return true
-      if (aria === "false") return false
+  return page
+    .locator(`[data-timeline-part-id="${editPartID}"]`)
+    .first()
+    .evaluate(
+      (element, textPartID) => ({
+        expanded: (() => {
+          const trigger = element.querySelector('[data-slot="collapsible-trigger"]')
+          const aria = trigger?.getAttribute("aria-expanded")
+          if (aria === "true") return true
+          if (aria === "false") return false
 
-      const root = element.querySelector('[data-component="collapsible"]')
-      if (root?.hasAttribute("data-expanded")) return true
-      if (root?.hasAttribute("data-closed")) return false
+          const root = element.querySelector('[data-component="collapsible"]')
+          if (root?.hasAttribute("data-expanded")) return true
+          if (root?.hasAttribute("data-closed")) return false
 
-      const content = element.querySelector<HTMLElement>('[data-slot="collapsible-content"]')
-      return !!content && content.getBoundingClientRect().height > 0
-    })(),
-    row: element.closest("[data-timeline-row]")?.getAttribute("data-timeline-row"),
-    streamedTextVisible: !!document.querySelector(`[data-timeline-part-id="${textPartID}"]`),
-  }), textPartID)
+          const content = element.querySelector<HTMLElement>('[data-slot="collapsible-content"]')
+          return !!content && content.getBoundingClientRect().height > 0
+        })(),
+        row: element.closest("[data-timeline-row]")?.getAttribute("data-timeline-row"),
+        streamedTextVisible: !!document.querySelector(`[data-timeline-part-id="${textPartID}"]`),
+      }),
+      textPartID,
+    )
 }
 
 async function installDiffProbe(page: Page) {
@@ -231,27 +239,33 @@ async function installDiffProbe(page: Page) {
 }
 
 async function markDiffProbe(page: Page) {
-  await page.locator(`[data-timeline-part-id="${editPartID}"]`).first().evaluate((element) => {
-    const tool = element as HTMLElement
-    const file = tool.querySelector<HTMLElement>('[data-component="file"][data-mode="diff"]')
-    if (!file) throw new Error("missing edit diff file")
+  await page
+    .locator(`[data-timeline-part-id="${editPartID}"]`)
+    .first()
+    .evaluate((element) => {
+      const tool = element as HTMLElement
+      const file = tool.querySelector<HTMLElement>('[data-component="file"][data-mode="diff"]')
+      if (!file) throw new Error("missing edit diff file")
 
-    tool.dataset.timelineProbe = "before"
-    file.dataset.timelineProbe = "before"
-    window.__timelineDiffProbe.reset()
-  })
+      tool.dataset.timelineProbe = "before"
+      file.dataset.timelineProbe = "before"
+      window.__timelineDiffProbe.reset()
+    })
 }
 
 async function readDiffProbe(page: Page) {
-  return page.locator(`[data-timeline-part-id="${editPartID}"]`).first().evaluate((element) => {
-    const tool = element as HTMLElement
-    const file = tool.querySelector<HTMLElement>('[data-component="file"][data-mode="diff"]')
-    return {
-      fileMarker: file?.dataset.timelineProbe,
-      shadowRoots: window.__timelineDiffProbe.shadowRoots(),
-      toolMarker: tool.dataset.timelineProbe,
-    }
-  })
+  return page
+    .locator(`[data-timeline-part-id="${editPartID}"]`)
+    .first()
+    .evaluate((element) => {
+      const tool = element as HTMLElement
+      const file = tool.querySelector<HTMLElement>('[data-component="file"][data-mode="diff"]')
+      return {
+        fileMarker: file?.dataset.timelineProbe,
+        shadowRoots: window.__timelineDiffProbe.shadowRoots(),
+        toolMarker: tool.dataset.timelineProbe,
+      }
+    })
 }
 
 function editPartWithAdditions(additions: number) {
@@ -292,10 +306,23 @@ async function mockServer(page: Page, events: EventPayload[]) {
 
     const path = url.pathname
     if (path === "/global/event") return sse(route, events.splice(0))
-    if (path === "/global/config" || path === "/config" || path === "/provider/auth" || path === "/mcp" || path === "/session/status") return json(route, {})
-    if (["/skill", "/command", "/lsp", "/formatter", "/permission", "/question", "/vcs/status", "/vcs/diff"].includes(path)) return json(route, [])
+    if (
+      path === "/global/config" ||
+      path === "/config" ||
+      path === "/provider/auth" ||
+      path === "/mcp" ||
+      path === "/session/status"
+    )
+      return json(route, {})
+    if (
+      ["/skill", "/command", "/lsp", "/formatter", "/permission", "/question", "/vcs/status", "/vcs/diff"].includes(
+        path,
+      )
+    )
+      return json(route, [])
     if (path === "/provider") return json(route, provider())
-    if (path === "/path") return json(route, { state: directory, config: directory, worktree: directory, directory, home: "C:/OpenCode" })
+    if (path === "/path")
+      return json(route, { state: directory, config: directory, worktree: directory, directory, home: "C:/OpenCode" })
     if (path === "/project") return json(route, [project()])
     if (path === "/project/current") return json(route, project())
     if (path === "/agent") return json(route, [{ name: "build", mode: "primary" }])
@@ -309,11 +336,26 @@ async function mockServer(page: Page, events: EventPayload[]) {
 }
 
 function project() {
-  return { id: projectID, worktree: directory, vcs: "git", name: "timeline-state-regression", time: { created: 1700000000000, updated: 1700000000000 }, sandboxes: [] }
+  return {
+    id: projectID,
+    worktree: directory,
+    vcs: "git",
+    name: "timeline-state-regression",
+    time: { created: 1700000000000, updated: 1700000000000 },
+    sandboxes: [],
+  }
 }
 
 function session() {
-  return { id: sessionID, slug: "timeline-state-regression", projectID, directory, title, version: "dev", time: { created: 1700000000000, updated: 1700000000000 } }
+  return {
+    id: sessionID,
+    slug: "timeline-state-regression",
+    projectID,
+    directory,
+    title,
+    version: "dev",
+    time: { created: 1700000000000, updated: 1700000000000 },
+  }
 }
 
 function provider() {

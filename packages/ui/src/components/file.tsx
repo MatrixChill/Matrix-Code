@@ -1089,8 +1089,12 @@ function DiffViewer<T>(props: DiffFileProps<T>) {
       return sampledChecksum(contents)
     }
 
-    const before = local.before ? { ...local.before, contents: beforeContents, cacheKey: cacheKey(beforeContents) } : undefined
-    const after = local.after ? { ...local.after, contents: afterContents, cacheKey: cacheKey(afterContents) } : undefined
+    const before = local.before
+      ? { ...local.before, contents: beforeContents, cacheKey: cacheKey(beforeContents) }
+      : undefined
+    const after = local.after
+      ? { ...local.after, contents: afterContents, cacheKey: cacheKey(afterContents) }
+      : undefined
     const targetChanged =
       local.fileDiff !== undefined
         ? instanceFileDiff !== local.fileDiff
