@@ -45,7 +45,9 @@ export const Model = Schema.Struct({
   modalities: Schema.optional(
     Schema.Struct({
       input: Schema.optional(Schema.mutable(Schema.Array(Schema.Literals(["text", "audio", "image", "video", "pdf"])))),
-      output: Schema.optional(Schema.mutable(Schema.Array(Schema.Literals(["text", "audio", "image", "video", "pdf"])))),
+      output: Schema.optional(
+        Schema.mutable(Schema.Array(Schema.Literals(["text", "audio", "image", "video", "pdf"]))),
+      ),
     }),
   ),
   experimental: Schema.optional(Schema.Boolean),
