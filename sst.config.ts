@@ -14,7 +14,11 @@ export default $config({
         aws: {
           version: "7.30.0",
           region: "us-east-1",
-          profile: process.env.GITHUB_ACTIONS ? undefined : input.stage === "production" ? "opencode-production" : "opencode-dev",
+          profile: process.env.GITHUB_ACTIONS
+            ? undefined
+            : input.stage === "production"
+              ? "opencode-production"
+              : "opencode-dev",
         },
         stripe: {
           version: "0.0.28",
