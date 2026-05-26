@@ -7,9 +7,7 @@ export function NewSessionDesignView(props: { children: JSX.Element }) {
       <div class="absolute inset-x-0 top-[25.375%] flex justify-center px-6">
         <div class="w-full max-w-[720px]">
           <WordmarkV2 class="h-auto w-full text-v2-icon-icon-base" />
-          <div class="mt-8">
-            {props.children}
-          </div>
+          <div class="mt-8">{props.children}</div>
         </div>
       </div>
     </div>

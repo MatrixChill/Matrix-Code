@@ -171,7 +171,8 @@ function StatusPopoverView(props: { state: StatusPopoverState }) {
   })
 
   const popoverProps = {
-    class: "[&_[data-slot=popover-body]]:p-0 w-[360px] max-w-[calc(100vw-40px)] bg-transparent border-0 shadow-none rounded-xl",
+    class:
+      "[&_[data-slot=popover-body]]:p-0 w-[360px] max-w-[calc(100vw-40px)] bg-transparent border-0 shadow-none rounded-xl",
     gutter: 4,
     placement: "bottom-end" as const,
     shift: -168,
@@ -192,7 +193,10 @@ function StatusPopoverView(props: { state: StatusPopoverState }) {
       trigger={
         <div class="relative size-4">
           <IconV2 name={props.state.shown ? "status-active" : "status"} />
-          <div classList={statusDotClass()} class="-top-1 -right-1 size-2 border border-[var(--v2-background-bg-deep)]" />
+          <div
+            classList={statusDotClass()}
+            class="-top-1 -right-1 size-2 border border-[var(--v2-background-bg-deep)]"
+          />
         </div>
       }
       {...popoverProps}

@@ -1799,9 +1799,7 @@ export default function Page() {
               </Match>
               <Match when={true}>
                 <Show when={USE_NEW_SESSION_DESIGN} fallback={<NewSessionView worktree={newSessionWorktree()} />}>
-                  <NewSessionDesignView>
-                    {composerRegion("inline")}
-                  </NewSessionDesignView>
+                  <NewSessionDesignView>{composerRegion("inline")}</NewSessionDesignView>
                 </Show>
               </Match>
             </Switch>

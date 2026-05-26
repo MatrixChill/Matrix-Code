@@ -240,7 +240,10 @@ function HomeDesign() {
           />
           <div class="mt-3 overflow-auto flex-1">
             <div class="pt-3 flex flex-col gap-6">
-              <Show when={!sessionLoad.isLoading} fallback={<HomeSessionSkeleton label={language.t("common.loading")} />}>
+              <Show
+                when={!sessionLoad.isLoading}
+                fallback={<HomeSessionSkeleton label={language.t("common.loading")} />}
+              >
                 <Show
                   when={groups().length > 0}
                   fallback={
@@ -458,10 +461,7 @@ function HomeProjectRow(props: {
                 <Icon name="edit" size="small" />
                 {props.language.t("common.edit")}
               </MenuV2.Item>
-              <MenuV2.Item
-                disabled={props.unseenCount === 0}
-                onSelect={() => props.clearNotifications(props.project)}
-              >
+              <MenuV2.Item disabled={props.unseenCount === 0} onSelect={() => props.clearNotifications(props.project)}>
                 <Icon name="circle-check" size="small" />
                 {props.language.t("sidebar.project.clearNotifications")}
               </MenuV2.Item>
