@@ -4,7 +4,9 @@ export default $config({
   app(input) {
     // Dev owns the shared AWS lake/stats infra for all non-production stages.
     const awsStage = input.stage === "production" ? "production" : "dev"
-    const deployAws = input.stage === awsStage
+    // TODO temporarily disable AWS infra deployment
+    const deployAws = false
+    //const deployAws = input.stage === awsStage
     return {
       name: "opencode",
       removal: input?.stage === "production" ? "retain" : "remove",
@@ -38,8 +40,8 @@ export default $config({
     const stage = await import("./infra/stage.js")
     await import("./infra/app.js")
     if (stage.deployAws) {
-      await import("./infra/lake.js")
-      await import("./infra/stats.js")
+      //await import("./infra/lake.js")
+      //await import("./infra/stats.js")
     }
     const { stat } = await import("./infra/console.js")
     await import("./infra/enterprise.js")
