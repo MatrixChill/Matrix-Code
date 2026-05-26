@@ -231,12 +231,14 @@ export function make(input: {
     const page = filtered.slice(0, limit)
     const last = page.at(-1)
     return {
-      sessions: page.map((item): SessionInfo => ({
-        sessionId: item.id,
-        cwd: item.directory,
-        title: item.title,
-        updatedAt: new Date(item.time.updated).toISOString(),
-      })),
+      sessions: page.map(
+        (item): SessionInfo => ({
+          sessionId: item.id,
+          cwd: item.directory,
+          title: item.title,
+          updatedAt: new Date(item.time.updated).toISOString(),
+        }),
+      ),
       ...(filtered.length > limit && last ? { nextCursor: String(last.time.updated) } : {}),
     }
   })
@@ -311,10 +313,7 @@ export function make(input: {
     )
     const messages = yield* request(
       () =>
-        input.sdk.session.messages(
-          { directory: params.cwd, sessionID: forked.id, limit: 20 },
-          { throwOnError: true },
-        ),
+        input.sdk.session.messages({ directory: params.cwd, sessionID: forked.id, limit: 20 }, { throwOnError: true }),
       "session",
     )
     const restored = restoreFromMessages(messages.map((item) => item.info))
