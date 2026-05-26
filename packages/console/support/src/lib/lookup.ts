@@ -73,15 +73,11 @@ export async function lookup(identifier: string): Promise<LookupResult> {
   }
 
   // Treat as email
-  const authData = await Database.use((tx) =>
-    tx.select().from(AuthTable).where(eq(AuthTable.subject, identifier)),
-  )
+  const authData = await Database.use((tx) => tx.select().from(AuthTable).where(eq(AuthTable.subject, identifier)))
   if (authData.length === 0) throw new Error("Email not found")
 
   const accountID = authData[0].accountID
-  const auth = await Database.use((tx) =>
-    tx.select().from(AuthTable).where(eq(AuthTable.accountID, accountID)),
-  )
+  const auth = await Database.use((tx) => tx.select().from(AuthTable).where(eq(AuthTable.accountID, accountID)))
 
   const accountWorkspaces = await Database.use((tx) =>
     tx
@@ -313,8 +309,13 @@ async function loadWorkspace(workspaceID: string): Promise<WorkspaceSection> {
         freeRequests: sql<number>`SUM(CASE WHEN ${UsageTable.cost} = 0 THEN 1 ELSE 0 END)`.as("free_requests"),
         goRequests: sql<number>`SUM(CASE WHEN ${planExpr} = 'lite' THEN 1 ELSE 0 END)`.as("go_requests"),
         goCost: sql<number>`SUM(CASE WHEN ${planExpr} = 'lite' THEN ${UsageTable.cost} ELSE 0 END)`.as("go_cost"),
-        apiRequests: sql<number>`SUM(CASE WHEN ${planExpr} IS NULL AND ${UsageTable.cost} > 0 THEN 1 ELSE 0 END)`.as("api_requests"),
-        apiCost: sql<number>`SUM(CASE WHEN ${planExpr} IS NULL AND ${UsageTable.cost} > 0 THEN ${UsageTable.cost} ELSE 0 END)`.as("api_cost"),
+        apiRequests: sql<number>`SUM(CASE WHEN ${planExpr} IS NULL AND ${UsageTable.cost} > 0 THEN 1 ELSE 0 END)`.as(
+          "api_requests",
+        ),
+        apiCost:
+          sql<number>`SUM(CASE WHEN ${planExpr} IS NULL AND ${UsageTable.cost} > 0 THEN ${UsageTable.cost} ELSE 0 END)`.as(
+            "api_cost",
+          ),
       })
       .from(UsageTable)
       .where(
@@ -466,9 +467,7 @@ function getSubscriptionStatus(row: {
   const retryIn = isWeeklyLimited
     ? formatRetryTime(Math.ceil((week.end.getTime() - now.getTime()) / 1000))
     : isRollingLimited && row.timeRollingUpdated
-      ? formatRetryTime(
-          Math.ceil((row.timeRollingUpdated.getTime() + rollingWindowMs - now.getTime()) / 1000),
-        )
+      ? formatRetryTime(Math.ceil((row.timeRollingUpdated.getTime() + rollingWindowMs - now.getTime()) / 1000))
       : null
 
   return {
