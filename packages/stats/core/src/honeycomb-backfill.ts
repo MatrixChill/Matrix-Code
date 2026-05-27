@@ -69,7 +69,9 @@ function printQueries(args: string[]) {
   const periodEnd = parseDateFlag(flags, "period-end") ?? defaultPeriodEnd()
   const days = parseIntegerFlag(flags, "days") ?? DEFAULT_DAYS
   const limit = parseIntegerFlag(flags, "limit") ?? 1000
-  const dailyStart = new Date(Date.UTC(periodEnd.getUTCFullYear(), periodEnd.getUTCMonth(), periodEnd.getUTCDate() - days + 1))
+  const dailyStart = new Date(
+    Date.UTC(periodEnd.getUTCFullYear(), periodEnd.getUTCMonth(), periodEnd.getUTCDate() - days + 1),
+  )
   const weekStart = syncWeekStart(periodEnd)
 
   console.log(
@@ -124,8 +126,14 @@ async function importFiles(args: string[]) {
     }))),
   ])
   const providerRows = providerRowsFromAggregates([
-    ...(await metricRows(opts.files["provider-day"], "day", opts, (row, base) => ({ ...base, provider: provider(row) }))),
-    ...(await metricRows(opts.files["provider-week"], "week", opts, (row, base) => ({ ...base, provider: provider(row) }))),
+    ...(await metricRows(opts.files["provider-day"], "day", opts, (row, base) => ({
+      ...base,
+      provider: provider(row),
+    }))),
+    ...(await metricRows(opts.files["provider-week"], "week", opts, (row, base) => ({
+      ...base,
+      provider: provider(row),
+    }))),
   ])
   const geoRows = geoRowsFromAggregates([
     ...(await metricRows(opts.files["geo-day"], "day", opts, (row, base) => ({
@@ -231,7 +239,10 @@ function commonCalculatedFields() {
     },
     {
       name: "stat_provider",
-      expression: `IF(STARTS_WITH(COALESCE($provider, ""), "minimax-plan"), "minimax-plan", STARTS_WITH(COALESCE($provider, ""), "zai-plan"), "zai-plan", STARTS_WITH(COALESCE($provider, ""), "azure-databricks"), "azure-databricks", REG_MATCH(COALESCE($provider, ""), ` + "`^azure[0-9]+`" + `), "azure-openai", COALESCE($provider, "unknown"))`,
+      expression:
+        `IF(STARTS_WITH(COALESCE($provider, ""), "minimax-plan"), "minimax-plan", STARTS_WITH(COALESCE($provider, ""), "zai-plan"), "zai-plan", STARTS_WITH(COALESCE($provider, ""), "azure-databricks"), "azure-databricks", REG_MATCH(COALESCE($provider, ""), ` +
+        "`^azure[0-9]+`" +
+        `), "azure-openai", COALESCE($provider, "unknown"))`,
     },
     { name: "stat_country", expression: `COALESCE($cf.country, "ZZ")` },
   ]
@@ -243,12 +254,18 @@ function metricCalculatedFields() {
       name: "stat_tokens_total",
       expression: `SUM(COALESCE($tokens.cache_read, 0), COALESCE($tokens.cache_write_5m, 0), COALESCE($tokens.input, 0), COALESCE($tokens.output, 0))`,
     },
-    { name: "stat_cost_input_microcents", expression: `COALESCE($cost.input.microcents, MUL($cost.input, 1000000), 0)` },
+    {
+      name: "stat_cost_input_microcents",
+      expression: `COALESCE($cost.input.microcents, MUL($cost.input, 1000000), 0)`,
+    },
     {
       name: "stat_cost_output_microcents",
       expression: `COALESCE($cost.output.microcents, MUL($cost.output, 1000000), 0)`,
     },
-    { name: "stat_cost_total_microcents", expression: `COALESCE($cost.total.microcents, MUL($cost.total, 1000000), 0)` },
+    {
+      name: "stat_cost_total_microcents",
+      expression: `COALESCE($cost.total.microcents, MUL($cost.total, 1000000), 0)`,
+    },
     {
       name: "stat_output_tps",
       expression: `IF(LT(SUB($timestamp.last_byte, $timestamp.first_byte), 100), null, DIV(MUL($tokens.output, 1000), SUB($timestamp.last_byte, $timestamp.first_byte)))`,
@@ -287,11 +304,11 @@ function lookupRows(
   return readRows(file).then((rows) =>
     Array.from(
       rows
-      .flatMap((row) => map(row, grain, opts))
-      .reduce((result, [key, value]) => {
-        if (value && value > (result.get(key) ?? "")) result.set(key, value)
-        return result
-      }, new Map<string, string>()),
+        .flatMap((row) => map(row, grain, opts))
+        .reduce((result, [key, value]) => {
+          if (value && value > (result.get(key) ?? "")) result.set(key, value)
+          return result
+        }, new Map<string, string>()),
     ),
   )
 }
@@ -443,10 +460,7 @@ function geoDimensionKey(row: GeoStatRow) {
   return row.country
 }
 
-function lookupKey(
-  base: { grain: string; period_start: Date; dataset: string; tier: string },
-  ...dimension: string[]
-) {
+function lookupKey(base: { grain: string; period_start: Date; dataset: string; tier: string }, ...dimension: string[]) {
   return [base.grain, base.period_start.toISOString(), base.dataset, base.tier, ...dimension].join("\u0000")
 }
 
@@ -515,7 +529,10 @@ function hasCell(row: RawRow, names: string[]) {
 
 function cell(row: RawRow, names: string[]) {
   const normalized = normalizedCells(row)
-  return names.flatMap((name) => [row[name], normalized.get(normalizeHeader(name))]).find((value) => value !== undefined) ?? ""
+  return (
+    names.flatMap((name) => [row[name], normalized.get(normalizeHeader(name))]).find((value) => value !== undefined) ??
+    ""
+  )
 }
 
 function normalizedCells(row: RawRow) {
@@ -550,7 +567,11 @@ function defaultPeriodEnd() {
 }
 
 function sameUtcDay(left: Date, right: Date) {
-  return left.getUTCFullYear() === right.getUTCFullYear() && left.getUTCMonth() === right.getUTCMonth() && left.getUTCDate() === right.getUTCDate()
+  return (
+    left.getUTCFullYear() === right.getUTCFullYear() &&
+    left.getUTCMonth() === right.getUTCMonth() &&
+    left.getUTCDate() === right.getUTCDate()
+  )
 }
 
 async function readRows(file: string) {
