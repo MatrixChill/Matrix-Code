@@ -91,8 +91,7 @@ export const Info = Schema.Struct({
         }),
         timeout: Schema.optional(
           Schema.Union([PositiveInt, Schema.Literal(false)]).annotate({
-            description:
-              "Timeout in milliseconds for full requests to this provider. Set to false to disable timeout.",
+            description: "Timeout in milliseconds for full requests to this provider. Set to false to disable timeout.",
           }),
         ).annotate({
           description: "Timeout in milliseconds for full requests to this provider. Set to false to disable timeout.",
