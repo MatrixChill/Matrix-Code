@@ -969,9 +969,7 @@ export function Session() {
               value: transcript,
               renderer,
               cwd:
-                (project.instance.path().worktree === "/"
-                  ? undefined
-                  : project.instance.path().worktree) ||
+                (project.instance.path().worktree === "/" ? undefined : project.instance.path().worktree) ||
                 project.instance.directory() ||
                 process.cwd(),
             })
@@ -987,9 +985,7 @@ export function Session() {
               value: transcript,
               renderer,
               cwd:
-                (project.instance.path().worktree === "/"
-                  ? undefined
-                  : project.instance.path().worktree) ||
+                (project.instance.path().worktree === "/" ? undefined : project.instance.path().worktree) ||
                 project.instance.directory() ||
                 process.cwd(),
             })

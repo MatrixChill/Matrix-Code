@@ -513,9 +513,7 @@ export function Prompt(props: PromptProps) {
             value,
             renderer,
             cwd:
-              (project.instance.path().worktree === "/"
-                ? undefined
-                : project.instance.path().worktree) ||
+              (project.instance.path().worktree === "/" ? undefined : project.instance.path().worktree) ||
               project.instance.directory() ||
               process.cwd(),
           })
