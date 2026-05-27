@@ -162,7 +162,11 @@ export function createWebSocketFetch(options?: CreateWebSocketFetchOptions) {
       }
 
       entry.fallback = true
-      log.warn("websocket setup failed", { key, error: error instanceof Error ? error.message : String(error), fallback: "http" })
+      log.warn("websocket setup failed", {
+        key,
+        error: error instanceof Error ? error.message : String(error),
+        fallback: "http",
+      })
       invalidate(entry)
       return httpFetch(input, httpInit)
     }
@@ -202,7 +206,11 @@ async function socket(
   maxConnectionAge: number,
   signal?: AbortSignal | null,
 ) {
-  if (entry.socket?.readyState === WebSocket.OPEN && entry.connectedAt && Date.now() - entry.connectedAt < maxConnectionAge) {
+  if (
+    entry.socket?.readyState === WebSocket.OPEN &&
+    entry.connectedAt &&
+    Date.now() - entry.connectedAt < maxConnectionAge
+  ) {
     return entry.socket
   }
 

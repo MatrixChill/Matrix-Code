@@ -201,7 +201,14 @@ export function streamResponsesWebSocket(options: StreamResponsesWebSocketOption
     }
 
     if (!emitted) options.onFirstEvent?.()
-    controller?.enqueue(encoder.encode(`${text.split(/\r?\n/).map((line) => `data: ${line}`).join("\n")}\n\n`))
+    controller?.enqueue(
+      encoder.encode(
+        `${text
+          .split(/\r?\n/)
+          .map((line) => `data: ${line}`)
+          .join("\n")}\n\n`,
+      ),
+    )
     emitted = true
     resetIdleTimeout("idle timeout waiting for websocket")
 

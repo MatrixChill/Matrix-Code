@@ -551,7 +551,10 @@ function streamRequest(headers?: Record<string, string>, signal?: AbortSignal): 
 }
 
 function mockFetch(
-  fn: (input: Parameters<typeof globalThis.fetch>[0], init: Parameters<typeof globalThis.fetch>[1]) => ReturnType<typeof globalThis.fetch>,
+  fn: (
+    input: Parameters<typeof globalThis.fetch>[0],
+    init: Parameters<typeof globalThis.fetch>[1],
+  ) => ReturnType<typeof globalThis.fetch>,
 ): typeof globalThis.fetch {
   return Object.assign(fn, { preconnect: globalThis.fetch.preconnect })
 }
