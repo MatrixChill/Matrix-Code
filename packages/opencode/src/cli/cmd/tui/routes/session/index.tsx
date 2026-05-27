@@ -134,12 +134,6 @@ const sessionBindingCommands = [
   "session.toggle.actions",
   "session.toggle.scrollbar",
   "session.toggle.generic_tool_output",
-  "session.page.up",
-  "session.page.down",
-  "session.line.up",
-  "session.line.down",
-  "session.half.page.up",
-  "session.half.page.down",
   "session.first",
   "session.last",
   "session.messages_last_user",
@@ -153,6 +147,17 @@ const sessionBindingCommands = [
   "session.child.next",
   "session.child.previous",
 ] as const
+
+const sessionGlobalBindingCommands = [
+  "session.page.up",
+  "session.page.down",
+  "session.line.up",
+  "session.line.down",
+  "session.half.page.up",
+  "session.half.page.down",
+] as const
+
+const sessionGlobalUnfocusedBindingCommands = ["session.first", "session.last"] as const
 
 const context = createContext<{
   width: number
@@ -1065,6 +1070,15 @@ export function Session() {
 
   useBindings(() => ({
     commands: sessionCommands(),
+  }))
+
+  useBindings(() => ({
+    bindings: tuiConfig.keybinds.gather("session.global", sessionGlobalBindingCommands),
+  }))
+
+  useBindings(() => ({
+    enabled: () => renderer.currentFocusedEditor === null,
+    bindings: tuiConfig.keybinds.gather("session.global.unfocused", sessionGlobalUnfocusedBindingCommands),
   }))
 
   useBindings(() => ({
