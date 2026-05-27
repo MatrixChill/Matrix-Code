@@ -210,7 +210,7 @@ const ingestService = new sst.aws.Service("LakeIngestService", {
   cluster: lakeCluster,
   architecture: "arm64",
   cpu: "0.5 vCPU",
-  memory: "1 GB",
+  memory: "2 GB",
   image: {
     context: ".",
     dockerfile: "packages/stats/server/Dockerfile",
