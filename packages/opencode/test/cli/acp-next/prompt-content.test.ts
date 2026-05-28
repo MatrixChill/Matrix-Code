@@ -8,8 +8,7 @@ import { cliIt } from "../../lib/cli-process"
 import { expectOk } from "../acp/acp-test-client"
 import { createAcpNextClient, initialize, newSession, verifierConfig } from "./helpers"
 
-const tinyPng =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII="
+const tinyPng = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII="
 
 describe("opencode acp-next prompt content subprocess", () => {
   cliIt.live(
