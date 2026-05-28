@@ -18,7 +18,7 @@ import {
 import { runtime } from "@opencode-ai/stats-core/runtime"
 import { createAsync, query } from "@solidjs/router"
 import { scaleBand, scaleLinear } from "d3-scale"
-import { createEffect, createMemo, createSignal, For, onCleanup, Show, type JSX } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js"
 import { getRequestEvent } from "solid-js/web"
 
 const products = ["All Users", "Zen", "Go", "Enterprise"] as const
@@ -98,21 +98,29 @@ export default function StatsHome() {
 }
 
 function Hero(props: { updatedAt: string | null }) {
+  const [timeZone, setTimeZone] = createSignal("UTC")
+  onMount(() => setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"))
+
   return (
     <section data-section="hero">
       <p data-slot="hero-meta">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
-          <rect x="3" y="3" width="10" height="10" fill="currentColor" />
-          <rect x="7" y="6.5" width="2" height="4.5" fill="var(--stats-layer-2)" />
-          <rect x="7" y="5" width="2" height="1" fill="var(--stats-layer-2)" />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M13 13H3V3H13V13ZM6.46777 6.81641V7.81641H7.5791V11.3721H8.5791V6.81641H6.46777ZM7.30078 4.62891V5.62891H8.85645V4.62891H7.30078Z"
+            fill="currentColor"
+          />
         </svg>
-        <span>{props.updatedAt ? `Updated ${formatUpdatedAt(props.updatedAt)}` : "No rows yet"}</span>
+        <span>{props.updatedAt ? `Updated ${formatUpdatedAt(props.updatedAt, timeZone())}` : "No rows yet"}</span>
       </p>
       <div data-slot="hero-canvas">
         <div data-slot="hero-pattern" aria-hidden="true" />
         <h1>Model Stats</h1>
         <p data-slot="hero-copy">
-          See which models are winning real usage, how the mix shifts over time, and where momentum is moving each week.
+          See which models are winning real usage, how the mix{" "}
+          <br data-slot="hero-copy-break" />
+          shifts over time, and where momentum is moving each week.
         </p>
       </div>
     </section>
@@ -154,7 +162,7 @@ function EmptyState(props: { title: string; description: string }) {
   )
 }
 
-function formatUpdatedAt(value: string) {
+function formatUpdatedAt(value: string, timeZone: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "just now"
   return new Intl.DateTimeFormat("en", {
@@ -162,7 +170,7 @@ function formatUpdatedAt(value: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "UTC",
+    timeZone,
     timeZoneName: "short",
   }).format(date)
 }
