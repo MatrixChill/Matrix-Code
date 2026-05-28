@@ -204,7 +204,6 @@ describe("opencode acp verifier compatibility baseline", () => {
         )
 
         expect(update.params?.sessionId).toBe(session.sessionId)
-
       }),
     60_000,
   )
