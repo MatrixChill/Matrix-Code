@@ -1213,7 +1213,7 @@ function Header() {
   return (
     <header data-component="top" data-menu-open={menuOpen() ? "true" : undefined}>
       <div data-slot="header-bar">
-        <a data-slot="brand" href="/" aria-label="OpenCode home">
+        <a data-slot="brand" href={import.meta.env.BASE_URL} aria-label="Stats home">
           <StatsWordmark />
         </a>
         <nav data-component="section-nav" aria-label="Stats sections">
@@ -1436,7 +1436,7 @@ function SubscribeModal(props: { onClose: () => void }) {
               event.preventDefault()
               setStatus("pending")
               setMessage("")
-              fetch("/api/newsletter", {
+              fetch(`${import.meta.env.BASE_URL}api/newsletter`, {
                 method: "POST",
                 body: new FormData(event.currentTarget),
               }).then(
