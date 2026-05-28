@@ -72,8 +72,8 @@ export default function StatsHome() {
       <Link rel="preload" href={ibmPlexMonoMediumLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <Link rel="preload" href={ibmPlexMonoSemiBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <Link rel="preload" href={ibmPlexMonoBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
+      <Header />
       <div data-component="container">
-        <Header />
         <div data-component="content">
           <Show when={data()} fallback={<StatsLoading />}>
             {(stats) => (

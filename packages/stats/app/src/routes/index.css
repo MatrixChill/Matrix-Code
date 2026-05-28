@@ -72,7 +72,6 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 4rem;
   font-synthesis: none;
   overflow-x: clip;
   padding-bottom: 5rem;
@@ -89,10 +88,8 @@
 [data-page="stats"] [data-component="container"] {
   box-sizing: border-box;
   width: 100%;
-  max-width: calc(80rem + 2px);
+  max-width: 80rem;
   margin: 0 auto;
-  border-left: 1px solid var(--stats-line);
-  border-right: 1px solid var(--stats-line);
 }
 
 [data-page="stats"] [data-component="top"] {
@@ -377,6 +374,7 @@
   display: flex;
   justify-content: center;
   gap: 32px;
+  margin-top: 4rem;
   color: var(--stats-faint);
   text-align: center;
   font-family:
@@ -1512,12 +1510,6 @@
       0 -0.5px 0 0 #ffffff4d,
       0 0 0 0.5px #ffffff66,
       0 1px 2px 0 #00000066;
-  }
-}
-
-@media (max-width: 80rem) {
-  [data-page="stats"] [data-component="container"] {
-    border: 0;
   }
 }
 
