@@ -33,7 +33,5 @@ export async function statsProxy(evt: APIEvent) {
 }
 
 function rewriteStatsHtml(html: string) {
-  return html
-    .replaceAll("\"/_build/", "\"/stats/_build/")
-    .replaceAll("'/_build/", "'/stats/_build/")
+  return html.replaceAll('"/_build/', '"/stats/_build/').replaceAll("'/_build/", "'/stats/_build/")
 }
