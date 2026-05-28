@@ -520,10 +520,71 @@
   flex: 0 0 auto;
 }
 
-[data-page="stats"] [data-slot="hero-meta"] span {
+[data-page="stats"] [data-slot="hero-meta-label"],
+[data-page="stats"] [data-slot="hero-meta-empty"] {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+[data-page="stats"] [data-slot="hero-meta-time"] {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+[data-page="stats"] [data-slot="hero-meta-separator"] {
+  flex: 0 0 auto;
+  margin-right: 0.35em;
+}
+
+[data-page="stats"] [data-slot="hero-meta-ticker"] {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 1.1em;
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+[data-page="stats"] [data-slot="hero-meta-ticker-track"] {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  transform: translateY(0);
+  will-change: transform;
+}
+
+[data-page="stats"] [data-slot="hero-meta-ticker"][data-ticking="true"] [data-slot="hero-meta-ticker-track"] {
+  animation: stats-hero-meta-ticker 680ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-page="stats"] [data-slot="hero-meta-ticker-item"] {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+}
+
+@keyframes stats-hero-meta-ticker {
+  0%,
+  18% {
+    transform: translateY(0);
+  }
+
+  82%,
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-page="stats"] [data-slot="hero-meta-ticker"][data-ticking="true"] [data-slot="hero-meta-ticker-track"] {
+    animation: none;
+    transform: translateY(-50%);
+  }
 }
 
 @media (min-width: 48rem) {

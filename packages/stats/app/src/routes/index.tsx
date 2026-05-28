@@ -117,11 +117,47 @@ export default function StatsHome() {
 
 function Hero(props: { updatedAt: string | null }) {
   const [timeZone, setTimeZone] = createSignal("UTC")
-  onMount(() => setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"))
+  const [previousTimeZone, setPreviousTimeZone] = createSignal("UTC")
+  const [isTicking, setIsTicking] = createSignal(false)
+  const updatedAtParts = (timeZone: string) =>
+    props.updatedAt ? formatUpdatedAtParts(props.updatedAt, timeZone) : { date: "No rows yet", time: "" }
+  const previousUpdatedAt = createMemo(() => updatedAtParts(previousTimeZone()))
+  const currentUpdatedAt = createMemo(() => updatedAtParts(timeZone()))
+  const currentUpdatedLabel = createMemo(() =>
+    props.updatedAt ? `Updated ${formatUpdatedAtLabel(currentUpdatedAt())}` : "No rows yet",
+  )
+  const isDateTicking = createMemo(() => isTicking() && previousUpdatedAt().date !== currentUpdatedAt().date)
+  const isTimeTicking = createMemo(() => isTicking() && previousUpdatedAt().time !== currentUpdatedAt().time)
+
+  onMount(() => {
+    if (!props.updatedAt) return
+    const nextTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+    if (nextTimeZone === "UTC") return
+    if (
+      formatUpdatedAtLabel(formatUpdatedAtParts(props.updatedAt, nextTimeZone)) ===
+      formatUpdatedAtLabel(updatedAtParts("UTC"))
+    )
+      return
+    const timeouts: number[] = []
+    timeouts.push(
+      window.setTimeout(() => {
+        setPreviousTimeZone(timeZone())
+        setTimeZone(nextTimeZone)
+        setIsTicking(true)
+        timeouts.push(
+          window.setTimeout(() => {
+            setPreviousTimeZone(nextTimeZone)
+            setIsTicking(false)
+          }, 720),
+        )
+      }, 480),
+    )
+    onCleanup(() => timeouts.forEach((timeout) => window.clearTimeout(timeout)))
+  })
 
   return (
     <section data-section="hero">
-      <p data-slot="hero-meta">
+      <p data-slot="hero-meta" aria-live="polite" aria-atomic="true" aria-label={currentUpdatedLabel()}>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
           <path
             fill-rule="evenodd"
@@ -130,7 +166,28 @@ function Hero(props: { updatedAt: string | null }) {
             fill="currentColor"
           />
         </svg>
-        <span>{props.updatedAt ? `Updated ${formatUpdatedAt(props.updatedAt, timeZone())}` : "No rows yet"}</span>
+        {props.updatedAt ? (
+          <>
+            <span data-slot="hero-meta-label" aria-hidden="true">
+              Updated
+            </span>
+            <span data-slot="hero-meta-time" aria-hidden="true">
+              <HeroMetaTickerPart
+                previous={previousUpdatedAt().date}
+                current={currentUpdatedAt().date}
+                ticking={isDateTicking()}
+              />
+              <span data-slot="hero-meta-separator">,</span>
+              <HeroMetaTickerPart
+                previous={previousUpdatedAt().time}
+                current={currentUpdatedAt().time}
+                ticking={isTimeTicking()}
+              />
+            </span>
+          </>
+        ) : (
+          <span data-slot="hero-meta-empty">No rows yet</span>
+        )}
       </p>
       <div data-slot="hero-canvas">
         <div data-slot="hero-pattern" aria-hidden="true" />
@@ -141,6 +198,17 @@ function Hero(props: { updatedAt: string | null }) {
         </p>
       </div>
     </section>
+  )
+}
+
+function HeroMetaTickerPart(props: { previous: string; current: string; ticking: boolean }) {
+  return (
+    <span data-slot="hero-meta-ticker" data-ticking={props.ticking}>
+      <span data-slot="hero-meta-ticker-track">
+        <span data-slot="hero-meta-ticker-item">{props.previous}</span>
+        <span data-slot="hero-meta-ticker-item">{props.current}</span>
+      </span>
+    </span>
   )
 }
 
@@ -185,17 +253,27 @@ function EmptyState(props: { title: string; description: string }) {
   )
 }
 
-function formatUpdatedAt(value: string, timeZone: string) {
+function formatUpdatedAtParts(value: string, timeZone: string) {
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "just now"
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone,
-    timeZoneName: "short",
-  }).format(date)
+  if (Number.isNaN(date.getTime())) return { date: "just now", time: "" }
+  return {
+    date: new Intl.DateTimeFormat("en", {
+      month: "short",
+      day: "numeric",
+      timeZone,
+    }).format(date),
+    time: new Intl.DateTimeFormat("en", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone,
+      timeZoneName: "short",
+    }).format(date),
+  }
+}
+
+function formatUpdatedAtLabel(value: { date: string; time: string }) {
+  if (!value.time) return value.date
+  return `${value.date}, ${value.time}`
 }
 
 function TopModelsSection(props: { data: StatsHomeData["usage"] }) {
