@@ -297,7 +297,11 @@ function MobileFilterSheet(props: {
 }) {
   return (
     <div data-component="mobile-filter-sheet" role="presentation" onClick={props.onClose}>
-      <div data-slot="filter-sheet-panel" role="radiogroup" aria-label={props.kind === "product" ? "Product filter" : "Date range"}>
+      <div
+        data-slot="filter-sheet-panel"
+        role="radiogroup"
+        aria-label={props.kind === "product" ? "Product filter" : "Date range"}
+      >
         <Show
           when={props.kind === "product"}
           fallback={
@@ -408,7 +412,12 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
   const activePoint = createMemo(() => props.data[activeIndex() ?? -1])
 
   return (
-    <div data-component="top-models-chart" data-range={props.range} role="img" aria-label="Stacked top model usage chart">
+    <div
+      data-component="top-models-chart"
+      data-range={props.range}
+      role="img"
+      aria-label="Stacked top model usage chart"
+    >
       <div data-slot="top-models-axis" aria-hidden="true">
         <For each={props.data}>
           {(day, index) => (
@@ -487,7 +496,10 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
               </div>
               <Show when={activeIndex() === dayIndex() && activePoint()}>
                 {(point) => (
-                  <div data-component="chart-tooltip" data-placement={dayIndex() > props.data.length * 0.62 ? "left" : "right"}>
+                  <div
+                    data-component="chart-tooltip"
+                    data-placement={dayIndex() > props.data.length * 0.62 ? "left" : "right"}
+                  >
                     <strong>{point().date}</strong>
                     <span>{formatTokens(usageTotal(point()))} total</span>
                     <div data-slot="tooltip-divider" />
