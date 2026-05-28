@@ -207,7 +207,11 @@ export function createServerSyncContext() {
       void bootstrapInstance(directory)
     },
     onMcp: (directory, setStore) => {
-      void retry(() => sdkFor(directory).command.list().then((x) => setStore("command", x.data ?? []))).catch((err) => {
+      void retry(() =>
+        sdkFor(directory)
+          .command.list()
+          .then((x) => setStore("command", x.data ?? [])),
+      ).catch((err) => {
         showToast({
           variant: "error",
           title: language.t("toast.project.reloadFailed.title", { project: getFilename(directory) }),
