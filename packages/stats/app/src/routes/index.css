@@ -74,7 +74,7 @@
   flex-direction: column;
   font-synthesis: none;
   overflow-x: clip;
-  padding-bottom: 5rem;
+  padding-bottom: 0;
   background: var(--stats-bg);
 }
 
@@ -338,59 +338,160 @@
 }
 
 [data-page="stats"] [data-component="footer"] {
-  display: flex;
-  border-top: 1px solid var(--stats-line);
+  position: relative;
+  display: grid;
+  gap: 56px;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 112px 0 24px;
   color: var(--stats-text);
   font-family:
     "IBM Plex Mono",
     var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
-  font-size: 14px;
+  font-size: 11px;
 }
 
-[data-page="stats"] [data-component="footer"] [data-slot="cell"] {
-  flex: 1;
-  text-align: center;
+[data-page="stats"] [data-slot="footer-grid"] {
+  display: grid;
+  grid-template-columns: 120px repeat(4, minmax(0, 1fr));
+  gap: 72px;
+  align-items: start;
 }
 
-[data-page="stats"] [data-component="footer"] [data-slot="cell"] + [data-slot="cell"] {
-  border-left: 1px solid var(--stats-line);
-}
-
-[data-page="stats"] [data-component="footer"] a {
+[data-page="stats"] [data-slot="footer-mark"] {
   display: block;
-  width: 100%;
-  padding: 2rem 0;
+  width: fit-content;
+  color: var(--stats-text);
+}
+
+[data-page="stats"] [data-slot="footer-mark"] [data-slot="brand-mark"] {
+  width: 24px;
+  height: 30px;
+}
+
+[data-page="stats"] [data-slot="footer-column"] {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-width: 0;
+}
+
+[data-page="stats"] [data-slot="footer-column"] h2 {
+  color: var(--stats-text);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+[data-page="stats"] [data-slot="footer-column"] nav {
+  display: grid;
+  gap: 12px;
+}
+
+[data-page="stats"] [data-slot="footer-column"] a,
+[data-page="stats"] [data-slot="footer-column"] p {
+  color: var(--stats-text);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+[data-page="stats"] [data-slot="footer-column"] a,
+[data-page="stats"] [data-slot="footer-column"] p,
+[data-page="stats"] [data-slot="footer-bottom"] {
+  color: var(--stats-muted);
+}
+
+[data-page="stats"] [data-slot="footer-column"] a:hover {
   color: var(--stats-text);
   text-decoration: none;
 }
 
-[data-page="stats"] [data-component="footer"] a:hover {
-  background: var(--stats-layer);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-[data-page="stats"] [data-component="legal"] {
-  display: flex;
+[data-page="stats"] [data-slot="subscribe-button"] {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 32px;
-  margin-top: 4rem;
-  color: var(--stats-faint);
-  text-align: center;
-  font-family:
-    "IBM Plex Mono",
-    var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
-  font-size: 14px;
+  width: fit-content;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--stats-line);
+  background: var(--stats-bg);
+  color: var(--stats-text) !important;
 }
 
-[data-page="stats"] [data-component="legal"] a {
-  color: var(--stats-faint);
-  text-decoration: none;
+[data-page="stats"] [data-slot="subscribe-button"]:hover {
+  border-color: var(--stats-line-strong);
+  background: var(--stats-layer);
 }
 
-[data-page="stats"] [data-component="legal"] a:hover {
+[data-page="stats"] [data-slot="footer-pattern"] {
+  height: 16px;
+  overflow: hidden;
+  background: var(--stats-hero-pattern);
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H2V2H0V0Z' fill='black'/%3E%3C/svg%3E");
+  mask-position: center top;
+  mask-repeat: repeat;
+  mask-size: 6px 6px;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H2V2H0V0Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-position: center top;
+  -webkit-mask-repeat: repeat;
+  -webkit-mask-size: 6px 6px;
+}
+
+[data-page="stats"] [data-slot="footer-bottom"],
+[data-page="stats"] [data-slot="footer-bottom"] > div {
+  display: flex;
+  align-items: center;
+}
+
+[data-page="stats"] [data-slot="footer-bottom"] {
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+[data-page="stats"] [data-slot="footer-bottom"] > div:first-child {
+  gap: 24px;
+}
+
+[data-page="stats"] [data-slot="status"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+[data-page="stats"] [data-slot="status"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: #198b43;
+}
+
+[data-page="stats"] [data-slot="theme-toggle"] {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 2px;
+  background: var(--stats-layer);
+}
+
+[data-page="stats"] [data-slot="theme-toggle"] button {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 16px;
+  padding: 0;
+  border-radius: 0;
   color: var(--stats-muted);
-  text-decoration: underline;
+  background: transparent;
+}
+
+[data-page="stats"] [data-slot="theme-toggle"] button[data-active="true"] {
+  color: var(--stats-text);
+  background: var(--stats-bg);
 }
 
 [data-page="stats"] [data-component="content"] a {
@@ -403,8 +504,7 @@
   text-underline-offset: 4px;
 }
 
-[data-page="stats"] [data-section="chart"],
-[data-page="stats"] [data-section="newsletter"] {
+[data-page="stats"] [data-section="chart"] {
   border-bottom: 1px solid var(--stats-line);
   box-shadow:
     inset 1px 0 var(--stats-line),
@@ -936,8 +1036,7 @@
   background: transparent;
 }
 
-[data-page="stats"] [data-component="usage-chart"],
-[data-page="stats"] [data-component="country-map"] {
+[data-page="stats"] [data-component="usage-chart"] {
   position: relative;
 }
 
@@ -969,8 +1068,7 @@
   line-height: 1.5;
 }
 
-[data-page="stats"] [data-component="usage-chart"] svg,
-[data-page="stats"] [data-component="country-map"] svg {
+[data-page="stats"] [data-component="usage-chart"] svg {
   display: block;
   width: 100%;
   overflow: visible;
@@ -1071,8 +1169,7 @@
   background: var(--stats-layer-2);
 }
 
-[data-page="stats"] [data-component="chart-tooltip"],
-[data-page="stats"] [data-component="map-tooltip"] {
+[data-page="stats"] [data-component="chart-tooltip"] {
   position: absolute;
   right: auto;
   top: 96px;
@@ -1221,27 +1318,73 @@
   font-weight: 500;
 }
 
-[data-page="stats"] [data-section="leaderboard"] {
+[data-page="stats"] :is([data-section="leaderboard"], [data-section="market-share"], [data-section="token-cost"], [data-section="session-cost"]) {
+  position: relative;
   box-sizing: border-box;
   box-shadow:
     inset 0 -1px var(--stats-line),
     inset 1px 0 var(--stats-line),
     inset -1px 0 var(--stats-line);
   padding: 80px 40px;
+  color: var(--stats-text);
 }
 
-[data-page="stats"] [data-slot="leaderboard-title"] {
+[data-page="stats"] [data-component="section-bridge"] {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--stats-line);
+  background: var(--stats-bg);
+  color: var(--stats-faint);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+[data-page="stats"] [data-component="section-bridge"]:hover {
+  color: var(--stats-text);
+  text-decoration: none;
+}
+
+[data-page="stats"] [data-component="section-bridge"] i {
+  width: 1px;
+  height: 10px;
+  background: var(--stats-line-strong);
+}
+
+[data-page="stats"] [data-component="section-bridge"] strong,
+[data-page="stats"] [data-component="section-bridge"] b {
+  color: var(--stats-muted);
+  font-weight: 600;
+}
+
+[data-page="stats"] [data-slot="section-title"] {
   max-width: 1200px;
   margin-bottom: 40px;
   color: var(--stats-muted);
   font-size: 28px;
   font-weight: 400;
   line-height: 1.5;
+  letter-spacing: 0;
 }
 
-[data-page="stats"] [data-slot="leaderboard-title"] strong {
+[data-page="stats"] [data-slot="section-title"] strong {
   color: var(--stats-text);
   font-weight: 500;
+}
+
+[data-page="stats"] [data-slot="section-title"] span {
+  color: var(--stats-muted);
+  font-weight: 400;
 }
 
 [data-page="stats"] [data-component="leaderboard"],
@@ -1447,17 +1590,18 @@
 }
 
 [data-page="stats"] [data-component="market-share"] {
+  --market-gap: 12px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
-  height: 280px;
+  height: 348px;
 }
 
 [data-page="stats"] [data-slot="market-labels"],
 [data-page="stats"] [data-slot="market-bars"] {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(var(--market-count), minmax(0, 1fr));
+  gap: var(--market-gap);
 }
 
 [data-page="stats"] [data-slot="market-labels"] button,
@@ -1475,14 +1619,15 @@
   flex-direction: column;
   align-items: flex-start;
   color: var(--stats-faint);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.5;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
 }
 
 [data-page="stats"] [data-slot="market-labels"] button[data-active="true"] {
   color: var(--stats-text);
   background: transparent;
+  font-weight: 600;
 }
 
 [data-page="stats"] [data-slot="market-bars"] {
@@ -1494,6 +1639,7 @@
   flex-direction: column;
   gap: 2px;
   height: 100%;
+  overflow: hidden;
 }
 
 [data-page="stats"] [data-slot="market-bars"] button[data-active="true"] {
@@ -1504,6 +1650,10 @@
   width: 100%;
   min-height: 1px;
   background: var(--stats-layer-2);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    opacity 140ms ease;
 }
 
 [data-page="stats"] [data-component="market-share-list"] {
@@ -1511,8 +1661,8 @@
   grid-auto-flow: column;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, auto);
-  gap: 8px;
-  margin: 20px 0 0;
+  gap: 8px 10px;
+  margin: 36px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1520,20 +1670,38 @@
 [data-page="stats"] [data-component="market-share-list"] li {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
-  padding: 8px 12px 8px 8px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 8px;
   background: var(--stats-layer);
   border: 1px solid var(--stats-line);
-  font-size: 13px;
-  line-height: 1.1;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+[data-page="stats"] [data-component="market-share-list"] li[data-active="true"],
+[data-page="stats"] [data-component="market-share-list"] li:focus-visible {
+  border-color: var(--stats-text);
+  background: var(--stats-layer);
+  box-shadow:
+    0 0 0 0.5px color-mix(in srgb, var(--stats-text) 70%, transparent),
+    0 1px 2px -1px #00000014,
+    0 2px 4px #0000000a;
 }
 
 [data-page="stats"] [data-component="market-share-list"] span {
-  width: 20px;
+  width: 22px;
   flex: 0 0 auto;
   color: var(--stats-muted);
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
 }
 
@@ -1562,7 +1730,7 @@
 
 [data-page="stats"] [data-component="market-share-list"] b {
   color: var(--stats-muted);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 [data-page="stats"] [data-slot="market-footer"] {
@@ -1570,15 +1738,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 64px;
-  margin-top: 24px;
+  margin-top: 40px;
 }
 
 [data-page="stats"] [data-slot="market-footer"] p {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 166px;
-  font-size: 13px;
+  width: 240px;
+  color: var(--stats-text);
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1.1;
   white-space: nowrap;
 }
@@ -1588,6 +1758,7 @@
   display: grid;
   gap: 8px;
   width: 100%;
+  margin-top: 4px;
 }
 
 [data-page="stats"] button[data-component="token-row"] {
@@ -1601,8 +1772,8 @@
   border-radius: 0;
   background: transparent;
   color: var(--stats-text);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1;
   text-align: left;
 }
 
@@ -1612,8 +1783,9 @@
 }
 
 [data-page="stats"] [data-component="token-row"] strong {
-  flex: 0 0 48px;
-  font-weight: 600;
+  flex: 0 0 56px;
+  color: var(--stats-text);
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -1622,7 +1794,7 @@
 }
 
 [data-page="stats"] [data-component="token-row"] > span {
-  flex: 0 0 133px;
+  flex: 0 0 132px;
   overflow: hidden;
   color: var(--stats-muted);
   font-weight: 400;
@@ -1637,17 +1809,17 @@
 [data-page="stats"] [data-component="metric-bar"] {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
   min-width: 0;
-  height: 6px;
+  height: 5px;
   font-style: normal;
 }
 
 [data-page="stats"] [data-component="metric-bar"] b,
 [data-page="stats"] [data-component="metric-bar"] em {
   display: block;
-  height: 6px;
+  height: 5px;
 }
 
 [data-page="stats"] [data-component="metric-bar"] b {
@@ -1661,7 +1833,7 @@
 
 [data-page="stats"] [data-component="metric-bar"] em {
   flex: 1;
-  min-width: 12px;
+  min-width: 8px;
   background: var(--stats-layer-2);
 }
 
@@ -1674,6 +1846,7 @@
   align-items: flex-end;
   gap: 12px;
   width: 100%;
+  height: 18px;
 }
 
 [data-page="stats"] [data-slot="session-heading"] span {
@@ -1684,18 +1857,19 @@
   flex: 1;
   min-width: 0;
   color: var(--stats-faint);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1;
 }
 
 [data-page="stats"] [data-component="token-tooltip"] {
   position: absolute;
-  left: 32%;
+  left: 44%;
   z-index: 2;
   display: grid;
-  gap: 8px;
-  width: 192px;
+  gap: 6px;
+  width: 150px;
+  box-sizing: border-box;
   padding: 8px;
   background: var(--stats-layer);
   box-shadow:
@@ -1708,8 +1882,8 @@
 [data-page="stats"] [data-component="token-tooltip"] p {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 11px;
+  gap: 10px;
+  font-size: 9px;
   font-weight: 600;
   line-height: 1.1;
 }
@@ -1720,25 +1894,21 @@
 
 [data-page="stats"] [data-slot="token-footer"] {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-top: 32px;
+  margin-top: 40px;
 }
 
-[data-page="stats"] button[data-component="live-filter"] {
+[data-page="stats"] [data-component="live-filter"] {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0;
   color: var(--stats-muted);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1.1;
-}
-
-[data-page="stats"] button[data-component="live-filter"][data-active="true"] {
-  color: var(--stats-muted);
-  background: transparent;
 }
 
 [data-page="stats"] [data-component="live-filter"]::before {
@@ -1753,170 +1923,11 @@
   display: grid;
   gap: 8px;
   width: 100%;
+  margin-top: 4px;
 }
 
 [data-page="stats"] [data-component="toggle"] {
   width: fit-content;
-}
-
-[data-page="stats"] [data-component="country-map"] circle {
-  fill: var(--stats-accent);
-  fill-opacity: 0.14;
-  stroke: var(--stats-accent);
-  stroke-width: 1.5;
-  transition:
-    fill-opacity 120ms ease,
-    stroke-width 120ms ease;
-}
-
-[data-page="stats"] [data-component="country-map"] g[role="button"] {
-  cursor: pointer;
-  outline: none;
-}
-
-[data-page="stats"] [data-component="country-map"] g[role="button"][data-active="true"] circle {
-  fill-opacity: 0.28;
-  stroke-width: 3;
-}
-
-[data-page="stats"] [data-component="country-map"] text {
-  fill: var(--stats-text);
-  font-size: 12px;
-  font-weight: 600;
-  pointer-events: none;
-}
-
-[data-page="stats"] [data-component="map-tooltip"] {
-  top: 24px;
-  left: 24px;
-  right: auto;
-  min-width: 168px;
-}
-
-[data-page="stats"] [data-component="map-tooltip"] span,
-[data-page="stats"] [data-component="map-tooltip"] em {
-  color: var(--stats-muted);
-  font-size: 12px;
-  font-style: normal;
-}
-
-[data-page="stats"] [data-component="map-tooltip"] p {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  color: var(--stats-text);
-  font-size: 12px;
-}
-
-[data-page="stats"] [data-component="country-list"] {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 20px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-[data-page="stats"] [data-component="country-list"] button {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--stats-line);
-  border-radius: 0;
-  background: var(--stats-layer);
-  color: var(--stats-muted);
-  font-size: 13px;
-  line-height: 1.1;
-  text-align: left;
-}
-
-[data-page="stats"] [data-component="country-list"] button[data-active="true"] {
-  border-color: var(--stats-line-strong);
-  background: var(--stats-layer-2);
-  color: var(--stats-muted);
-}
-
-[data-page="stats"] [data-component="country-list"] span,
-[data-page="stats"] [data-component="country-list"] em {
-  color: var(--stats-faint);
-  font-style: normal;
-}
-
-[data-page="stats"] [data-component="country-list"] strong {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--stats-text);
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-[data-page="stats"] [data-component="country-list"] b {
-  color: var(--stats-muted);
-  font-weight: 600;
-}
-
-[data-page="stats"] [data-slot="country-footer"] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: 32px;
-}
-
-[data-page="stats"] [data-slot="country-footer"] p {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--stats-muted);
-  font-size: 13px;
-}
-
-[data-page="stats"] [data-slot="country-footer"] span {
-  color: var(--stats-faint);
-}
-
-[data-page="stats"] [data-section="newsletter"] {
-  min-height: 272px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  align-items: center;
-  gap: 48px;
-}
-
-[data-page="stats"] [data-section="newsletter"] div {
-  display: grid;
-  gap: 16px;
-}
-
-[data-page="stats"] [data-section="newsletter"] p {
-  color: var(--stats-muted);
-}
-
-[data-page="stats"] form {
-  display: flex;
-  border: 1px solid var(--stats-line);
-  background: var(--stats-layer);
-  padding: 4px;
-}
-
-[data-page="stats"] input {
-  min-width: 0;
-  flex: 1;
-  border: 0;
-  background: transparent;
-  color: var(--stats-text);
-  font: inherit;
-  padding: 12px;
-}
-
-[data-page="stats"] form button {
-  background: var(--stats-text);
-  color: #fff;
-  padding: 12px 16px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1945,8 +1956,7 @@
     --stats-hero-pattern: #303030;
   }
 
-  [data-page="stats"] [data-component="chart-tooltip"],
-  [data-page="stats"] [data-component="map-tooltip"] {
+  [data-page="stats"] [data-component="chart-tooltip"] {
     background: #242424f2;
   }
 
@@ -2026,7 +2036,10 @@
 
 @media (max-width: 74rem) {
   [data-page="stats"] [data-section="top-models"],
-  [data-page="stats"] [data-section="leaderboard"] {
+  [data-page="stats"] [data-section="leaderboard"],
+  [data-page="stats"] [data-section="market-share"],
+  [data-page="stats"] [data-section="token-cost"],
+  [data-page="stats"] [data-section="session-cost"] {
     padding: 64px 32px;
   }
 }
@@ -2037,14 +2050,9 @@
     --stats-section-padding: 4rem;
   }
 
-  [data-page="stats"] [data-section="chart"],
-  [data-page="stats"] [data-section="newsletter"] {
+  [data-page="stats"] [data-section="chart"] {
     padding-left: 24px;
     padding-right: 24px;
-  }
-
-  [data-page="stats"] [data-section="newsletter"] {
-    grid-template-columns: 1fr;
   }
 
   [data-page="stats"] [data-slot="section-header"] {
@@ -2111,40 +2119,52 @@
     grid-template-rows: none;
   }
 
-  [data-page="stats"] [data-component="country-list"] {
-    grid-template-columns: 1fr;
-  }
-
   [data-page="stats"] [data-slot="market-footer"] {
     align-items: flex-start;
     flex-direction: column;
     gap: 24px;
   }
 
-  [data-page="stats"] [data-slot="country-footer"] {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  [data-page="stats"] [data-component="chart-tooltip"],
-  [data-page="stats"] [data-component="map-tooltip"] {
+  [data-page="stats"] [data-component="chart-tooltip"] {
     position: static;
     margin-top: 16px;
   }
 
-  [data-page="stats"] [data-section="newsletter"] form {
-    width: 100%;
+  [data-page="stats"] [data-component="footer"] {
+    padding: 88px 24px 24px;
+  }
+
+  [data-page="stats"] [data-slot="footer-grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px 32px;
+  }
+
+  [data-page="stats"] [data-slot="footer-mark"] {
+    grid-column: 1 / -1;
+  }
+
+  [data-page="stats"] [data-slot="footer-bottom"],
+  [data-page="stats"] [data-slot="footer-bottom"] > div:first-child {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  [data-page="stats"] [data-slot="footer-bottom"] {
+    line-height: 1.5;
   }
 }
 
 @media (max-width: 47.999rem) {
   [data-page="stats"] [data-section="top-models"],
-  [data-page="stats"] [data-section="leaderboard"] {
+  [data-page="stats"] [data-section="leaderboard"],
+  [data-page="stats"] [data-section="market-share"],
+  [data-page="stats"] [data-section="token-cost"],
+  [data-page="stats"] [data-section="session-cost"] {
     padding: 48px 24px;
   }
 
   [data-page="stats"] [data-slot="top-models-title"],
-  [data-page="stats"] [data-slot="leaderboard-title"] {
+  [data-page="stats"] [data-slot="section-title"] {
     margin-bottom: 32px;
     font-size: 16px;
   }
@@ -2213,12 +2233,7 @@
 }
 
 @media (max-width: 40rem) {
-  [data-page="stats"] [data-component="footer"],
-  [data-page="stats"] [data-component="legal"] {
-    flex-wrap: wrap;
-  }
-
-  [data-page="stats"] [data-component="footer"] [data-slot="cell"] {
-    flex-basis: 50%;
+  [data-page="stats"] [data-slot="footer-grid"] {
+    grid-template-columns: 1fr;
   }
 }

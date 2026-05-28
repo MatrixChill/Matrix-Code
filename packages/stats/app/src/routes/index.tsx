@@ -6,7 +6,6 @@ import ibmPlexMonoMediumLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/I
 import ibmPlexMonoSemiBoldLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-SemiBold-Latin1.woff2?url"
 import ibmPlexMonoBoldLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Bold-Latin1.woff2?url"
 import {
-  type CountryEntry,
   getStatsHomeData,
   type LeaderboardEntry,
   type MarketDay,
@@ -51,20 +50,6 @@ const usageColors = [
   "#ff6467",
 ]
 const marketColors = ["#ed6aff", "#a684ff", "#7c86ff", "#51a2ff", "#00d3f2", "#00d5be", "#00bc7d", "#9ae600", "#ffb900"]
-const countryPositions = [
-  { x: 112, y: 96 },
-  { x: 284, y: 144 },
-  { x: 472, y: 92 },
-  { x: 642, y: 154 },
-  { x: 800, y: 96 },
-  { x: 172, y: 234 },
-  { x: 362, y: 250 },
-  { x: 552, y: 236 },
-  { x: 744, y: 252 },
-  { x: 48, y: 184 },
-  { x: 892, y: 198 },
-  { x: 456, y: 176 },
-] as const
 
 type UsageProduct = (typeof products)[number]
 type TokenProduct = (typeof tokenProducts)[number]
@@ -102,15 +87,12 @@ export default function StatsHome() {
                 <MarketShareSection data={stats().market} />
                 <TokenCostSection data={stats().tokenCost} />
                 <SessionCostSection data={stats().sessionCost} />
-                <CountrySection data={stats().country} />
-                <Newsletter />
               </>
             )}
           </Show>
         </div>
         <Footer />
       </div>
-      <Legal />
     </main>
   )
 }
@@ -241,6 +223,25 @@ function ChartSection(props: {
       </div>
       {props.children}
     </section>
+  )
+}
+
+function SectionTitle(props: { title: string; description: string }) {
+  return (
+    <p data-slot="section-title">
+      <strong>{props.title}.</strong> <span>{props.description}</span>
+    </p>
+  )
+}
+
+function SectionBridge(props: { label: string; href: string }) {
+  return (
+    <a data-component="section-bridge" href={props.href}>
+      <span>LEAN MORE</span>
+      <i />
+      <strong>{props.label}</strong>
+      <b>▸</b>
+    </a>
   )
 }
 
@@ -678,10 +679,10 @@ function LeaderboardSection(props: { data: StatsHomeData["leaderboard"] }) {
 
   return (
     <section id="leaderboard" data-section="leaderboard">
-      <p data-slot="leaderboard-title">
-        <strong>Leaderboard.</strong>{" "}
-        <span>Shown are the sum of prompt and completion tokens per model, including reasoning tokens.</span>
-      </p>
+      <SectionTitle
+        title="Leaderboard"
+        description="Shown are the sum of prompt and completion tokens per model, including reasoning tokens."
+      />
       <Show
         when={data().length > 0}
         fallback={
@@ -771,44 +772,99 @@ function formatChange(value: number) {
 function MarketShareSection(props: { data: StatsHomeData["market"] }) {
   const [range, setRange] = createSignal<UsageRange>("1W")
   const [activeIndex, setActiveIndex] = createSignal(2)
+  const [activeAuthor, setActiveAuthor] = createSignal<string>()
+  const [inspecting, setInspecting] = createSignal(false)
   const data = createMemo(() => props.data[range()])
   const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(data().length - 1, 0)))
   const activeDay = createMemo(() => data()[selectedIndex()])
 
   return (
-    <ChartSection id="market-share" title="Market Share" description="Compare token share by model author.">
+    <section
+      id="market-share"
+      data-section="market-share"
+      onPointerLeave={(event) => {
+        if (event.pointerType === "touch") return
+        setActiveAuthor(undefined)
+        setInspecting(false)
+      }}
+    >
+      <SectionBridge label="LEADERBOARD" href="#leaderboard" />
+      <SectionTitle title="Market Share" description="Compare token share by model author." />
       <Show
         when={activeDay()}
         fallback={<EmptyState title="No market data" description="No model_stat rows matched this range." />}
       >
         {(day) => (
           <>
-            <MarketShare data={data()} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
-            <MarketShareList data={day().authors} />
+            <MarketShare
+              data={data()}
+              activeIndex={selectedIndex()}
+              activeAuthor={activeAuthor()}
+              inspecting={inspecting()}
+              onActiveIndexChange={(index) => {
+                setActiveIndex(index)
+                setInspecting(true)
+              }}
+              onActiveAuthorChange={(author) => {
+                setActiveAuthor(author)
+                setInspecting(true)
+              }}
+            />
+            <MarketShareList
+              data={day().authors}
+              activeAuthor={activeAuthor()}
+              onActiveAuthorChange={(author) => {
+                setActiveAuthor(author)
+                setInspecting(true)
+              }}
+            />
           </>
         )}
       </Show>
       <div data-slot="market-footer">
         <p>
           <span>[*]</span>
-          <strong>{activeDay()?.date ?? "No data"}</strong>
+          <strong>{inspecting() ? formatMarketDate(activeDay()) : formatMarketRange(data())}</strong>
         </p>
-        <FilterPills items={ranges} selected={range()} label="Date range" variant="range" onSelect={setRange} />
+        <FilterPills
+          items={ranges}
+          selected={range()}
+          label="Date range"
+          variant="range"
+          onSelect={(item) => {
+            setRange(item)
+            setActiveAuthor(undefined)
+            setInspecting(false)
+          }}
+        />
       </div>
-    </ChartSection>
+    </section>
   )
 }
 
-function MarketShare(props: { data: MarketDay[]; activeIndex: number; onActiveIndexChange: (index: number) => void }) {
+function MarketShare(props: {
+  data: MarketDay[]
+  activeIndex: number
+  activeAuthor: string | undefined
+  inspecting: boolean
+  onActiveIndexChange: (index: number) => void
+  onActiveAuthorChange: (author: string) => void
+}) {
   return (
-    <div data-component="market-share" role="img" aria-label="Market share by model author">
+    <div
+      data-component="market-share"
+      role="img"
+      aria-label="Market share by model author"
+      style={{ "--market-count": props.data.length } as JSX.CSSProperties}
+    >
       <div data-slot="market-labels">
         <For each={props.data}>
           {(day, index) => (
             <button
               type="button"
-              data-active={props.activeIndex === index() ? "true" : undefined}
+              data-active={props.inspecting && props.activeIndex === index() ? "true" : undefined}
               onClick={() => props.onActiveIndexChange(index())}
+              onPointerEnter={() => props.onActiveIndexChange(index())}
             >
               <span>{formatTrillions(day.total)}</span>
               <span>{day.date}</span>
@@ -822,15 +878,39 @@ function MarketShare(props: { data: MarketDay[]; activeIndex: number; onActiveIn
             <button
               type="button"
               aria-label={`${day.date} ${formatTrillions(day.total)}`}
-              data-active={props.activeIndex === index() ? "true" : undefined}
+              data-active={props.inspecting && props.activeIndex === index() ? "true" : undefined}
               onClick={() => props.onActiveIndexChange(index())}
+              onPointerEnter={() => props.onActiveIndexChange(index())}
             >
               <For each={day.authors}>
                 {(author, authorIndex) => (
                   <span
+                    data-active={props.activeAuthor === author.author ? "true" : undefined}
+                    data-muted={
+                      props.activeAuthor !== undefined && props.activeAuthor !== author.author ? "true" : undefined
+                    }
                     style={{
-                      "background-color": props.activeIndex === index() ? marketColors[authorIndex()] : undefined,
+                      "background-color": getMarketSegmentColor(
+                        author.author,
+                        marketColors[authorIndex()] ?? "var(--stats-text)",
+                        props.activeAuthor,
+                      ),
                       "flex-grow": author.share,
+                    }}
+                    onPointerEnter={(event) => {
+                      event.stopPropagation()
+                      props.onActiveIndexChange(index())
+                      props.onActiveAuthorChange(author.author)
+                    }}
+                    onPointerDown={(event) => {
+                      event.stopPropagation()
+                      props.onActiveIndexChange(index())
+                      props.onActiveAuthorChange(author.author)
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      props.onActiveIndexChange(index())
+                      props.onActiveAuthorChange(author.author)
                     }}
                   />
                 )}
@@ -843,12 +923,28 @@ function MarketShare(props: { data: MarketDay[]; activeIndex: number; onActiveIn
   )
 }
 
-function MarketShareList(props: { data: MarketDay["authors"] }) {
+function MarketShareList(props: {
+  data: MarketDay["authors"]
+  activeAuthor: string | undefined
+  onActiveAuthorChange: (author: string) => void
+}) {
   return (
     <ol data-component="market-share-list">
       <For each={props.data}>
         {(item, index) => (
-          <li>
+          <li
+            role="button"
+            tabIndex={0}
+            aria-label={`${item.author} ${formatTrillions(item.tokens)} ${item.share.toFixed(1)} percent`}
+            data-active={props.activeAuthor === item.author ? "true" : undefined}
+            onPointerEnter={() => props.onActiveAuthorChange(item.author)}
+            onFocus={() => props.onActiveAuthorChange(item.author)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return
+              event.preventDefault()
+              props.onActiveAuthorChange(item.author)
+            }}
+          >
             <span>{String(index() + 1).padStart(2, "0")}</span>
             <i style={{ background: marketColors[index()] }} />
             <strong>{item.author}</strong>
@@ -861,25 +957,47 @@ function MarketShareList(props: { data: MarketDay["authors"] }) {
   )
 }
 
+function getMarketSegmentColor(author: string, color: string, activeAuthor: string | undefined) {
+  if (!activeAuthor) return color
+  if (activeAuthor === author) return color
+  return "var(--stats-bar-idle)"
+}
+
 function formatTrillions(value: number) {
   return `${value.toFixed(value >= 10 ? 0 : 1)}T`
+}
+
+function formatMarketDate(day: MarketDay | undefined) {
+  if (!day) return "No data"
+  return `${day.date} ${new Date().getFullYear()}`
+}
+
+function formatMarketRange(data: MarketDay[]) {
+  const first = data[0]?.date
+  const last = data[data.length - 1]?.date
+  if (!first || !last) return "No data"
+  const year = new Date().getFullYear()
+  return `${first} ${year} → ${last} ${year}`
 }
 
 function TokenCostSection(props: { data: StatsHomeData["tokenCost"] }) {
   const [product, setProduct] = createSignal<TokenProduct>("Zen")
   const [activeIndex, setActiveIndex] = createSignal(2)
   const data = createMemo(() => props.data[product()])
-  const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(data().length - 1, 0)))
+  const visible = createMemo(() => data().slice(0, 13))
+  const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(visible().length - 1, 0)))
 
   return (
-    <ChartSection id="token-cost" title="Token Cost" description="Price per 1M tokens.">
+    <section id="token-cost" data-section="token-cost">
+      <SectionBridge label="MARKET SHARE" href="#market-share" />
+      <SectionTitle title="Token Cost" description="Price per 1M tokens." />
       <Show
-        when={data().length > 0}
+        when={visible().length > 0}
         fallback={
           <EmptyState title="No token cost data" description="No cost-bearing model_stat rows matched this product." />
         }
       >
-        <TokenCostChart data={data()} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
+        <TokenCostChart data={visible()} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
       </Show>
       <div data-slot="token-footer">
         <FilterPills
@@ -889,8 +1007,9 @@ function TokenCostSection(props: { data: StatsHomeData["tokenCost"] }) {
           variant="product"
           onSelect={setProduct}
         />
+        <LiveIndicator />
       </div>
-    </ChartSection>
+    </section>
   )
 }
 
@@ -921,7 +1040,7 @@ function TokenCostChart(props: {
       </For>
       <Show when={active()}>
         {(item) => (
-          <div data-component="token-tooltip" style={{ top: `${props.activeIndex * 28 + 2}px` }}>
+          <div data-component="token-tooltip" style={{ top: `${props.activeIndex * 36 + 2}px` }}>
             <p>
               <span>Input</span>
               <strong>{formatDollars(item().input)}</strong>
@@ -958,12 +1077,15 @@ function SessionCostSection(props: { data: StatsHomeData["sessionCost"] }) {
   const [product, setProduct] = createSignal<TokenProduct>("Zen")
   const [activeIndex, setActiveIndex] = createSignal(2)
   const data = createMemo(() => props.data[product()])
-  const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(data().length - 1, 0)))
+  const visible = createMemo(() => data().slice(0, 16))
+  const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(visible().length - 1, 0)))
 
   return (
-    <ChartSection id="session-cost" title="Session Cost" description="Average cost per session.">
+    <section id="session-cost" data-section="session-cost">
+      <SectionBridge label="TOKEN COST" href="#token-cost" />
+      <SectionTitle title="Session Cost" description="Average cost per session." />
       <Show
-        when={data().length > 0}
+        when={visible().length > 0}
         fallback={
           <EmptyState
             title="No session cost data"
@@ -971,7 +1093,7 @@ function SessionCostSection(props: { data: StatsHomeData["sessionCost"] }) {
           />
         }
       >
-        <SessionCostChart data={data()} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
+        <SessionCostChart data={visible()} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
       </Show>
       <div data-slot="token-footer">
         <FilterPills
@@ -981,8 +1103,9 @@ function SessionCostSection(props: { data: StatsHomeData["sessionCost"] }) {
           variant="product"
           onSelect={setProduct}
         />
+        <LiveIndicator />
       </div>
-    </ChartSection>
+    </section>
   )
 }
 
@@ -1024,7 +1147,7 @@ function SessionCostChart(props: {
           <div
             data-component="token-tooltip"
             data-variant="session"
-            style={{ top: `${props.activeIndex * 28 + 21}px` }}
+            style={{ top: `${props.activeIndex * 36 + 28}px` }}
           >
             <p>
               <span>Cost/Session</span>
@@ -1041,6 +1164,10 @@ function SessionCostChart(props: {
   )
 }
 
+function LiveIndicator() {
+  return <span data-component="live-filter">Live</span>
+}
+
 function formatTokenCount(value: number) {
   if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(1))}M`
   return `${Math.round(value / 1_000)}K`
@@ -1048,141 +1175,6 @@ function formatTokenCount(value: number) {
 
 function formatSessionCost(value: number) {
   return `$${value.toFixed(4)}`
-}
-
-function CountrySection(props: { data: StatsHomeData["country"] }) {
-  const [range, setRange] = createSignal<UsageRange>("1W")
-  const data = createMemo(() => props.data[range()])
-
-  return (
-    <ChartSection title="Token by Country" description="Country-level token totals from geo_stat.">
-      <Show
-        when={data().length > 0}
-        fallback={<EmptyState title="No country data" description="No geo_stat rows matched this range." />}
-      >
-        <CountryChart data={data()} />
-      </Show>
-      <div data-slot="country-footer">
-        <p>
-          <span>[*]</span>
-          <strong>Top countries by tokens</strong>
-        </p>
-        <FilterPills items={ranges} selected={range()} label="Date range" variant="range" onSelect={setRange} />
-      </div>
-    </ChartSection>
-  )
-}
-
-function CountryChart(props: { data: CountryEntry[] }) {
-  const [activeIndex, setActiveIndex] = createSignal(0)
-  const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(props.data.length - 1, 0)))
-  const active = createMemo(() => props.data[selectedIndex()])
-  const max = createMemo(() => Math.max(0.0001, ...props.data.map((item) => item.tokens)))
-
-  return (
-    <div data-component="country-map">
-      <svg viewBox="0 0 920 320" role="img" aria-label="Country token share bubble chart">
-        <For each={props.data.slice(0, countryPositions.length)}>
-          {(item, index) => {
-            const position = countryPositions[index()]
-            const radius = 18 + Math.sqrt(item.tokens / max()) * 58
-            return (
-              <g
-                role="button"
-                tabIndex={0}
-                aria-label={`${formatCountry(item.country)} ${formatTokens(item.tokens)}`}
-                data-active={selectedIndex() === index() ? "true" : undefined}
-                onPointerEnter={() => setActiveIndex(index())}
-                onClick={() => setActiveIndex(index())}
-                onFocus={() => setActiveIndex(index())}
-              >
-                <circle cx={position.x} cy={position.y} r={radius} />
-                <text x={position.x} y={position.y + 4} text-anchor="middle">
-                  {item.country}
-                </text>
-              </g>
-            )
-          }}
-        </For>
-      </svg>
-      <Show when={active()}>
-        {(item) => (
-          <div data-component="map-tooltip">
-            <strong>{formatCountry(item().country)}</strong>
-            <span>{item().continent || "Unknown region"}</span>
-            <p>
-              <b>{formatTokens(item().tokens)}</b>
-              <em>{item().share.toFixed(1)}%</em>
-            </p>
-          </div>
-        )}
-      </Show>
-      <CountryList data={props.data.slice(0, 8)} activeIndex={selectedIndex()} onActiveIndexChange={setActiveIndex} />
-    </div>
-  )
-}
-
-function CountryList(props: {
-  data: CountryEntry[]
-  activeIndex: number
-  onActiveIndexChange: (index: number) => void
-}) {
-  return (
-    <ol data-component="country-list">
-      <For each={props.data}>
-        {(item, index) => (
-          <li>
-            <button
-              type="button"
-              data-active={props.activeIndex === index() ? "true" : undefined}
-              onClick={() => props.onActiveIndexChange(index())}
-              onPointerEnter={() => props.onActiveIndexChange(index())}
-            >
-              <span>{String(item.rank).padStart(2, "0")}</span>
-              <strong>{formatCountry(item.country)}</strong>
-              <em>{formatTokens(item.tokens)}</em>
-              <b>{item.share.toFixed(1)}%</b>
-            </button>
-          </li>
-        )}
-      </For>
-    </ol>
-  )
-}
-
-function formatCountry(country: string) {
-  const known: Record<string, string> = {
-    AU: "Australia",
-    BR: "Brazil",
-    CA: "Canada",
-    CN: "China",
-    DE: "Germany",
-    FR: "France",
-    GB: "United Kingdom",
-    IN: "India",
-    JP: "Japan",
-    KR: "South Korea",
-    NL: "Netherlands",
-    SG: "Singapore",
-    US: "United States",
-    ZZ: "Unknown",
-  }
-  return known[country] ?? country
-}
-
-function Newsletter() {
-  return (
-    <section data-section="newsletter">
-      <div>
-        <h2>Be the first to know when we release new products</h2>
-        <p>Join the waitlist for early access.</p>
-      </div>
-      <form>
-        <input type="email" placeholder="Email address" />
-        <button>Subscribe</button>
-      </form>
-    </section>
-  )
 }
 
 function Header() {
@@ -1290,10 +1282,7 @@ function Header() {
 function StatsWordmark() {
   return (
     <span data-slot="stats-wordmark" aria-hidden="true">
-      <svg data-slot="brand-mark" width="19" height="24" viewBox="0 0 19 24" fill="none">
-        <path opacity="0.2" d="M14.25 19.2H4.75V9.6H14.25V19.2Z" fill="currentColor" />
-        <path d="M14.25 4.8H4.75V19.2H14.25V4.8ZM19 24H0V0H19V24Z" fill="currentColor" />
-      </svg>
+      <StatsMark />
       <svg data-slot="brand-label" width="51" height="14" viewBox="0 0 50.8509 14" fill="none">
         <path
           d="M46.2359 14C45.2276 14 44.3356 13.819 43.56 13.4571C42.7973 13.0822 42.138 12.5328 41.5822 11.8089L43.1722 10.277C43.56 10.807 44.0124 11.2142 44.5295 11.4986C45.0466 11.7701 45.6283 11.9058 46.2747 11.9058C47.7225 11.9058 48.4464 11.2465 48.4464 9.92798C48.4464 9.38504 48.3172 8.97138 48.0586 8.68698C47.8001 8.40259 47.3735 8.19575 46.7788 8.06648L45.596 7.8338C44.3679 7.57525 43.463 7.13573 42.8813 6.51524C42.2996 5.89474 42.0088 5.02862 42.0088 3.9169C42.0088 2.62419 42.3901 1.6482 43.1528 0.98892C43.9284 0.32964 45.0272 0 46.4492 0C47.4187 0 48.2461 0.161588 48.9312 0.484764C49.6293 0.795014 50.2239 1.28624 50.7151 1.95845L49.1251 3.45152C48.789 2.99908 48.4076 2.66297 47.9811 2.44321C47.5545 2.21053 47.0309 2.09418 46.4104 2.09418C45.7253 2.09418 45.2211 2.22992 44.898 2.50139C44.5748 2.77285 44.4132 3.21237 44.4132 3.81995C44.4132 4.3241 44.536 4.71191 44.7816 4.98338C45.0401 5.25485 45.4538 5.45522 46.0226 5.58449L47.2054 5.83656C47.8647 5.97876 48.4206 6.15328 48.873 6.36011C49.3384 6.56694 49.7133 6.82548 49.9977 7.13573C50.295 7.44598 50.5083 7.8144 50.6376 8.241C50.7798 8.65466 50.8509 9.14589 50.8509 9.71468C50.8509 11.1108 50.4501 12.1773 49.6486 12.9141C48.8601 13.638 47.7225 14 46.2359 14Z"
@@ -1320,42 +1309,114 @@ function StatsWordmark() {
   )
 }
 
+function StatsMark() {
+  return (
+    <svg data-slot="brand-mark" width="19" height="24" viewBox="0 0 19 24" fill="none" aria-hidden="true">
+      <path opacity="0.2" d="M14.25 19.2H4.75V9.6H14.25V19.2Z" fill="currentColor" />
+      <path d="M14.25 4.8H4.75V19.2H14.25V4.8ZM19 24H0V0H19V24Z" fill="currentColor" />
+    </svg>
+  )
+}
+
 function Footer() {
+  const modelStats = [
+    { href: "#top-models", label: "Top Models" },
+    { href: "#leaderboard", label: "Leaderboard" },
+    { href: "#market-share", label: "Market Share" },
+    { href: "#token-cost", label: "Token Cost" },
+    { href: "#session-cost", label: "Session Cost" },
+  ]
+  const legal = [
+    { href: "https://opencode.ai/legal/terms-of-service", label: "Terms of service" },
+    { href: "https://opencode.ai/legal/privacy-policy", label: "Privacy policy" },
+  ]
+  const connect = [
+    { href: "mailto:hello@opencode.ai", label: "Contact us" },
+    { href: "https://opencode.ai/discord", label: "Community" },
+    { href: "https://x.com/opencode_ai", label: "X" },
+    { href: "https://github.com/sst/opencode", label: "GitHub" },
+    { href: "https://youtube.com/@opencode-ai", label: "YouTube" },
+  ]
+
   return (
     <footer data-component="footer">
-      <div data-slot="cell">
-        <a href="https://github.com/sst/opencode" target="_blank" rel="noreferrer">
-          GitHub
+      <SectionBridge label="SESSION COST" href="#session-cost" />
+      <div data-slot="footer-grid">
+        <a data-slot="footer-mark" href="/" aria-label="OpenCode home">
+          <StatsMark />
         </a>
+        <FooterColumn title="Model Stats" links={modelStats} />
+        <FooterColumn title="Legal" links={legal} />
+        <FooterColumn title="Connect" links={connect} />
+        <div data-slot="footer-column">
+          <h2>Newsletter</h2>
+          <p>Be the first to know about new releases.</p>
+          <a data-slot="subscribe-button" href="https://opencode.ai/">
+            Subscribe
+          </a>
+        </div>
       </div>
-      <div data-slot="cell">
-        <a href="https://opencode.ai/docs">Docs</a>
-      </div>
-      <div data-slot="cell">
-        <a href="https://opencode.ai/changelog">Changelog</a>
-      </div>
-      <div data-slot="cell">
-        <a href="https://x.com/opencode_ai">X</a>
+      <div data-slot="footer-pattern" aria-hidden="true" />
+      <div data-slot="footer-bottom">
+        <div>
+          <span>© 2026 Anomaly Innovations Inc.</span>
+          <span data-slot="status">All systems Operational</span>
+        </div>
+        <div data-slot="theme-toggle" aria-label="Theme preference">
+          <button type="button" aria-label="Use dark theme">
+            <MoonIcon />
+          </button>
+          <button type="button" aria-label="Use light theme">
+            <SunIcon />
+          </button>
+          <button type="button" aria-label="Use system theme" data-active="true">
+            <MonitorIcon />
+          </button>
+        </div>
       </div>
     </footer>
   )
 }
 
-function Legal() {
+function FooterColumn(props: { title: string; links: { href: string; label: string }[] }) {
   return (
-    <div data-component="legal">
-      <span>
-        ©{new Date().getFullYear()} <a href="https://anoma.ly">Anomaly</a>
-      </span>
-      <span>
-        <a href="https://opencode.ai/brand">Brand</a>
-      </span>
-      <span>
-        <a href="https://opencode.ai/legal/privacy-policy">Privacy</a>
-      </span>
-      <span>
-        <a href="https://opencode.ai/legal/terms-of-service">Terms</a>
-      </span>
+    <div data-slot="footer-column">
+      <h2>{props.title}</h2>
+      <nav aria-label={props.title}>
+        <For each={props.links}>
+          {(link) => (
+            <a href={link.href} target={link.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+              {link.label}
+            </a>
+          )}
+        </For>
+      </nav>
     </div>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M8.8 7.9A4.3 4.3 0 0 1 4.1 3.2A3.9 3.9 0 1 0 8.8 7.9Z" stroke="currentColor" />
+    </svg>
+  )
+}
+
+function SunIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M6 3.5V2M6 10V8.5M8.5 6H10M2 6H3.5M7.75 4.25L8.8 3.2M3.2 8.8L4.25 7.75M4.25 4.25L3.2 3.2M8.8 8.8L7.75 7.75" stroke="currentColor" />
+      <circle cx="6" cy="6" r="1.7" stroke="currentColor" />
+    </svg>
+  )
+}
+
+function MonitorIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M2 3H10V8H2V3Z" stroke="currentColor" />
+      <path d="M4.5 10H7.5M6 8V10" stroke="currentColor" />
+    </svg>
   )
 }
