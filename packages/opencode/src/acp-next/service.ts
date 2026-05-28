@@ -553,79 +553,79 @@ function makeDirectoryService(sdk: OpencodeClient) {
 
 function makeUsageService(sdk: OpencodeClient) {
   const limits = new Map<string, Promise<number | undefined>>()
-  const contextLimit: UsageService.Interface["contextLimit"] = Effect.fn("ACPNext.promptUsage.contextLimit")(function* (
-    params,
-  ) {
-    const key = `${params.directory}\u0000${params.providerID}\u0000${params.modelID}`
-    const current = limits.get(key)
-    if (current) return yield* Effect.promise(() => current)
+  const contextLimit: UsageService.Interface["contextLimit"] = Effect.fn("ACPNext.promptUsage.contextLimit")(
+    function* (params) {
+      const key = `${params.directory}\u0000${params.providerID}\u0000${params.modelID}`
+      const current = limits.get(key)
+      if (current) return yield* Effect.promise(() => current)
 
-    const next = sdk.config
-      .providers({ directory: params.directory }, { throwOnError: true })
-      .then((response) => {
-        const providers = Object.fromEntries(
-          (response.data?.providers ?? []).map((provider) => [provider.id, provider]),
-        ) as Record<ProviderID, Provider.Info>
-        return UsageService.findContextLimit(providers, params.providerID, params.modelID)
-      })
-      .catch((error: unknown) => {
-        log.error("failed to get providers for usage context limit", { error })
-        return undefined
-      })
-    limits.set(key, next)
-    return yield* Effect.promise(() => next)
-  })
-
-  const sendUpdate: UsageService.Interface["sendUpdate"] = Effect.fn("ACPNext.promptUsage.sendUpdate")(function* (
-    params,
-  ) {
-    const messages = yield* request(
-      () =>
-        sdk.session.messages(
-          {
-            sessionID: params.sessionID,
-            directory: params.directory,
-          },
-          { throwOnError: true },
-        ),
-      "session",
-    ).pipe(
-      Effect.map((messages) => messages as readonly UsageService.SessionMessage[]),
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          log.error("failed to fetch messages for usage update", { error })
-          return undefined
-        }),
-      ),
-    )
-    if (!messages) return
-
-    const message = UsageService.latestAssistantMessage(messages)
-    if (!message?.providerID || !message.modelID) return
-
-    const size = yield* contextLimit({
-      directory: params.directory,
-      providerID: ProviderID.make(message.providerID),
-      modelID: ModelID.make(message.modelID),
-    })
-    if (!size) return
-
-    yield* Effect.promise(() =>
-      params.connection
-        .sessionUpdate({
-          sessionId: params.sessionID,
-          update: {
-            sessionUpdate: "usage_update",
-            used: message.tokens.input + message.tokens.cache.read,
-            size,
-            cost: { amount: UsageService.totalSessionCost(messages), currency: "USD" },
-          },
+      const next = sdk.config
+        .providers({ directory: params.directory }, { throwOnError: true })
+        .then((response) => {
+          const providers = Object.fromEntries(
+            (response.data?.providers ?? []).map((provider) => [provider.id, provider]),
+          ) as Record<ProviderID, Provider.Info>
+          return UsageService.findContextLimit(providers, params.providerID, params.modelID)
         })
-        .catch((error) => {
-          log.error("failed to send usage update", { error })
-        }),
-    )
-  })
+        .catch((error: unknown) => {
+          log.error("failed to get providers for usage context limit", { error })
+          return undefined
+        })
+      limits.set(key, next)
+      return yield* Effect.promise(() => next)
+    },
+  )
+
+  const sendUpdate: UsageService.Interface["sendUpdate"] = Effect.fn("ACPNext.promptUsage.sendUpdate")(
+    function* (params) {
+      const messages = yield* request(
+        () =>
+          sdk.session.messages(
+            {
+              sessionID: params.sessionID,
+              directory: params.directory,
+            },
+            { throwOnError: true },
+          ),
+        "session",
+      ).pipe(
+        Effect.map((messages) => messages as readonly UsageService.SessionMessage[]),
+        Effect.catch((error) =>
+          Effect.sync(() => {
+            log.error("failed to fetch messages for usage update", { error })
+            return undefined
+          }),
+        ),
+      )
+      if (!messages) return
+
+      const message = UsageService.latestAssistantMessage(messages)
+      if (!message?.providerID || !message.modelID) return
+
+      const size = yield* contextLimit({
+        directory: params.directory,
+        providerID: ProviderID.make(message.providerID),
+        modelID: ModelID.make(message.modelID),
+      })
+      if (!size) return
+
+      yield* Effect.promise(() =>
+        params.connection
+          .sessionUpdate({
+            sessionId: params.sessionID,
+            update: {
+              sessionUpdate: "usage_update",
+              used: message.tokens.input + message.tokens.cache.read,
+              size,
+              cost: { amount: UsageService.totalSessionCost(messages), currency: "USD" },
+            },
+          })
+          .catch((error) => {
+            log.error("failed to send usage update", { error })
+          }),
+      )
+    },
+  )
 
   return UsageService.Service.of({
     buildUsage: UsageService.buildUsage,
