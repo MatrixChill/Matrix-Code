@@ -192,11 +192,7 @@ function buildQueries(limit: number, tiers: string[]): QuerySpec[] {
       tier,
       metricQuery(["date", "tier", "stat_provider", "stat_model"], limit, tierFilters(tier)),
     ),
-    querySpec(
-      "provider-day",
-      tier,
-      metricQuery(["date", "tier", "stat_provider"], limit, tierFilters(tier)),
-    ),
+    querySpec("provider-day", tier, metricQuery(["date", "tier", "stat_provider"], limit, tierFilters(tier))),
     querySpec("geo-day", tier, metricQuery(["date", "tier", "country", "continent"], limit, tierFilters(tier))),
     querySpec(
       "geo-model-day",
@@ -205,7 +201,11 @@ function buildQueries(limit: number, tiers: string[]): QuerySpec[] {
     ),
   ])
   const weekly = tiers.flatMap((tier) => [
-    querySpec("model-week", tier, metricQuery(["week", "tier", "stat_provider", "stat_model"], limit, tierFilters(tier))),
+    querySpec(
+      "model-week",
+      tier,
+      metricQuery(["week", "tier", "stat_provider", "stat_model"], limit, tierFilters(tier)),
+    ),
     querySpec("provider-week", tier, metricQuery(["week", "tier", "stat_provider"], limit, tierFilters(tier))),
     querySpec("geo-week", tier, metricQuery(["week", "tier", "country", "continent"], limit, tierFilters(tier))),
     querySpec(
@@ -227,11 +227,7 @@ function querySpec(importKey: ImportKey, tier: string, query: ReturnType<typeof 
   }
 }
 
-function metricQuery(
-  breakdowns: string[],
-  limit: number,
-  filters: ReturnType<typeof commonFilters> = [],
-) {
+function metricQuery(breakdowns: string[], limit: number, filters: ReturnType<typeof commonFilters> = []) {
   return {
     granularity: 0,
     breakdowns,
@@ -409,11 +405,7 @@ function geoContinentLookup(row: RawRow, grain: Grain, opts: ImportOptions): [st
   return [[lookupKey({ ...base, dataset: opts.dataset, tier: tier(row), grain }, country(row)), value]]
 }
 
-function geoModelAggregate(
-  row: RawRow,
-  base: StatBaseAggregate,
-  continentLookup: Map<string, string>,
-): GeoAggregate[] {
+function geoModelAggregate(row: RawRow, base: StatBaseAggregate, continentLookup: Map<string, string>): GeoAggregate[] {
   const author = provider(row)
   if (!author) return []
 

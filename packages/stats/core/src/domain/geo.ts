@@ -16,7 +16,12 @@ import {
 } from "./stat"
 
 export type GeoStatRow = typeof geoStat.$inferInsert
-export type GeoStatAggregate = StatBaseAggregate & { provider: string; model: string; country: string; continent: string }
+export type GeoStatAggregate = StatBaseAggregate & {
+  provider: string
+  model: string
+  country: string
+  continent: string
+}
 export type GeoStatMetric = {
   periodKey: string
   updatedAt: Date

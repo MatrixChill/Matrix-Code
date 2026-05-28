@@ -97,14 +97,7 @@ export function synthesizeAllTierRows<T extends StatBaseRow>(rows: T[], dimensio
     ...rows,
     ...Object.values(
       rows.reduce<Record<string, T>>((result, row) => {
-        const key = [
-          row.grain,
-          row.period_key,
-          row.dataset,
-          row.client,
-          row.source,
-          dimensionKey(row),
-        ].join("\u0000")
+        const key = [row.grain, row.period_key, row.dataset, row.client, row.source, dimensionKey(row)].join("\u0000")
         result[key] = result[key] ? combineRows(result[key], row) : { ...row, tier: "all" }
         return result
       }, {}),
@@ -115,15 +108,9 @@ export function synthesizeAllTierRows<T extends StatBaseRow>(rows: T[], dimensio
 export function collapseRows<T extends StatBaseRow>(rows: T[], dimensionKey: (row: T) => string) {
   return Object.values(
     rows.reduce<Record<string, T>>((result, row) => {
-      const key = [
-        row.grain,
-        row.period_key,
-        row.dataset,
-        row.tier,
-        row.client,
-        row.source,
-        dimensionKey(row),
-      ].join("\u0000")
+      const key = [row.grain, row.period_key, row.dataset, row.tier, row.client, row.source, dimensionKey(row)].join(
+        "\u0000",
+      )
       result[key] = result[key] ? combineRows(result[key], row) : row
       return result
     }, {}),
@@ -170,7 +157,9 @@ export function startOfUtcDay(value: Date) {
 }
 
 export function startOfIsoWeek(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() - (value.getUTCDay() || 7) + 1))
+  return new Date(
+    Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() - (value.getUTCDay() || 7) + 1),
+  )
 }
 
 export function isoWeekId(value: Date) {
@@ -188,7 +177,10 @@ export function rankBy<T extends StatBaseRow>(rows: T[], value: (row: T) => numb
   return new Map(rows.toSorted((a, b) => value(b) - value(a)).map((row, index) => [row, index + 1]))
 }
 
-export function rankRowsWithMarketShare<T extends StatBaseRow>(rows: T[], groupKey: (row: T) => string = statPeriodKey) {
+export function rankRowsWithMarketShare<T extends StatBaseRow>(
+  rows: T[],
+  groupKey: (row: T) => string = statPeriodKey,
+) {
   return Object.values(
     rows.reduce<Record<string, T[]>>((result, row) => {
       const key = groupKey(row)
