@@ -599,11 +599,11 @@ function LeaderboardSection(props: { data: StatsHomeData["leaderboard"] }) {
   const data = createMemo(() => props.data[product()][range()])
 
   return (
-    <ChartSection
-      id="leaderboard"
-      title="Leaderboard"
-      description="Shown are the sum of prompt and completion tokens per model, including reasoning tokens."
-    >
+    <section id="leaderboard" data-section="leaderboard">
+      <p data-slot="leaderboard-title">
+        <strong>Leaderboard.</strong>{" "}
+        <span>Shown are the sum of prompt and completion tokens per model, including reasoning tokens.</span>
+      </p>
       <Show
         when={data().length > 0}
         fallback={
@@ -615,20 +615,30 @@ function LeaderboardSection(props: { data: StatsHomeData["leaderboard"] }) {
       <div data-slot="chart-footer">
         <StatsFilters product={product()} range={range()} onProductSelect={setProduct} onRangeSelect={setRange} />
       </div>
-    </ChartSection>
+    </section>
   )
 }
 
 function Leaderboard(props: { data: LeaderboardEntry[] }) {
+  const featured = createMemo(() => props.data.slice(0, 3))
+  const columns = createMemo(() =>
+    [0, 1, 2].map((index) => props.data.slice(3 + index * 5, 8 + index * 5)).filter((column) => column.length > 0),
+  )
+
   return (
-    <div data-component="leaderboard" aria-label="Model token leaderboard">
-      <div data-slot="leaderboard-grid">
-        <div data-slot="leaderboard-featured">
-          <For each={props.data.slice(0, 3)}>{(entry) => <LeaderboardCard entry={entry} size="featured" />}</For>
-        </div>
-        <div data-slot="leaderboard-compact">
-          <For each={props.data.slice(3)}>{(entry) => <LeaderboardCard entry={entry} size="compact" />}</For>
-        </div>
+    <div data-component="leaderboard" role="list" aria-label="Model token leaderboard">
+      <div data-slot="leaderboard-featured">
+        <For each={featured()}>{(entry) => <LeaderboardCard entry={entry} size="featured" />}</For>
+      </div>
+      <div data-slot="leaderboard-pattern" aria-hidden="true" />
+      <div data-slot="leaderboard-compact">
+        <For each={columns()}>
+          {(column) => (
+            <div data-slot="leaderboard-column">
+              <For each={column}>{(entry) => <LeaderboardCard entry={entry} size="compact" />}</For>
+            </div>
+          )}
+        </For>
       </div>
     </div>
   )
@@ -636,7 +646,12 @@ function Leaderboard(props: { data: LeaderboardEntry[] }) {
 
 function LeaderboardCard(props: { entry: LeaderboardEntry; size: "featured" | "compact" }) {
   return (
-    <article data-component="leader-card" data-size={props.size}>
+    <article
+      data-component="leader-card"
+      data-size={props.size}
+      role="listitem"
+      aria-label={`${String(props.entry.rank).padStart(2, "0")} ${props.entry.model} by ${props.entry.author}`}
+    >
       <span data-slot="rank">{String(props.entry.rank).padStart(2, "0")}</span>
       <ProviderIcon data-slot="leader-watermark" aria-hidden="true" id={getProviderIconId(props.entry.author)} />
       <div data-slot="leader-body">
