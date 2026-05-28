@@ -71,7 +71,12 @@ async function createSession(session: ACPNextSession.Interface, sessionId: strin
   await Effect.runPromise(session.create({ id: sessionId, cwd }))
 }
 
-async function createKnownTextPart(session: ACPNextSession.Interface, sessionId: string, messageId: string, partId: string) {
+async function createKnownTextPart(
+  session: ACPNextSession.Interface,
+  sessionId: string,
+  messageId: string,
+  partId: string,
+) {
   await Effect.runPromise(
     session.recordPartMetadata({
       sessionId,
