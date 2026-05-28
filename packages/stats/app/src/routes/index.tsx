@@ -1,6 +1,8 @@
 import "./index.css"
-import { Meta, Title } from "@solidjs/meta"
+import { Link, Meta, Title } from "@solidjs/meta"
 import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
+import ibmPlexMonoMediumLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Medium-Latin1.woff2?url"
+import ibmPlexMonoRegularLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Regular-Latin1.woff2?url"
 import {
   type CountryEntry,
   getStatsHomeData,
@@ -64,6 +66,8 @@ export default function StatsHome() {
     <main data-page="stats">
       <Title>OpenCode Stats</Title>
       <Meta name="description" content="OpenCode usage, market share, token cost, and session cost stats." />
+      <Link rel="preload" href={ibmPlexMonoRegularLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
+      <Link rel="preload" href={ibmPlexMonoMediumLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <div data-component="container">
         <Header />
         <div data-component="content">
@@ -92,19 +96,21 @@ export default function StatsHome() {
 function Hero(props: { updatedAt: string | null }) {
   return (
     <section data-section="hero">
-      <div>
-        <h1>OpenCode Stats</h1>
-        <p data-slot="meta">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
-            <rect x="3" y="3" width="10" height="10" fill="currentColor" />
-            <rect x="7" y="6.5" width="2" height="4.5" fill="var(--stats-layer-2)" />
-            <rect x="7" y="5" width="2" height="1" fill="var(--stats-layer-2)" />
-          </svg>
-          <span>OpenCode data</span> <b>·</b>{" "}
-          <em>{props.updatedAt ? `Updated ${formatUpdatedAt(props.updatedAt)}` : "No rows yet"}</em>
+      <p data-slot="hero-meta">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+          <rect x="3" y="3" width="10" height="10" fill="currentColor" />
+          <rect x="7" y="6.5" width="2" height="4.5" fill="var(--stats-layer-2)" />
+          <rect x="7" y="5" width="2" height="1" fill="var(--stats-layer-2)" />
+        </svg>
+        <span>{props.updatedAt ? `Updated ${formatUpdatedAt(props.updatedAt)}` : "No rows yet"}</span>
+      </p>
+      <div data-slot="hero-canvas">
+        <div data-slot="hero-pattern" aria-hidden="true" />
+        <h1>Model Stats</h1>
+        <p data-slot="hero-copy">
+          See which models are winning real usage, how the mix shifts over time, and where momentum is moving each week.
         </p>
       </div>
-      <p>See how model usage, provider share, cost, and geography move across OpenCode traffic.</p>
     </section>
   )
 }

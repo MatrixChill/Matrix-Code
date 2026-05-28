@@ -1,3 +1,47 @@
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Regular-Latin1.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014,
+    U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+FB01-FB02;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Medium-Latin1.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014,
+    U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+FB01-FB02;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-SemiBold-Latin1.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014,
+    U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+FB01-FB02;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Bold-Latin1.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014,
+    U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+FB01-FB02;
+}
+
 [data-page="stats"] {
   --color-background: #ffffff;
   --color-background-weak: #fafafa;
@@ -21,12 +65,15 @@
   --stats-accent-text: #6c7dff;
   --stats-bar-idle: #d4d4d4;
   --stats-dot: #d4d4d4;
+  --stats-hero-muted: #5c5c5c;
+  --stats-hero-pattern: #eeeeee;
   --stats-page-padding: 5rem;
   --stats-section-padding: 6rem;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 4rem;
+  font-synthesis: none;
   overflow-x: clip;
   padding-bottom: 5rem;
   background: var(--stats-bg);
@@ -42,7 +89,7 @@
 [data-page="stats"] [data-component="container"] {
   box-sizing: border-box;
   width: 100%;
-  max-width: 67.5rem;
+  max-width: 80rem;
   margin: 0 auto;
   border-left: 1px solid var(--stats-line);
   border-right: 1px solid var(--stats-line);
@@ -366,11 +413,16 @@
 }
 
 [data-page="stats"] [data-section="hero"] {
-  min-height: 270px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: start;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 24px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 128px 24px 48px;
+  border-bottom: 0;
 }
 
 [data-page="stats"] h1,
@@ -384,6 +436,7 @@
   line-height: 1;
   letter-spacing: normal;
   font-weight: 600;
+  max-width: none;
 }
 
 [data-page="stats"] h2 {
@@ -393,29 +446,55 @@
   font-weight: 500;
 }
 
-[data-page="stats"] [data-section="hero"] > p,
 [data-page="stats"] [data-slot="section-header"] p {
   color: var(--stats-muted);
   font-size: 16px;
   line-height: 1.5;
 }
 
-[data-page="stats"] [data-section="hero"] > div {
+[data-page="stats"] [data-slot="hero-canvas"] {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  width: 100%;
   min-width: 0;
 }
 
-[data-page="stats"] [data-slot="meta"] {
+[data-page="stats"] [data-section="hero"] h1 {
+  color: var(--stats-text);
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+[data-page="stats"] [data-slot="hero-copy"] {
+  color: var(--stats-hero-muted);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+[data-page="stats"] [data-slot="hero-pattern"] {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  background-image: radial-gradient(circle, var(--stats-hero-pattern) 1px, transparent 1.1px);
+  background-position: 0 0;
+  background-size: 6px 6px;
+}
+
+[data-page="stats"] [data-slot="hero-meta"] {
   display: flex;
   align-items: center;
   gap: 4px;
   width: fit-content;
+  max-width: 100%;
   height: 24px;
   padding: 0 8px 0 4px;
   background: var(--stats-layer-2);
-  color: var(--stats-faint);
+  color: var(--stats-hero-muted);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.1;
@@ -423,22 +502,69 @@
   white-space: nowrap;
 }
 
-[data-page="stats"] [data-slot="meta"] svg {
+[data-page="stats"] [data-slot="hero-meta"] svg {
   width: 16px;
   height: 16px;
-  color: var(--stats-faint);
   flex: 0 0 auto;
 }
 
-[data-page="stats"] [data-slot="meta"] span {
-  color: var(--stats-muted);
+[data-page="stats"] [data-slot="hero-meta"] span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-[data-page="stats"] [data-slot="meta"] b,
-[data-page="stats"] [data-slot="meta"] em {
-  color: var(--stats-faint);
-  font-style: normal;
-  font-weight: 600;
+@media (min-width: 58rem) {
+  [data-page="stats"] [data-section="hero"] {
+    gap: 16px;
+    padding: 128px 40px 24px;
+  }
+
+  [data-page="stats"] [data-slot="hero-canvas"] {
+    position: relative;
+    display: block;
+    height: 232px;
+    overflow: hidden;
+  }
+
+  [data-page="stats"] [data-slot="hero-pattern"] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1280px;
+    height: 351px;
+    transform: translate(-50%, -50%);
+  }
+
+  [data-page="stats"] [data-section="hero"] h1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: max-content;
+    max-width: 100%;
+    padding: 0 12px 12px 0;
+    background: var(--stats-bg);
+    white-space: nowrap;
+  }
+
+  [data-page="stats"] [data-slot="hero-copy"] {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    width: min(36rem, 100%);
+    padding: 12px 0 0 16px;
+    background: var(--stats-bg);
+    text-align: right;
+  }
+}
+
+@media (min-width: 90rem) {
+  [data-page="stats"] [data-section="hero"] {
+    padding-right: 0;
+    padding-left: 0;
+  }
 }
 
 [data-page="stats"] [data-section="chart"] {
@@ -1328,6 +1454,8 @@
     --stats-faint: #808080;
     --stats-bar-idle: #303030;
     --stats-dot: #303030;
+    --stats-hero-muted: #808080;
+    --stats-hero-pattern: #303030;
   }
 
   [data-page="stats"] [data-component="chart-tooltip"],

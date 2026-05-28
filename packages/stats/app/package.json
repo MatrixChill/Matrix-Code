@@ -12,6 +12,7 @@
     "start": "vite start"
   },
   "dependencies": {
+    "@ibm/plex": "6.4.1",
     "@opencode-ai/stats-core": "workspace:*",
     "@opencode-ai/ui": "workspace:*",
     "@solidjs/meta": "catalog:",

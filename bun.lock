@@ -629,6 +629,7 @@
       "name": "@opencode-ai/stats-app",
       "version": "1.15.11",
       "dependencies": {
+        "@ibm/plex": "6.4.1",
         "@opencode-ai/stats-core": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
         "@solidjs/meta": "catalog:",
