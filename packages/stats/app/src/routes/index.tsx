@@ -403,6 +403,7 @@ function FilterPills<T extends string>(props: {
 
 function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
   const [activeIndex, setActiveIndex] = createSignal<number>()
+  const [activeSegment, setActiveSegment] = createSignal<number>()
   const maxTotal = createMemo(() => getTopModelsMaxTotal(props.data))
   const activePoint = createMemo(() => props.data[activeIndex() ?? -1])
 
@@ -411,10 +412,16 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
       <div data-slot="top-models-axis" aria-hidden="true">
         <For each={props.data}>
           {(day, index) => (
-            <div data-active={activeIndex() === index() ? "true" : undefined}>
+            <div
+              data-active={activeIndex() === index() ? "true" : undefined}
+              data-mobile-hidden={isTopModelsMobileAxisHidden(index(), props.data.length) ? "true" : undefined}
+            >
               <span data-slot="axis-label">
-                <span>{formatTokens(usageTotal(day))}</span>
-                <span>{day.date}</span>
+                <span data-slot="axis-total">{formatTokens(usageTotal(day))}</span>
+                <span data-slot="axis-date">
+                  <span data-slot="axis-date-full">{day.date}</span>
+                  <span data-slot="axis-date-mobile">{formatTopModelsMobileDate(day.date, props.range)}</span>
+                </span>
               </span>
             </div>
           )}
@@ -431,29 +438,48 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
               data-active={activeIndex() === dayIndex() ? "true" : undefined}
               data-muted={activeIndex() !== undefined && activeIndex() !== dayIndex() ? "true" : undefined}
               style={{ "--top-models-bar-height": `${getTopModelsBarHeight(usageTotal(day), maxTotal())}%` }}
-              onPointerEnter={() => setActiveIndex(dayIndex())}
+              onPointerEnter={() => {
+                setActiveIndex(dayIndex())
+                setActiveSegment(undefined)
+              }}
               onPointerLeave={(event) => {
                 if (event.pointerType === "touch") return
                 setActiveIndex(undefined)
+                setActiveSegment(undefined)
               }}
               onClick={() => setActiveIndex(dayIndex())}
-              onFocus={() => setActiveIndex(dayIndex())}
-              onBlur={() => setActiveIndex(undefined)}
+              onFocus={() => {
+                setActiveIndex(dayIndex())
+                setActiveSegment(undefined)
+              }}
+              onBlur={() => {
+                setActiveIndex(undefined)
+                setActiveSegment(undefined)
+              }}
               onKeyDown={(event) => {
                 if (event.key !== "Enter" && event.key !== " ") return
                 event.preventDefault()
                 setActiveIndex(dayIndex())
+                setActiveSegment(undefined)
               }}
             >
               <div data-slot="top-models-stack" style={{ "grid-template-rows": getTopModelsSegmentRows(day) }}>
                 <For each={visibleTopModelsSegments(day)}>
                   {(item) => (
                     <i
+                      data-series={item.index}
+                      data-active={activeSegment() === item.index ? "true" : undefined}
                       style={{
                         background: getTopModelsSegmentColor(
                           item.index,
                           activeIndex() !== undefined && activeIndex() !== dayIndex(),
+                          activeSegment(),
                         ),
+                      }}
+                      onPointerEnter={(event) => {
+                        event.stopPropagation()
+                        setActiveIndex(dayIndex())
+                        setActiveSegment(item.index)
                       }}
                     />
                   )}
@@ -467,7 +493,12 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
                     <div data-slot="tooltip-divider" />
                     <For each={visibleTopModelsSegments(point())}>
                       {(item) => (
-                        <p>
+                        <p
+                          data-active={activeSegment() === item.index ? "true" : undefined}
+                          data-muted={
+                            activeSegment() !== undefined && activeSegment() !== item.index ? "true" : undefined
+                          }
+                        >
                           <span data-slot="tooltip-label">
                             <i style={{ background: usageColors[item.index] }} /> {item.segment.model}
                           </span>
@@ -510,9 +541,20 @@ function visibleTopModelsSegments(point: UsagePoint) {
   return point.segments.map((segment, index) => ({ segment, index })).filter((item) => item.segment.value > 0)
 }
 
-function getTopModelsSegmentColor(index: number, muted: boolean) {
+function getTopModelsSegmentColor(index: number, muted: boolean, activeSegment: number | undefined) {
+  if (activeSegment !== undefined)
+    return activeSegment === index ? (usageColors[index] ?? "var(--stats-text)") : "var(--stats-layer-2)"
   if (muted) return "var(--stats-layer-2)"
   return usageColors[index] ?? "var(--stats-text)"
+}
+
+function isTopModelsMobileAxisHidden(index: number, count: number) {
+  return count > 7 && index % 2 === 1
+}
+
+function formatTopModelsMobileDate(label: string, range: UsageRange) {
+  if (range === "1M" || range === "2M") return label.split(" - ")[0] ?? label
+  return label
 }
 
 function usageTotal(point: UsagePoint) {

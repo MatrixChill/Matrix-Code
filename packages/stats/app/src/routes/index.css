@@ -630,6 +630,7 @@
 }
 
 [data-page="stats"] [data-component="top-models-chart"] {
+  --top-models-bar-gap: 12px;
   position: relative;
   display: grid;
   grid-template-rows: 34px minmax(0, 1fr);
@@ -641,8 +642,11 @@
 [data-page="stats"] [data-slot="top-models-axis"],
 [data-page="stats"] [data-slot="top-models-bars"] {
   display: flex;
-  gap: 12px;
   min-width: 0;
+}
+
+[data-page="stats"] [data-slot="top-models-axis"] {
+  gap: var(--top-models-bar-gap);
 }
 
 [data-page="stats"] [data-slot="top-models-axis"] > div {
@@ -664,43 +668,54 @@
   flex-direction: column;
 }
 
+[data-page="stats"] [data-slot="axis-date-mobile"] {
+  display: none;
+}
+
 [data-page="stats"] [data-slot="top-models-bars"] {
+  width: calc(100% + var(--top-models-bar-gap));
+  margin-inline: calc(var(--top-models-bar-gap) / -2);
   min-height: 0;
 }
 
 [data-page="stats"] [data-slot="top-models-bar"] {
   position: relative;
+  box-sizing: border-box;
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
+  padding-inline: calc(var(--top-models-bar-gap) / 2);
   outline: none;
   cursor: pointer;
 }
 
 [data-page="stats"] [data-slot="top-models-bar"]::before {
   position: absolute;
-  inset: 0;
+  inset: 0 calc(var(--top-models-bar-gap) / 2);
   content: "";
   background: var(--stats-dot);
   mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H2V2H0V0Z' fill='black'/%3E%3C/svg%3E");
+  mask-position: center top;
   mask-repeat: repeat;
   mask-size: 6px 6px;
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H2V2H0V0Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-position: center top;
   -webkit-mask-repeat: repeat;
   -webkit-mask-size: 6px 6px;
 }
 
 [data-page="stats"] [data-slot="top-models-stack"] {
   position: absolute;
-  right: 0;
+  right: calc(var(--top-models-bar-gap) / 2);
   bottom: 0;
-  left: 0;
+  left: calc(var(--top-models-bar-gap) / 2);
   z-index: 1;
   display: grid;
   height: var(--top-models-bar-height);
   min-height: 0;
   overflow: hidden;
   background: var(--stats-bg);
+  box-shadow: 0 -4px 0 var(--stats-bg);
 }
 
 [data-page="stats"] [data-slot="top-models-stack"] i {
@@ -1116,6 +1131,10 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 12px;
+}
+
+[data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] p[data-muted="true"] {
+  opacity: 0.46;
 }
 
 [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] [data-slot="tooltip-divider"] + p {
@@ -2026,9 +2045,19 @@
     position: absolute;
     left: 50%;
     width: max-content;
-    max-width: 96px;
+    max-width: 72px;
     transform: rotate(-90deg) translateX(-50%);
     transform-origin: left center;
+  }
+
+  [data-page="stats"] [data-slot="top-models-axis"] > div[data-mobile-hidden="true"] [data-slot="axis-label"],
+  [data-page="stats"] [data-slot="axis-total"],
+  [data-page="stats"] [data-slot="axis-date-full"] {
+    display: none;
+  }
+
+  [data-page="stats"] [data-slot="axis-date-mobile"] {
+    display: block;
   }
 
   [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] {
