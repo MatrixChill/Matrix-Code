@@ -403,7 +403,6 @@
   text-underline-offset: 4px;
 }
 
-[data-page="stats"] [data-section="hero"],
 [data-page="stats"] [data-section="chart"],
 [data-page="stats"] [data-section="newsletter"] {
   border-bottom: 1px solid var(--stats-line);
@@ -424,6 +423,7 @@
   overflow: hidden;
   padding: 128px 24px 48px;
   border-bottom: 0;
+  box-shadow: none;
 }
 
 [data-page="stats"] h1,
