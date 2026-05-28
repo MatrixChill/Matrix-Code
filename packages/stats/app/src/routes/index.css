@@ -2061,7 +2061,22 @@
   }
 
   [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] {
-    display: none;
+    position: fixed;
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    z-index: 40;
+    width: auto;
+    min-width: 0;
+    max-height: min(320px, 48vh);
+    overflow: auto;
+    transform: none;
+  }
+
+  [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"][data-placement] {
+    right: 12px;
+    left: 12px;
   }
 }
 

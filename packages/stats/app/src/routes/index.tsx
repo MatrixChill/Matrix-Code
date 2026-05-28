@@ -447,6 +447,11 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
               data-active={activeIndex() === dayIndex() ? "true" : undefined}
               data-muted={activeIndex() !== undefined && activeIndex() !== dayIndex() ? "true" : undefined}
               style={{ "--top-models-bar-height": `${getTopModelsBarHeight(usageTotal(day), maxTotal())}%` }}
+              onPointerDown={(event) => {
+                if (event.pointerType !== "touch") return
+                setActiveIndex(dayIndex())
+                setActiveSegment(undefined)
+              }}
               onPointerEnter={() => {
                 setActiveIndex(dayIndex())
                 setActiveSegment(undefined)
@@ -486,6 +491,16 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
                         ),
                       }}
                       onPointerEnter={(event) => {
+                        event.stopPropagation()
+                        setActiveIndex(dayIndex())
+                        setActiveSegment(item.index)
+                      }}
+                      onPointerDown={(event) => {
+                        event.stopPropagation()
+                        setActiveIndex(dayIndex())
+                        setActiveSegment(item.index)
+                      }}
+                      onClick={(event) => {
                         event.stopPropagation()
                         setActiveIndex(dayIndex())
                         setActiveSegment(item.index)
