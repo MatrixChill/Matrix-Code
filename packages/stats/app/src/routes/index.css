@@ -2133,6 +2133,18 @@
     background: #242424f2;
   }
 
+  [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] {
+    background: #242424f2;
+    box-shadow:
+      0 0 0 0.5px #ffffff24,
+      0 8px 16px #0000003d,
+      0 4px 8px #00000052;
+  }
+
+  [data-page="stats"] [data-section="top-models"] [data-component="chart-tooltip"] > span {
+    color: var(--stats-faint);
+  }
+
   [data-page="stats"] [data-component="leader-card"][data-size="compact"] {
     box-shadow:
       0 0 0 0.5px #ffffff1f,
