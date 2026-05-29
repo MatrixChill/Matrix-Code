@@ -615,56 +615,54 @@ function makeUsageService(sdk: OpencodeClient) {
     },
   )
 
-  const sendUpdate: UsageService.Interface["sendUpdate"] = Effect.fn("ACP.promptUsage.sendUpdate")(
-    function* (params) {
-      const messages = yield* request(
-        () =>
-          sdk.session.messages(
-            {
-              sessionID: params.sessionID,
-              directory: params.directory,
-            },
-            { throwOnError: true },
-          ),
-        "session",
-      ).pipe(
-        Effect.map((messages) => messages as readonly UsageService.SessionMessage[]),
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            log.error("failed to fetch messages for usage update", { error })
-            return undefined
-          }),
+  const sendUpdate: UsageService.Interface["sendUpdate"] = Effect.fn("ACP.promptUsage.sendUpdate")(function* (params) {
+    const messages = yield* request(
+      () =>
+        sdk.session.messages(
+          {
+            sessionID: params.sessionID,
+            directory: params.directory,
+          },
+          { throwOnError: true },
         ),
-      )
-      if (!messages) return
+      "session",
+    ).pipe(
+      Effect.map((messages) => messages as readonly UsageService.SessionMessage[]),
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          log.error("failed to fetch messages for usage update", { error })
+          return undefined
+        }),
+      ),
+    )
+    if (!messages) return
 
-      const message = UsageService.latestAssistantMessage(messages)
-      if (!message?.providerID || !message.modelID) return
+    const message = UsageService.latestAssistantMessage(messages)
+    if (!message?.providerID || !message.modelID) return
 
-      const size = yield* contextLimit({
-        directory: params.directory,
-        providerID: ProviderID.make(message.providerID),
-        modelID: ModelID.make(message.modelID),
-      })
-      if (!size) return
+    const size = yield* contextLimit({
+      directory: params.directory,
+      providerID: ProviderID.make(message.providerID),
+      modelID: ModelID.make(message.modelID),
+    })
+    if (!size) return
 
-      yield* Effect.promise(() =>
-        params.connection
-          .sessionUpdate({
-            sessionId: params.sessionID,
-            update: {
-              sessionUpdate: "usage_update",
-              used: message.tokens.input + message.tokens.cache.read,
-              size,
-              cost: { amount: UsageService.totalSessionCost(messages), currency: "USD" },
-            },
-          })
-          .catch((error) => {
-            log.error("failed to send usage update", { error })
-          }),
-      )
-    },
-  )
+    yield* Effect.promise(() =>
+      params.connection
+        .sessionUpdate({
+          sessionId: params.sessionID,
+          update: {
+            sessionUpdate: "usage_update",
+            used: message.tokens.input + message.tokens.cache.read,
+            size,
+            cost: { amount: UsageService.totalSessionCost(messages), currency: "USD" },
+          },
+        })
+        .catch((error) => {
+          log.error("failed to send usage update", { error })
+        }),
+    )
+  })
 
   return UsageService.Service.of({
     buildUsage: UsageService.buildUsage,
@@ -736,9 +734,7 @@ async function loadDirectorySnapshot(sdk: OpencodeClient, directory: string) {
       ACPProfile.measure("acp.directory.mode.defaultAgent.load", () =>
         sdk.app.agents({ directory }, { throwOnError: true }),
       ),
-      ACPProfile.measure("acp.directory.command.list", () =>
-        sdk.command.list({ directory }, { throwOnError: true }),
-      ),
+      ACPProfile.measure("acp.directory.command.list", () => sdk.command.list({ directory }, { throwOnError: true })),
       ACPProfile.measure("acp.directory.skill.list", () => sdk.app.skills({ directory }, { throwOnError: true })),
       ACPProfile.measure("acp.directory.defaultModel.config", () =>
         sdk.config.get({ directory }, { throwOnError: true }).catch(() => undefined),

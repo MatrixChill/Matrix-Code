@@ -148,9 +148,7 @@ export const layer = Layer.effect(
       update(sessionId, (session) => ({ ...session, modeId })),
     )
 
-    const recordPartMetadata: Interface["recordPartMetadata"] = Effect.fn("ACP.Session.recordPartMetadata")((
-      input,
-    ) => {
+    const recordPartMetadata: Interface["recordPartMetadata"] = Effect.fn("ACP.Session.recordPartMetadata")((input) => {
       const metadata = {
         messageId: input.messageId,
         partId: input.partId,

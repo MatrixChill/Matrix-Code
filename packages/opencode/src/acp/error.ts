@@ -1,12 +1,9 @@
 import { RequestError } from "@agentclientprotocol/sdk"
 import { Schema } from "effect"
 
-export class SessionNotFoundError extends Schema.TaggedErrorClass<SessionNotFoundError>()(
-  "ACPSessionNotFoundError",
-  {
-    sessionId: Schema.String,
-  },
-) {}
+export class SessionNotFoundError extends Schema.TaggedErrorClass<SessionNotFoundError>()("ACPSessionNotFoundError", {
+  sessionId: Schema.String,
+}) {}
 
 export class InvalidConfigOptionError extends Schema.TaggedErrorClass<InvalidConfigOptionError>()(
   "ACPInvalidConfigOptionError",

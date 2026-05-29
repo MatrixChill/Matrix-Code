@@ -12,9 +12,7 @@ describe("acp.error", () => {
       new ACPError.InvalidModeError({ mode: "turbo" }),
     ]
 
-    expect(cases.map((error) => ACPError.toRequestError(error).code)).toEqual([
-      -32602, -32602, -32602, -32602, -32602,
-    ])
+    expect(cases.map((error) => ACPError.toRequestError(error).code)).toEqual([-32602, -32602, -32602, -32602, -32602])
   })
 
   test("includes safe validation details", () => {
@@ -38,9 +36,7 @@ describe("acp.error", () => {
   })
 
   test("maps unsupported operations to method not found", () => {
-    const requestError = ACPError.toRequestError(
-      new ACPError.UnsupportedOperationError({ method: "session/new" }),
-    )
+    const requestError = ACPError.toRequestError(new ACPError.UnsupportedOperationError({ method: "session/new" }))
 
     expect(requestError.code).toBe(-32601)
     expect(requestError.data).toEqual({ method: "session/new" })
