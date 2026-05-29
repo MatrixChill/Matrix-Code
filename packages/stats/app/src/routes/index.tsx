@@ -864,11 +864,17 @@ function MarketShare(props: {
             <button
               type="button"
               data-active={props.inspecting && props.activeIndex === index() ? "true" : undefined}
+              data-mobile-hidden={isMarketMobileLabelHidden(index(), props.data.length) ? "true" : undefined}
               onClick={() => props.onActiveIndexChange(index())}
               onPointerEnter={() => props.onActiveIndexChange(index())}
             >
-              <span>{formatTrillions(day.total)}</span>
-              <span>{day.date}</span>
+              <span data-slot="market-axis-label">
+                <span data-slot="market-total">{formatTrillions(day.total)}</span>
+                <span data-slot="market-date">
+                  <span data-slot="market-date-full">{day.date}</span>
+                  <span data-slot="market-date-mobile">{formatMarketMobileDate(day.date)}</span>
+                </span>
+              </span>
             </button>
           )}
         </For>
@@ -964,21 +970,43 @@ function getMarketSegmentColor(author: string, color: string, activeAuthor: stri
   return "var(--stats-bar-idle)"
 }
 
+function isMarketMobileLabelHidden(index: number, count: number) {
+  return count > 7 && index % 2 === 1
+}
+
+function formatMarketMobileDate(label: string) {
+  return marketDateParts(label).start
+}
+
 function formatTrillions(value: number) {
   return `${value.toFixed(value >= 10 ? 0 : 1)}T`
 }
 
 function formatMarketDate(day: MarketDay | undefined) {
   if (!day) return "No data"
-  return `${day.date} ${new Date().getFullYear()}`
+  return formatMarketDateLabel(day.date)
 }
 
 function formatMarketRange(data: MarketDay[]) {
   const first = data[0]?.date
   const last = data[data.length - 1]?.date
   if (!first || !last) return "No data"
+  const start = marketDateParts(first).start
+  const end = marketDateParts(last).end
+  if (start === end) return formatMarketDateLabel(start)
+  return `${start} ${new Date().getFullYear()} → ${end} ${new Date().getFullYear()}`
+}
+
+function formatMarketDateLabel(label: string) {
+  const parts = marketDateParts(label)
   const year = new Date().getFullYear()
-  return `${first} ${year} → ${last} ${year}`
+  if (parts.start === parts.end) return `${parts.start} ${year}`
+  return `${parts.start} ${year} → ${parts.end} ${year}`
+}
+
+function marketDateParts(label: string) {
+  const [start, end] = label.split(" - ")
+  return { start: start ?? label, end: end ?? start ?? label }
 }
 
 function TokenCostSection(props: { data: StatsHomeData["tokenCost"] }) {
@@ -1019,7 +1047,7 @@ function TokenCostChart(props: {
   activeIndex: number
   onActiveIndexChange: (index: number) => void
 }) {
-  const max = createMemo(() => Math.max(1, ...props.data.map((item) => item.total)))
+  const max = createMemo(() => Math.max(0, ...props.data.map((item) => item.total)) || 1)
   const active = createMemo(() => props.data[props.activeIndex] ?? props.data[0])
 
   return (
@@ -1066,9 +1094,14 @@ function formatDollars(value: number) {
 }
 
 function MetricBar(props: { value: number; max: number; active: boolean }) {
+  const fill = createMemo(() => Math.min(1, Math.max(props.value / props.max, props.value > 0 ? 0.03 : 0)))
   return (
-    <i data-component="metric-bar" data-active={props.active ? "true" : undefined}>
-      <b style={{ "flex-grow": Math.max(props.value / Math.max(props.max, 1), 0.05) }} />
+    <i
+      data-component="metric-bar"
+      data-active={props.active ? "true" : undefined}
+      style={{ "--metric-bar-fill": `${fill() * 100}%` } as JSX.CSSProperties}
+    >
+      <b />
       <em />
     </i>
   )
@@ -1115,8 +1148,8 @@ function SessionCostChart(props: {
   activeIndex: number
   onActiveIndexChange: (index: number) => void
 }) {
-  const maxCost = createMemo(() => Math.max(1, ...props.data.map((item) => item.cost)))
-  const maxTokens = createMemo(() => Math.max(1, ...props.data.map((item) => item.tokens)))
+  const maxCost = createMemo(() => Math.max(0, ...props.data.map((item) => item.cost)) || 1)
+  const maxTokens = createMemo(() => Math.max(0, ...props.data.map((item) => item.tokens)) || 1)
   const active = createMemo(() => props.data[props.activeIndex] ?? props.data[0])
 
   return (

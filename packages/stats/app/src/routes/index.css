@@ -1719,6 +1719,7 @@
 [data-page="stats"] [data-slot="leader-copy"] strong {
   color: var(--stats-text);
   font-weight: 600;
+  line-height: 1.3;
 }
 
 [data-page="stats"] [data-slot="leader-copy"] span {
@@ -1797,6 +1798,14 @@
   color: var(--stats-text);
   background: transparent;
   font-weight: 600;
+}
+
+[data-page="stats"] [data-slot="market-axis-label"] {
+  display: grid;
+}
+
+[data-page="stats"] [data-slot="market-date-mobile"] {
+  display: none;
 }
 
 [data-page="stats"] [data-slot="market-bars"] {
@@ -1977,23 +1986,21 @@
 }
 
 [data-page="stats"] [data-component="metric-bar"] {
-  display: flex;
-  align-items: center;
-  gap: 3px;
+  position: relative;
+  display: block;
   flex: 1;
   min-width: 0;
   height: 5px;
+  background: var(--stats-layer-2);
   font-style: normal;
 }
 
-[data-page="stats"] [data-component="metric-bar"] b,
-[data-page="stats"] [data-component="metric-bar"] em {
-  display: block;
-  height: 5px;
-}
-
 [data-page="stats"] [data-component="metric-bar"] b {
-  flex-basis: 0;
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  width: var(--metric-bar-fill);
+  height: 5px;
   background: var(--stats-text);
 }
 
@@ -2002,12 +2009,10 @@
 }
 
 [data-page="stats"] [data-component="metric-bar"] em {
-  flex: 1;
-  min-width: 8px;
-  background: var(--stats-layer-2);
+  display: none;
 }
 
-[data-page="stats"] [data-component="metric-bar"][data-active="true"] em {
+[data-page="stats"] [data-component="metric-bar"][data-active="true"] {
   background: var(--stats-line-strong);
 }
 
@@ -2311,6 +2316,13 @@
     grid-template-rows: none;
   }
 
+  [data-page="stats"] [data-component="token-tooltip"] {
+    position: static;
+    order: -1;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
   [data-page="stats"] [data-slot="market-footer"] {
     align-items: flex-start;
     flex-direction: column;
@@ -2376,6 +2388,11 @@
     height: 400px;
   }
 
+  [data-page="stats"] [data-component="market-share"] {
+    grid-template-rows: 40px minmax(0, 1fr);
+    height: 400px;
+  }
+
   [data-page="stats"] [data-slot="top-models-axis"] > div {
     position: relative;
     display: flex;
@@ -2385,7 +2402,24 @@
     font-weight: 600;
   }
 
+  [data-page="stats"] [data-slot="market-labels"] button {
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    line-height: 1.2;
+  }
+
   [data-page="stats"] [data-slot="axis-label"] {
+    position: absolute;
+    left: 50%;
+    width: max-content;
+    max-width: 72px;
+    transform: rotate(-90deg) translateX(-50%);
+    transform-origin: left center;
+  }
+
+  [data-page="stats"] [data-slot="market-axis-label"] {
     position: absolute;
     left: 50%;
     width: max-content;
@@ -2400,7 +2434,17 @@
     display: none;
   }
 
+  [data-page="stats"] [data-slot="market-labels"] button[data-mobile-hidden="true"] [data-slot="market-axis-label"],
+  [data-page="stats"] [data-slot="market-total"],
+  [data-page="stats"] [data-slot="market-date-full"] {
+    display: none;
+  }
+
   [data-page="stats"] [data-slot="axis-date-mobile"] {
+    display: block;
+  }
+
+  [data-page="stats"] [data-slot="market-date-mobile"] {
     display: block;
   }
 
