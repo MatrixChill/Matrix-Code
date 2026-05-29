@@ -598,6 +598,7 @@ function TopModelsChart(props: {
 }) {
   const [activeIndex, setActiveIndex] = createSignal<number>()
   const maxTotal = createMemo(() => getTopModelsMaxTotal(props.data))
+  const segmentOrder = createMemo(() => getTopModelsSegmentOrder(props.data))
   const activePoint = createMemo(() => props.data[activeIndex() ?? -1])
 
   return (
@@ -671,8 +672,11 @@ function TopModelsChart(props: {
                 props.onActiveModelChange(undefined)
               }}
             >
-              <div data-slot="top-models-stack" style={{ "grid-template-rows": getTopModelsSegmentRows(day) }}>
-                <For each={stackedTopModelsSegments(day)}>
+              <div
+                data-slot="top-models-stack"
+                style={{ "grid-template-rows": getTopModelsSegmentRows(day, segmentOrder()) }}
+              >
+                <For each={stackedTopModelsSegments(day, segmentOrder())}>
                   {(item) => (
                     <i
                       data-series={item.index}
@@ -682,6 +686,7 @@ function TopModelsChart(props: {
                         background: getTopModelsSegmentColor(
                           item.segment.model,
                           item.index,
+                          segmentOrder(),
                           activeIndex() !== undefined && activeIndex() !== dayIndex(),
                           props.activeModel,
                         ),
@@ -725,7 +730,10 @@ function TopModelsChart(props: {
                           }
                         >
                           <span data-slot="tooltip-label">
-                            <i style={{ background: usageColors[item.index] }} /> {item.segment.model}
+                            <i
+                              style={{ background: getRankColor(item.segment.model, item.index, segmentOrder(), usageColors) }}
+                            />{" "}
+                            {item.segment.model}
                           </span>
                           <b>{formatTokens(item.segment.value)}</b>
                         </p>
@@ -754,10 +762,10 @@ function getTopModelsMaxTotal(data: UsagePoint[]) {
   return max
 }
 
-function getTopModelsSegmentRows(point: UsagePoint) {
+function getTopModelsSegmentRows(point: UsagePoint, order: Map<string, number>) {
   const total = usageTotal(point)
   if (total <= 0) return ""
-  return stackedTopModelsSegments(point)
+  return stackedTopModelsSegments(point, order)
     .map((item) => `${(item.segment.value / total) * 100}%`)
     .join(" ")
 }
@@ -766,17 +774,29 @@ function visibleTopModelsSegments(point: UsagePoint) {
   return point.segments.map((segment, index) => ({ segment, index })).filter((item) => item.segment.value > 0)
 }
 
-function stackedTopModelsSegments(point: UsagePoint) {
+function stackedTopModelsSegments(point: UsagePoint, order: Map<string, number>) {
   return visibleTopModelsSegments(point)
     .slice()
-    .sort((a, b) => a.segment.value - b.segment.value || a.index - b.index)
+    .sort((a, b) => (order.get(b.segment.model) ?? b.index) - (order.get(a.segment.model) ?? a.index))
 }
 
-function getTopModelsSegmentColor(model: string, index: number, muted: boolean, activeModel: string | undefined) {
+function getTopModelsSegmentOrder(data: UsagePoint[]) {
+  return getRankOrder(
+    data.flatMap((point) => point.segments.map((segment, index) => ({ key: segment.model, value: segment.value, index }))),
+  )
+}
+
+function getTopModelsSegmentColor(
+  model: string,
+  index: number,
+  order: Map<string, number>,
+  muted: boolean,
+  activeModel: string | undefined,
+) {
   if (activeModel !== undefined)
-    return activeModel === model ? (usageColors[index] ?? "var(--stats-text)") : "var(--stats-layer-2)"
+    return activeModel === model ? getRankColor(model, index, order, usageColors) : "var(--stats-layer-2)"
   if (muted) return "var(--stats-layer-2)"
-  return usageColors[index] ?? "var(--stats-text)"
+  return getRankColor(model, index, order, usageColors)
 }
 
 function isTopModelsMobileAxisHidden(index: number, count: number) {
@@ -895,6 +915,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
   const [activeAuthor, setActiveAuthor] = createSignal<string>()
   const [inspecting, setInspecting] = createSignal(false)
   const data = createMemo(() => props.data[range()])
+  const authorOrder = createMemo(() => getMarketAuthorOrder(data()))
   const selectedIndex = createMemo(() => Math.min(activeIndex(), Math.max(data().length - 1, 0)))
   const activeDay = createMemo(() => data()[selectedIndex()])
 
@@ -919,6 +940,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
             <MarketShare
               data={data()}
               range={range()}
+              authorOrder={authorOrder()}
               activeIndex={selectedIndex()}
               activeAuthor={activeAuthor()}
               inspecting={inspecting()}
@@ -933,6 +955,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
             />
             <MarketShareList
               data={day().authors}
+              authorOrder={authorOrder()}
               activeAuthor={activeAuthor()}
               onActiveAuthorChange={(author) => {
                 setActiveAuthor(author)
@@ -966,6 +989,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
 function MarketShare(props: {
   data: MarketDay[]
   range: UsageRange
+  authorOrder: Map<string, number>
   activeIndex: number
   activeAuthor: string | undefined
   inspecting: boolean
@@ -1013,9 +1037,10 @@ function MarketShare(props: {
               onClick={() => props.onActiveIndexChange(index())}
               onPointerEnter={() => props.onActiveIndexChange(index())}
             >
-              <For each={stackedMarketAuthors(day)}>
+              <For each={stackedMarketAuthors(day, props.authorOrder)}>
                 {(item) => (
                   <span
+                    data-author={item.author.author}
                     data-active={props.activeAuthor === item.author.author ? "true" : undefined}
                     data-muted={
                       props.activeAuthor !== undefined && props.activeAuthor !== item.author.author ? "true" : undefined
@@ -1023,7 +1048,7 @@ function MarketShare(props: {
                     style={{
                       "background-color": getMarketSegmentColor(
                         item.author.author,
-                        marketColors[item.index] ?? "var(--stats-text)",
+                        getRankColor(item.author.author, item.index, props.authorOrder, marketColors),
                         props.activeAuthor,
                       ),
                       "flex-grow": item.author.share,
@@ -1056,6 +1081,7 @@ function MarketShare(props: {
 
 function MarketShareList(props: {
   data: MarketDay["authors"]
+  authorOrder: Map<string, number>
   activeAuthor: string | undefined
   onActiveAuthorChange: (author: string) => void
 }) {
@@ -1077,7 +1103,7 @@ function MarketShareList(props: {
             }}
           >
             <span>{String(index() + 1).padStart(2, "0")}</span>
-            <i style={{ background: marketColors[index()] }} />
+            <i style={{ background: getRankColor(item.author, index(), props.authorOrder, marketColors) }} />
             <strong>{item.author}</strong>
             <em>{formatTrillions(item.tokens)}</em>
             <b>{item.share.toFixed(1)}%</b>
@@ -1094,11 +1120,38 @@ function getMarketSegmentColor(author: string, color: string, activeAuthor: stri
   return "var(--stats-bar-idle)"
 }
 
-function stackedMarketAuthors(day: MarketDay) {
+function stackedMarketAuthors(day: MarketDay, order: Map<string, number>) {
   return day.authors
     .map((author, index) => ({ author, index }))
     .slice()
-    .sort((a, b) => a.author.share - b.author.share || a.index - b.index)
+    .sort((a, b) => (order.get(b.author.author) ?? b.index) - (order.get(a.author.author) ?? a.index))
+}
+
+function getMarketAuthorOrder(data: MarketDay[]) {
+  return getRankOrder(
+    data.flatMap((day) => day.authors.map((author, index) => ({ key: author.author, value: author.tokens, index }))),
+  )
+}
+
+function getRankOrder(items: { key: string; value: number; index: number }[]) {
+  return new Map<string, number>(
+    Object.values(
+      items.reduce<Record<string, { key: string; value: number; index: number }>>((result, item) => {
+        result[item.key] = {
+          key: item.key,
+          value: (result[item.key]?.value ?? 0) + item.value,
+          index: Math.min(result[item.key]?.index ?? item.index, item.index),
+        }
+        return result
+      }, {}),
+    )
+      .toSorted((a, b) => b.value - a.value || a.index - b.index || a.key.localeCompare(b.key))
+      .map((item, index) => [item.key, index] as const),
+  )
+}
+
+function getRankColor(key: string, fallbackIndex: number, order: Map<string, number>, colors: readonly string[]) {
+  return colors[order.get(key) ?? fallbackIndex] ?? "var(--stats-text)"
 }
 
 function isMarketMobileLabelHidden(index: number, count: number) {
