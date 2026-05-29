@@ -48,12 +48,7 @@ function authFile() {
 
 function authService(layer: Layer.Layer<AppFileSystem.Service>) {
   return McpAuth.Service.use((auth) => Effect.succeed(auth)).pipe(
-    Effect.provide(
-      McpAuth.layer.pipe(
-        Layer.provide(EffectFlock.defaultLayer),
-        Layer.provide(layer),
-      ),
-    ),
+    Effect.provide(McpAuth.layer.pipe(Layer.provide(EffectFlock.defaultLayer), Layer.provide(layer))),
   )
 }
 
