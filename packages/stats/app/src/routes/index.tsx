@@ -596,18 +596,23 @@ function TopModelsChart(props: {
   activeModel: string | undefined
   onActiveModelChange: (model: string | undefined) => void
 }) {
+  let chartRef: HTMLDivElement | undefined
   const [activeIndex, setActiveIndex] = createSignal<number>()
   const maxTotal = createMemo(() => getTopModelsMaxTotal(props.data))
   const segmentOrder = createMemo(() => getTopModelsSegmentOrder(props.data))
   const activePoint = createMemo(() => props.data[activeIndex() ?? -1])
 
+  createEffect(() => scrollDenseChartToEnd(chartRef, props.range, props.data.length))
+
   return (
     <div
+      ref={chartRef}
       data-component="top-models-chart"
       data-range={props.range}
       data-dense-labels={isDenseColumnRange(props.range) ? "true" : undefined}
       role="img"
       aria-label="Stacked top model usage chart"
+      style={{ "--top-models-count": props.data.length } as JSX.CSSProperties}
     >
       <div data-slot="top-models-axis" aria-hidden="true">
         <For each={props.data}>
@@ -817,6 +822,13 @@ function isDenseColumnRange(range: UsageRange) {
   return range === "1M" || range === "2M"
 }
 
+function scrollDenseChartToEnd(element: HTMLDivElement | undefined, range: UsageRange, count: number) {
+  if (!element || count <= 0 || !isDenseColumnRange(range) || typeof window === "undefined") return
+  window.requestAnimationFrame(() => {
+    element.scrollLeft = element.scrollWidth - element.clientWidth
+  })
+}
+
 function formatTopModelsMobileDate(label: string, range: UsageRange) {
   if (range === "1M" || range === "2M") return label.split(" - ")[0] ?? label
   return label
@@ -1000,8 +1012,13 @@ function MarketShare(props: {
   onActiveIndexChange: (index: number) => void
   onActiveAuthorChange: (author: string) => void
 }) {
+  let chartRef: HTMLDivElement | undefined
+
+  createEffect(() => scrollDenseChartToEnd(chartRef, props.range, props.data.length))
+
   return (
     <div
+      ref={chartRef}
       data-component="market-share"
       data-range={props.range}
       data-dense-labels={isDenseColumnRange(props.range) ? "true" : undefined}

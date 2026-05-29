@@ -2858,6 +2858,37 @@
     height: 400px;
   }
 
+  [data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"],
+  [data-page="stats"] [data-component="market-share"][data-dense-labels="true"] {
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  [data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"]::-webkit-scrollbar,
+  [data-page="stats"] [data-component="market-share"][data-dense-labels="true"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] {
+    --top-models-mobile-bar-width: 12px;
+  }
+
+  [data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="top-models-axis"],
+  [data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="top-models-bars"] {
+    min-width: calc(var(--top-models-count) * (var(--top-models-mobile-bar-width) + var(--top-models-bar-gap)));
+  }
+
+  [data-page="stats"] [data-component="market-share"][data-dense-labels="true"] {
+    --market-mobile-bar-width: 12px;
+  }
+
+  [data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-labels"],
+  [data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-bars"] {
+    min-width: calc(var(--market-count) * (var(--market-mobile-bar-width) + var(--market-gap)));
+  }
+
   [data-page="stats"] [data-slot="top-models-axis"] > div {
     position: relative;
     display: flex;
