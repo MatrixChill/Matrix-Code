@@ -1065,8 +1065,64 @@
   flex-direction: column;
 }
 
+[data-page="stats"] [data-slot="top-models-axis"] > div[data-label-hidden="true"]:not([data-active="true"])
+  [data-slot="axis-label"],
+[data-page="stats"] [data-slot="market-labels"] button[data-label-hidden="true"]:not([data-active="true"])
+  [data-slot="market-axis-label"] {
+  visibility: hidden;
+}
+
 [data-page="stats"] [data-slot="axis-date-mobile"] {
   display: none;
+}
+
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] {
+  grid-template-rows: 40px minmax(0, 1fr);
+}
+
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] {
+  grid-template-rows: 40px minmax(0, 1fr);
+}
+
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"]
+  [data-slot="top-models-axis"]
+  > div {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  font-weight: 600;
+}
+
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-labels"] button {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  line-height: 1.2;
+}
+
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="axis-label"],
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-axis-label"] {
+  position: absolute;
+  left: 50%;
+  width: max-content;
+  max-width: 72px;
+  transform: rotate(-90deg) translateX(-50%);
+  transform-origin: left center;
+}
+
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="axis-total"],
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="axis-date-full"],
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-total"],
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-date-full"] {
+  display: none;
+}
+
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="axis-date-mobile"],
+[data-page="stats"] [data-component="market-share"][data-dense-labels="true"] [data-slot="market-date-mobile"] {
+  display: block;
 }
 
 [data-page="stats"] [data-slot="top-models-bars"] {

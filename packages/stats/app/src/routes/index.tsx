@@ -370,7 +370,7 @@ function formatUpdatedAtLabel(value: { date: string; time: string }) {
 
 function TopModelsSection(props: { data: StatsHomeData["usage"] }) {
   const [product, setProduct] = createSignal<UsageProduct>("All Users")
-  const [range, setRange] = createSignal<UsageRange>("1W")
+  const [range, setRange] = createSignal<UsageRange>("2M")
   const [sheet, setSheet] = createSignal<"product" | "range">()
   const data = createMemo(() => props.data[product()][range()])
 
@@ -585,6 +585,7 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
     <div
       data-component="top-models-chart"
       data-range={props.range}
+      data-dense-labels={isDenseColumnRange(props.range) ? "true" : undefined}
       role="img"
       aria-label="Stacked top model usage chart"
     >
@@ -593,6 +594,7 @@ function TopModelsChart(props: { data: UsagePoint[]; range: UsageRange }) {
           {(day, index) => (
             <div
               data-active={activeIndex() === index() ? "true" : undefined}
+              data-label-hidden={isColumnLabelHidden(index(), props.data.length) ? "true" : undefined}
               data-mobile-hidden={isTopModelsMobileAxisHidden(index(), props.data.length) ? "true" : undefined}
             >
               <span data-slot="axis-label">
@@ -755,6 +757,16 @@ function isTopModelsMobileAxisHidden(index: number, count: number) {
   return count > 7 && index % 2 === 1
 }
 
+function isColumnLabelHidden(index: number, count: number) {
+  if (count <= 20) return false
+  const interval = Math.ceil(count / 8)
+  return index !== count - 1 && index % interval !== 0
+}
+
+function isDenseColumnRange(range: UsageRange) {
+  return range === "1M" || range === "2M"
+}
+
 function formatTopModelsMobileDate(label: string, range: UsageRange) {
   if (range === "1M" || range === "2M") return label.split(" - ")[0] ?? label
   return label
@@ -771,7 +783,7 @@ function formatTokens(value: number) {
 
 function LeaderboardSection(props: { data: StatsHomeData["leaderboard"] }) {
   const [product, setProduct] = createSignal<UsageProduct>("All Users")
-  const [range, setRange] = createSignal<UsageRange>("1W")
+  const [range, setRange] = createSignal<UsageRange>("2M")
   const data = createMemo(() => props.data[product()][range()])
 
   return (
@@ -870,7 +882,7 @@ function formatChange(value: number) {
 }
 
 function MarketShareSection(props: { data: StatsHomeData["market"] }) {
-  const [range, setRange] = createSignal<UsageRange>("1W")
+  const [range, setRange] = createSignal<UsageRange>("2M")
   const [activeIndex, setActiveIndex] = createSignal(2)
   const [activeAuthor, setActiveAuthor] = createSignal<string>()
   const [inspecting, setInspecting] = createSignal(false)
@@ -898,6 +910,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
           <>
             <MarketShare
               data={data()}
+              range={range()}
               activeIndex={selectedIndex()}
               activeAuthor={activeAuthor()}
               inspecting={inspecting()}
@@ -944,6 +957,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
 
 function MarketShare(props: {
   data: MarketDay[]
+  range: UsageRange
   activeIndex: number
   activeAuthor: string | undefined
   inspecting: boolean
@@ -953,6 +967,8 @@ function MarketShare(props: {
   return (
     <div
       data-component="market-share"
+      data-range={props.range}
+      data-dense-labels={isDenseColumnRange(props.range) ? "true" : undefined}
       role="img"
       aria-label="Market share by model author"
       style={{ "--market-count": props.data.length } as JSX.CSSProperties}
@@ -963,6 +979,7 @@ function MarketShare(props: {
             <button
               type="button"
               data-active={props.inspecting && props.activeIndex === index() ? "true" : undefined}
+              data-label-hidden={isColumnLabelHidden(index(), props.data.length) ? "true" : undefined}
               data-mobile-hidden={isMarketMobileLabelHidden(index(), props.data.length) ? "true" : undefined}
               onClick={() => props.onActiveIndexChange(index())}
               onPointerEnter={() => props.onActiveIndexChange(index())}
