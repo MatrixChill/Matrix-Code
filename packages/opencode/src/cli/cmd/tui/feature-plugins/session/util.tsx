@@ -53,9 +53,9 @@ function collectTextParts(parts: readonly Part[]): string[] {
   return chunks
 }
 
-export function formatDiffSummary(summary: { additions: number; deletions: number; files: number } | undefined):
-  | { additions: number; deletions: number; files: number }
-  | undefined {
+export function formatDiffSummary(
+  summary: { additions: number; deletions: number; files: number } | undefined,
+): { additions: number; deletions: number; files: number } | undefined {
   if (!summary) return undefined
   if (!summary.additions && !summary.deletions && !summary.files) return undefined
   return summary
@@ -64,6 +64,7 @@ export function formatDiffSummary(summary: { additions: number; deletions: numbe
 export function shortModelLabel(model: { id: string; providerID?: string; variant?: string } | undefined): string {
   if (!model) return ""
   const id = model.id ?? ""
-  const stripped = model.providerID && id.startsWith(`${model.providerID}/`) ? id.slice(model.providerID.length + 1) : id
+  const stripped =
+    model.providerID && id.startsWith(`${model.providerID}/`) ? id.slice(model.providerID.length + 1) : id
   return model.variant ? `${stripped} (${model.variant})` : stripped
 }
