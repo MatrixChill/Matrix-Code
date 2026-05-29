@@ -37,6 +37,17 @@ const headerLinks = [
   { href: "#token-cost", label: "Token Cost" },
   { href: "#session-cost", label: "Session Cost" },
 ] as const
+const githubLink = {
+  href: "https://github.com/anomalyco/opencode",
+  apiHref: "https://api.github.com/repos/anomalyco/opencode",
+  label: "GitHub",
+  fallbackStars: "150K",
+  ariaLabel: "Star OpenCode on GitHub",
+}
+const compactNumberFormatter = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+})
 const usageColors = [
   "#ed6aff",
   "#a684ff",
@@ -61,12 +72,30 @@ const getData = query(async () => {
   return runtime.runPromise(getStatsHomeData())
 }, "getStatsHomeData")
 
+const getGitHubStars = query(async () => {
+  "use server"
+  return fetch(githubLink.apiHref, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  })
+    .then((response) => (response.ok ? response.json() : undefined))
+    .then((body: unknown) =>
+      body && typeof body === "object" && "stargazers_count" in body && typeof body.stargazers_count === "number"
+        ? compactNumberFormatter.format(body.stargazers_count)
+        : githubLink.fallbackStars,
+    )
+    .catch(() => githubLink.fallbackStars)
+}, "getGitHubStars")
+
 export default function StatsHome() {
   getRequestEvent()?.response.headers.set(
     "Cache-Control",
     "public, max-age=60, s-maxage=300, stale-while-revalidate=86400",
   )
   const data = createAsync(() => getData())
+  const githubStars = createAsync(() => getGitHubStars())
 
   return (
     <main data-page="stats">
@@ -76,7 +105,7 @@ export default function StatsHome() {
       <Link rel="preload" href={ibmPlexMonoMediumLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <Link rel="preload" href={ibmPlexMonoSemiBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <Link rel="preload" href={ibmPlexMonoBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
-      <Header />
+      <Header githubStars={githubStars() ?? githubLink.fallbackStars} />
       <div data-component="container">
         <div data-component="content">
           <Show when={data()} fallback={<StatsLoading />}>
@@ -1211,7 +1240,7 @@ function formatSessionCost(value: number) {
   return `$${value.toFixed(4)}`
 }
 
-function Header() {
+function Header(props: { githubStars: string }) {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const [menuViewport, setMenuViewport] = createSignal(false)
 
@@ -1264,12 +1293,13 @@ function Header() {
           <a
             data-slot="header-button"
             data-variant="neutral"
-            href="https://github.com/sst/opencode"
+            href={githubLink.href}
             target="_blank"
             rel="noreferrer"
+            aria-label={`${githubLink.ariaLabel} (${props.githubStars} stars)`}
           >
-            <strong>GitHub</strong>
-            <span>[150K]</span>
+            <strong>{githubLink.label}</strong>
+            <span>[{props.githubStars}]</span>
           </a>
           <a data-slot="header-button" data-variant="contrast" href="https://opencode.ai/">
             <strong>Try OpenCode</strong>
@@ -1294,12 +1324,13 @@ function Header() {
         <a
           data-slot="mobile-menu-item"
           data-variant="github"
-          href="https://github.com/sst/opencode"
+          href={githubLink.href}
           target="_blank"
           rel="noreferrer"
+          aria-label={`${githubLink.ariaLabel} (${props.githubStars} stars)`}
         >
-          <strong>GitHub</strong>
-          <span>[150K]</span>
+          <strong>{githubLink.label}</strong>
+          <span>[{props.githubStars}]</span>
         </a>
         <For each={headerLinks}>
           {(link) => (
@@ -1379,7 +1410,7 @@ function Footer() {
     { href: "mailto:hello@opencode.ai", label: "Contact us" },
     { href: "https://opencode.ai/discord", label: "Community" },
     { href: "https://x.com/opencode", label: "X" },
-    { href: "https://github.com/anomalyco/opencode", label: "GitHub" },
+    githubLink,
     { href: "https://www.youtube.com/@anomaly-co", label: "YouTube" },
   ]
 
