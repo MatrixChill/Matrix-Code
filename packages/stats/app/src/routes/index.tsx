@@ -749,6 +749,9 @@ function Leaderboard(props: { data: LeaderboardEntry[] }) {
           )}
         </For>
       </div>
+      <div data-slot="leaderboard-mobile" aria-label="Scrollable model token leaderboard">
+        <For each={props.data}>{(entry) => <LeaderboardCard entry={entry} size="featured" />}</For>
+      </div>
     </div>
   )
 }
@@ -1184,9 +1187,10 @@ function SessionCostChart(props: {
   return (
     <div data-component="session-cost">
       <div data-slot="session-heading">
-        <span />
+        <strong aria-hidden="true" />
+        <span aria-hidden="true" />
         <p>COST / SESSION</p>
-        <p>TOKENS / SESSIONS</p>
+        <p>TOKENS / SESSION</p>
       </div>
       <For each={props.data}>
         {(item, index) => (

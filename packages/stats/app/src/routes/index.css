@@ -1559,7 +1559,8 @@
 [data-page="stats"] [data-component="leaderboard"],
 [data-page="stats"] [data-slot="leaderboard-featured"],
 [data-page="stats"] [data-slot="leaderboard-compact"],
-[data-page="stats"] [data-slot="leaderboard-column"] {
+[data-page="stats"] [data-slot="leaderboard-column"],
+[data-page="stats"] [data-slot="leaderboard-mobile"] {
   display: grid;
 }
 
@@ -1590,6 +1591,10 @@
 
 [data-page="stats"] [data-slot="leaderboard-column"] {
   gap: 8px;
+}
+
+[data-page="stats"] [data-slot="leaderboard-mobile"] {
+  display: none;
 }
 
 [data-page="stats"] [data-section="leaderboard"] [data-slot="chart-footer"] {
@@ -2024,8 +2029,12 @@
   height: 18px;
 }
 
+[data-page="stats"] [data-slot="session-heading"] strong {
+  flex: 0 0 56px;
+}
+
 [data-page="stats"] [data-slot="session-heading"] span {
-  flex: 0 0 210px;
+  flex: 0 0 150px;
 }
 
 [data-page="stats"] [data-slot="session-heading"] p {
@@ -2305,6 +2314,10 @@
     font-size: 96px;
   }
 
+  [data-page="stats"] [data-slot="session-heading"] {
+    display: none;
+  }
+
   [data-page="stats"] [data-slot="market-labels"],
   [data-page="stats"] [data-slot="market-bars"] {
     gap: 8px;
@@ -2381,6 +2394,57 @@
 
   [data-page="stats"] [data-section="top-models"] [data-slot="chart-footer"] {
     display: none;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-featured"],
+  [data-page="stats"] [data-slot="leaderboard-pattern"],
+  [data-page="stats"] [data-slot="leaderboard-compact"] {
+    display: none;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"] {
+    box-sizing: border-box;
+    display: flex;
+    gap: 12px;
+    width: calc(100% + 48px);
+    margin-inline: -24px;
+    padding-inline: 24px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 24px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"] [data-component="leader-card"] {
+    flex: 0 0 240px;
+    width: 240px;
+    min-height: 156px;
+    gap: 32px;
+    scroll-snap-align: start;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"] [data-slot="leader-body"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"] [data-slot="leader-avatar"] {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border-radius: 6px;
+  }
+
+  [data-page="stats"] [data-slot="leaderboard-mobile"] [data-slot="leader-watermark"] {
+    right: -68px;
+    width: 240px;
+    height: 240px;
   }
 
   [data-page="stats"] [data-component="top-models-chart"] {
