@@ -2368,7 +2368,9 @@
     0 2px 6px #00000052;
 }
 
-[data-page="stats"][data-theme="dark"] [data-component="leader-card"][data-active="true"] [data-slot="leader-watermark"],
+[data-page="stats"][data-theme="dark"]
+  [data-component="leader-card"][data-active="true"]
+  [data-slot="leader-watermark"],
 [data-page="stats"][data-theme="dark"] [data-component="leader-card"]:hover [data-slot="leader-watermark"],
 [data-page="stats"][data-theme="dark"] [data-component="leader-card"]:focus-visible [data-slot="leader-watermark"],
 :root[data-stats-theme="dark"]

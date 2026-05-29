@@ -772,12 +772,7 @@ function stackedTopModelsSegments(point: UsagePoint) {
     .sort((a, b) => a.segment.value - b.segment.value || a.index - b.index)
 }
 
-function getTopModelsSegmentColor(
-  model: string,
-  index: number,
-  muted: boolean,
-  activeModel: string | undefined,
-) {
+function getTopModelsSegmentColor(model: string, index: number, muted: boolean, activeModel: string | undefined) {
   if (activeModel !== undefined)
     return activeModel === model ? (usageColors[index] ?? "var(--stats-text)") : "var(--stats-layer-2)"
   if (muted) return "var(--stats-layer-2)"
