@@ -1065,9 +1065,13 @@
   flex-direction: column;
 }
 
-[data-page="stats"] [data-slot="top-models-axis"] > div[data-label-hidden="true"]:not([data-active="true"])
+[data-page="stats"]
+  [data-slot="top-models-axis"]
+  > div[data-label-hidden="true"]:not([data-active="true"])
   [data-slot="axis-label"],
-[data-page="stats"] [data-slot="market-labels"] button[data-label-hidden="true"]:not([data-active="true"])
+[data-page="stats"]
+  [data-slot="market-labels"]
+  button[data-label-hidden="true"]:not([data-active="true"])
   [data-slot="market-axis-label"] {
   visibility: hidden;
 }
@@ -1084,9 +1088,7 @@
   grid-template-rows: 40px minmax(0, 1fr);
 }
 
-[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"]
-  [data-slot="top-models-axis"]
-  > div {
+[data-page="stats"] [data-component="top-models-chart"][data-dense-labels="true"] [data-slot="top-models-axis"] > div {
   position: relative;
   display: flex;
   align-items: center;
