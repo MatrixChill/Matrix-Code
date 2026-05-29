@@ -1648,15 +1648,16 @@ function SubscribeModal(props: { onClose: () => void }) {
             method="post"
             onSubmit={(event) => {
               event.preventDefault()
+              const form = event.currentTarget
               setStatus("pending")
               setMessage("")
               fetch(`${import.meta.env.BASE_URL}api/newsletter`, {
                 method: "POST",
-                body: new FormData(event.currentTarget),
+                body: new FormData(form),
               }).then(
                 async (response) => {
                   if (response.ok) {
-                    event.currentTarget.reset()
+                    form.reset()
                     setStatus("success")
                     return
                   }
