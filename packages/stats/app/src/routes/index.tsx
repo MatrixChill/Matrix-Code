@@ -38,9 +38,9 @@ const statsUnfurlAlt = "OpenCode Stats wordmark on a dark patterned background"
 const headerLinks = [
   { href: "#top-models", label: "Top Models" },
   { href: "#leaderboard", label: "Leaderboard" },
-  { href: "#market-share", label: "Market Share" },
   { href: "#token-cost", label: "Token Cost" },
   { href: "#session-cost", label: "Session Cost" },
+  { href: "#market-share", label: "Market Share" },
 ] as const
 const githubLink = {
   href: "https://github.com/anomalyco/opencode",
@@ -160,9 +160,9 @@ export default function StatsHome() {
               <>
                 <Hero updatedAt={stats().updatedAt} />
                 <TopModelsSection data={stats().usage} leaderboard={stats().leaderboard} />
-                <MarketShareSection data={stats().market} />
                 <TokenCostSection data={stats().tokenCost} />
                 <SessionCostSection data={stats().sessionCost} />
+                <MarketShareSection data={stats().market} />
               </>
             )}
           </Show>
@@ -913,7 +913,7 @@ function MarketShareSection(props: { data: StatsHomeData["market"] }) {
         setInspecting(false)
       }}
     >
-      <SectionBridge label="LEADERBOARD" href="#leaderboard" />
+      <SectionBridge label="SESSION COST" href="#session-cost" />
       <SectionTitle title="Market Share" description="Compare token share by model author." />
       <Show
         when={activeDay()}
@@ -1154,7 +1154,7 @@ function TokenCostSection(props: { data: StatsHomeData["tokenCost"] }) {
 
   return (
     <section id="token-cost" data-section="token-cost">
-      <SectionBridge label="MARKET SHARE" href="#market-share" />
+      <SectionBridge label="LEADERBOARD" href="#leaderboard" />
       <SectionTitle title="Token Cost" description="Price per 1M tokens." />
       <Show
         when={visible().length > 0}
@@ -1509,9 +1509,9 @@ function Footer(props: {
   const modelStats = [
     { href: "#top-models", label: "Top Models" },
     { href: "#leaderboard", label: "Leaderboard" },
-    { href: "#market-share", label: "Market Share" },
     { href: "#token-cost", label: "Token Cost" },
     { href: "#session-cost", label: "Session Cost" },
+    { href: "#market-share", label: "Market Share" },
   ]
   const legal = [
     { href: "https://opencode.ai/legal/terms-of-service", label: "Terms of service" },
@@ -1527,7 +1527,7 @@ function Footer(props: {
 
   return (
     <footer data-component="footer">
-      <SectionBridge label="SESSION COST" href="#session-cost" />
+      <SectionBridge label="MARKET SHARE" href="#market-share" />
       <div data-slot="footer-grid">
         <a data-slot="footer-mark" href="https://opencode.ai" aria-label="OpenCode home">
           <OpenCodeMark />
