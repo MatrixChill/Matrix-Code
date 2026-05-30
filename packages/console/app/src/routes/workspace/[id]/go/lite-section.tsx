@@ -75,14 +75,11 @@ const createLiteCheckoutUrl = action(
   async (workspaceID: string, successUrl: string, cancelUrl: string, method?: "alipay" | "upi") => {
     "use server"
     return json(
-      await withActor(
-        async () => {
-          const data = await Billing.generateLiteCheckoutUrl({ successUrl, cancelUrl, method })
-          await createReferralFromCookie()
-          return { error: undefined, data }
-        },
-        workspaceID,
-      ).catch((e) => ({
+      await withActor(async () => {
+        const data = await Billing.generateLiteCheckoutUrl({ successUrl, cancelUrl, method })
+        await createReferralFromCookie()
+        return { error: undefined, data }
+      }, workspaceID).catch((e) => ({
         error: e.message as string,
         data: undefined,
       })),
