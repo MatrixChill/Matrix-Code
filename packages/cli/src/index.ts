@@ -9,7 +9,4 @@ const cli = Command.make("opencode", {}, () => Effect.void).pipe(
   Command.withDescription("OpenCode command line interface"),
 )
 
-Command.run(cli, { version: "local" }).pipe(
-  Effect.provide(NodeServices.layer),
-  NodeRuntime.runMain,
-)
+Command.run(cli, { version: "local" }).pipe(Effect.provide(NodeServices.layer), NodeRuntime.runMain)
