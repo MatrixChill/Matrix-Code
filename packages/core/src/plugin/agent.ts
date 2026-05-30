@@ -105,7 +105,9 @@ export const Plugin = PluginV2.define({
     const whitelistedDirs = [TRUNCATION_GLOB, path.join(Global.Path.tmp, "*")]
     const readonlyExternalDirectory: PermissionV2.Ruleset = [
       { permission: "external_directory", pattern: "*", action: "ask" },
-      ...whitelistedDirs.map((pattern): PermissionV2.Rule => ({ permission: "external_directory", pattern, action: "allow" })),
+      ...whitelistedDirs.map(
+        (pattern): PermissionV2.Rule => ({ permission: "external_directory", pattern, action: "allow" }),
+      ),
     ]
     const defaults: PermissionV2.Ruleset = [
       { permission: "*", pattern: "*", action: "allow" },
@@ -137,21 +139,18 @@ export const Plugin = PluginV2.define({
         item.description = "Plan mode. Disallows all edit tools."
         item.mode = "primary"
         item.permissions.push(
-          ...PermissionV2.merge(
-            defaults,
-            [
-              { permission: "question", pattern: "*", action: "allow" },
-              { permission: "plan_exit", pattern: "*", action: "allow" },
-              { permission: "external_directory", pattern: path.join(Global.Path.data, "plans", "*"), action: "allow" },
-              { permission: "edit", pattern: "*", action: "deny" },
-              { permission: "edit", pattern: path.join(".opencode", "plans", "*.md"), action: "allow" },
-              {
-                permission: "edit",
-                pattern: path.relative(worktree, path.join(Global.Path.data, "plans", "*.md")),
-                action: "allow",
-              },
-            ],
-          ),
+          ...PermissionV2.merge(defaults, [
+            { permission: "question", pattern: "*", action: "allow" },
+            { permission: "plan_exit", pattern: "*", action: "allow" },
+            { permission: "external_directory", pattern: path.join(Global.Path.data, "plans", "*"), action: "allow" },
+            { permission: "edit", pattern: "*", action: "deny" },
+            { permission: "edit", pattern: path.join(".opencode", "plans", "*.md"), action: "allow" },
+            {
+              permission: "edit",
+              pattern: path.relative(worktree, path.join(Global.Path.data, "plans", "*.md")),
+              action: "allow",
+            },
+          ]),
         )
       })
 
@@ -159,7 +158,9 @@ export const Plugin = PluginV2.define({
         item.description =
           "General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel."
         item.mode = "subagent"
-        item.permissions.push(...PermissionV2.merge(defaults, [{ permission: "todowrite", pattern: "*", action: "deny" }]))
+        item.permissions.push(
+          ...PermissionV2.merge(defaults, [{ permission: "todowrite", pattern: "*", action: "deny" }]),
+        )
       })
 
       editor.update(AgentV2.ID.make("explore"), (item) => {

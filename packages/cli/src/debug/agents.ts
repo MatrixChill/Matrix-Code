@@ -8,6 +8,12 @@ export const AgentsCommand = Command.make("agents", {}, () =>
   Effect.gen(function* () {
     yield* PluginBoot.Service.use((service) => service.wait())
     const agents = yield* AgentV2.Service.use((service) => service.all())
-    process.stdout.write(JSON.stringify(agents.sort((a, b) => a.id.localeCompare(b.id)), null, 2) + EOL)
+    process.stdout.write(
+      JSON.stringify(
+        agents.sort((a, b) => a.id.localeCompare(b.id)),
+        null,
+        2,
+      ) + EOL,
+    )
   }),
 ).pipe(Command.withDescription("List all agents"))
