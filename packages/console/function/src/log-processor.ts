@@ -171,7 +171,10 @@ function ipPrefix(ip: string | undefined) {
   const full = [...headParts, ...new Array(missing).fill("0"), ...tailParts]
   if (full.length !== 8) return undefined
 
-  const prefix = full.slice(0, 4).map((part) => part.toLowerCase().replace(/^0+(?=.)/, "")).join(":")
+  const prefix = full
+    .slice(0, 4)
+    .map((part) => part.toLowerCase().replace(/^0+(?=.)/, ""))
+    .join(":")
   return `${prefix}::/64`
 }
 
