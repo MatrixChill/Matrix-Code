@@ -192,11 +192,7 @@ Plugins register replayable catalog transforms. Each transform receives a `Catal
 
 ```ts
 interface Catalog {
-  transform(): Effect.Effect<
-    (update: (catalog: Catalog.Editor) => void) => Effect.Effect<void>,
-    never,
-    Scope.Scope
-  >
+  transform(): Effect.Effect<(update: (catalog: Catalog.Editor) => void) => Effect.Effect<void>, never, Scope.Scope>
 }
 ```
 

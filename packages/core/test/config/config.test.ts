@@ -194,9 +194,14 @@ describe("Config", () => {
                 },
                 snapshots: false,
                 watcher: { ignore: ["node_modules/**", "dist/**", ".git"] },
-                formatter: { prettier: { disabled: true }, custom: { command: ["custom-fmt", "$FILE"], extensions: [".foo"] } },
+                formatter: {
+                  prettier: { disabled: true },
+                  custom: { command: ["custom-fmt", "$FILE"], extensions: [".foo"] },
+                },
                 lsp: { typescript: { disabled: true }, custom: { command: ["custom-lsp"], extensions: [".foo"] } },
-                attachments: { image: { auto_resize: false, max_width: 1200, max_height: 900, max_base64_bytes: 1048576 } },
+                attachments: {
+                  image: { auto_resize: false, max_width: 1200, max_height: 900, max_base64_bytes: 1048576 },
+                },
                 tool_output: { max_lines: 1000, max_bytes: 32768 },
                 mcp: {
                   timeout: 5000,
@@ -370,11 +375,15 @@ describe("Config", () => {
             await fs.mkdir(global, { recursive: true })
             await fs.writeFile(
               path.join(global, "opencode.json"),
-              JSON.stringify({ experimental: { policies: [{ effect: "deny", action: "provider.use", resource: "openai" }] } }),
+              JSON.stringify({
+                experimental: { policies: [{ effect: "deny", action: "provider.use", resource: "openai" }] },
+              }),
             )
             await fs.writeFile(
               path.join(tmp.path, "opencode.json"),
-              JSON.stringify({ experimental: { policies: [{ effect: "allow", action: "provider.use", resource: "openai" }] } }),
+              JSON.stringify({
+                experimental: { policies: [{ effect: "allow", action: "provider.use", resource: "openai" }] },
+              }),
             )
           })
 

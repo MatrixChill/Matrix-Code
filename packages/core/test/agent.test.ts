@@ -94,9 +94,7 @@ describe("AgentV2", () => {
       const id = AgentV2.ID.make("custom")
 
       yield* agent.update((editor) => Effect.sync(() => editor.update(id, () => {})))
-      expect(yield* agent.get(id)).toEqual(
-        AgentV2.Info.empty(id),
-      )
+      expect(yield* agent.get(id)).toEqual(AgentV2.Info.empty(id))
 
       yield* agent.update((editor) => Effect.sync(() => editor.remove(id)))
       expect(yield* agent.get(id)).toBeUndefined()

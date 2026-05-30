@@ -15,11 +15,7 @@ export interface Options<State extends Objectish, Editor> {
 
 export interface Interface<State extends Objectish, Editor> {
   readonly get: () => State
-  readonly transform: () => Effect.Effect<
-    (transform: Transform<Editor>) => Effect.Effect<void>,
-    never,
-    Scope.Scope
-  >
+  readonly transform: () => Effect.Effect<(transform: Transform<Editor>) => Effect.Effect<void>, never, Scope.Scope>
   readonly update: (update: (editor: Editor) => Effect.Effect<void>, reason?: string) => Effect.Effect<void>
 }
 

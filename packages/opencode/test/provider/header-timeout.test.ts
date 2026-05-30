@@ -17,12 +17,7 @@ afterEach(async () => {
 })
 
 const it = testEffect(
-  Layer.mergeAll(
-    Provider.defaultLayer,
-    Env.defaultLayer,
-    Plugin.defaultLayer,
-    CrossSpawnSpawner.defaultLayer,
-  ),
+  Layer.mergeAll(Provider.defaultLayer, Env.defaultLayer, Plugin.defaultLayer, CrossSpawnSpawner.defaultLayer),
 )
 
 it.live("headerTimeout does not abort delayed SSE body after headers arrive", () =>

@@ -32,17 +32,21 @@ export class Info extends Schema.Class<Info>("Config.Info")({
   model: Schema.String.pipe(Schema.optional).annotate({
     description: "Default model to use when no session or agent model is selected",
   }),
-  autoupdate: Schema.Union([Schema.Boolean, Schema.Literal("notify")]).pipe(Schema.optional).annotate({
-    description: "Automatically update or notify when a new version is available",
-  }),
+  autoupdate: Schema.Union([Schema.Boolean, Schema.Literal("notify")])
+    .pipe(Schema.optional)
+    .annotate({
+      description: "Automatically update or notify when a new version is available",
+    }),
   share: Schema.Literals(["manual", "auto", "disabled"]).pipe(Schema.optional).annotate({
     description: "Control whether sessions may be shared manually, automatically, or not at all",
   }),
   enterprise: Schema.Struct({
     url: Schema.String.pipe(Schema.optional),
-  }).pipe(Schema.optional).annotate({
-    description: "Enterprise sharing service configuration",
-  }),
+  })
+    .pipe(Schema.optional)
+    .annotate({
+      description: "Enterprise sharing service configuration",
+    }),
   username: Schema.String.pipe(Schema.optional).annotate({
     description: "Username displayed in conversations and used for telemetry identity",
   }),
@@ -196,7 +200,4 @@ export const layer = Layer.effect(
   }),
 )
 
-export const defaultLayer = layer.pipe(
-  Layer.provide(AppFileSystem.defaultLayer),
-  Layer.provide(Global.defaultLayer),
-)
+export const defaultLayer = layer.pipe(Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Global.defaultLayer))
