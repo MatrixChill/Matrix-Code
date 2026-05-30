@@ -7,9 +7,11 @@ import { Catalog } from "../catalog"
 import { Config } from "../config"
 import { ConfigAgentPlugin } from "../config/plugin/agent"
 import { EventV2 } from "../event"
+import { Location } from "../location"
 import { Npm } from "../npm"
 import { PluginV2 } from "../plugin"
 import { AccountPlugin } from "./account"
+import { AgentPlugin } from "./agent"
 import { ConfigProviderPlugin } from "../config/plugin/provider"
 import { EnvPlugin } from "./env"
 import { ModelsDevPlugin } from "./models-dev"
@@ -23,6 +25,7 @@ type Plugin = {
     | AgentV2.Service
     | Npm.Service
     | EventV2.Service
+    | Location.Service
     | PluginV2.Service
     | Config.Service
   >
@@ -42,6 +45,7 @@ export const layer = Layer.effect(
     const accounts = yield* AccountV2.Service
     const agents = yield* AgentV2.Service
     const config = yield* Config.Service
+    const location = yield* Location.Service
     const npm = yield* Npm.Service
     const events = yield* EventV2.Service
     const done = yield* Deferred.make<void>()
@@ -54,6 +58,7 @@ export const layer = Layer.effect(
           Effect.provideService(AccountV2.Service, accounts),
           Effect.provideService(AgentV2.Service, agents),
           Effect.provideService(Config.Service, config),
+          Effect.provideService(Location.Service, location),
           Effect.provideService(Npm.Service, npm),
           Effect.provideService(EventV2.Service, events),
           Effect.provideService(PluginV2.Service, plugin),
@@ -64,6 +69,7 @@ export const layer = Layer.effect(
     const boot = Effect.gen(function* () {
       yield* add(EnvPlugin)
       yield* add(AccountPlugin)
+      yield* add(AgentPlugin.Plugin)
       for (const item of ProviderPlugins) {
         yield* add(item)
       }

@@ -1,6 +1,6 @@
 export * as AgentV2 from "./agent"
 
-import { Array, Context, Effect, Layer, Schema } from "effect"
+import { Array, Context, Effect, Layer, Schema, Scope } from "effect"
 import { castDraft, enableMapSet, type Draft } from "immer"
 import { ModelV2 } from "./model"
 import { PermissionV2 } from "./permission"
@@ -59,7 +59,7 @@ export type Editor = {
 
 export interface Interface {
   readonly transform: State.Interface<Data, Editor>["transform"]
-  readonly update: State.Interface<Data, Editor>["update"]
+  readonly update: (update: State.Transform<Editor>) => Effect.Effect<void, never, Scope.Scope>
   readonly get: (id: ID) => Effect.Effect<Info | undefined>
   readonly all: () => Effect.Effect<Info[]>
 }
@@ -90,7 +90,10 @@ export const layer = Layer.effect(
 
     return Service.of({
       transform: state.transform,
-      update: state.update,
+      update: Effect.fn("AgentV2.update")(function* (update) {
+        const transform = yield* state.transform()
+        yield* transform(update)
+      }),
       get: Effect.fn("AgentV2.get")(function* (id) {
         return state.get().agents.get(id)
       }),

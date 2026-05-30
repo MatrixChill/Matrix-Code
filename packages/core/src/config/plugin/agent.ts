@@ -12,10 +12,9 @@ export const Plugin = PluginV2.define({
   effect: Effect.gen(function* () {
     const agent = yield* AgentV2.Service
     const config = yield* Config.Service
-    const transform = yield* agent.transform()
     const files = yield* config.get()
 
-    yield* transform((editor) => {
+    yield* agent.update((editor) => {
       const permissions = new Map<AgentV2.ID, PermissionV2.Ruleset>()
 
       for (const file of files) {

@@ -76,12 +76,10 @@ describe("AgentV2", () => {
       const id = AgentV2.ID.make("build")
 
       yield* agent.update((editor) =>
-        Effect.sync(() =>
-          editor.update(id, (info) => {
-            info.mode = "primary"
-            info.hidden = true
-          }),
-        ),
+        editor.update(id, (info) => {
+          info.mode = "primary"
+          info.hidden = true
+        }),
       )
 
       expect(yield* agent.get(id)).toMatchObject({ id, mode: "primary", hidden: true })
@@ -93,10 +91,10 @@ describe("AgentV2", () => {
       const agent = yield* AgentV2.Service
       const id = AgentV2.ID.make("custom")
 
-      yield* agent.update((editor) => Effect.sync(() => editor.update(id, () => {})))
+      yield* agent.update((editor) => editor.update(id, () => {}))
       expect(yield* agent.get(id)).toEqual(AgentV2.Info.empty(id))
 
-      yield* agent.update((editor) => Effect.sync(() => editor.remove(id)))
+      yield* agent.update((editor) => editor.remove(id))
       expect(yield* agent.get(id)).toBeUndefined()
     }),
   )
