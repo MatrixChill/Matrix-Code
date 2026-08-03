@@ -105,11 +105,7 @@ function showErrors(input: {
   })
 }
 
-export const loadGlobalConfigQuery = (
-  scope: ServerScope,
-  sdk: OpencodeClient,
-  protocol?: Promise<ServerProtocol>,
-) =>
+export const loadGlobalConfigQuery = (scope: ServerScope, sdk: OpencodeClient, protocol?: Promise<ServerProtocol>) =>
   queryOptions({
     queryKey: [scope, "config"],
     queryFn: async () => {
