@@ -59,7 +59,7 @@ export namespace Referral {
     const accountID = Actor.account()
     const code = await ensureCode(workspaceID)
     const rows = await Database.use(async (tx) => {
-      const [rewards, invites, inviteeReferral, inviteeRewards] = await Promise.all([
+      const [rewards, invites, inviteeReferral] = await Promise.all([
         tx
           .select({
             referralID: ReferralRewardTable.referralID,
@@ -106,19 +106,10 @@ export namespace Referral {
           .where(and(eq(ReferralTable.inviteeAccountID, accountID), isNull(ReferralTable.timeDeleted)))
           .orderBy(asc(UserTable.timeCreated))
           .then((rows) => rows.find((row) => row.inviterEmail) ?? rows[0]),
-        tx
-          .select({ referralID: ReferralRewardTable.referralID })
-          .from(ReferralRewardTable)
-          .innerJoin(ReferralTable, eq(ReferralTable.id, ReferralRewardTable.referralID))
-          .where(
-            and(
-              eq(ReferralTable.inviteeAccountID, accountID),
-              isNull(ReferralRewardTable.timeDeleted),
-              isNull(ReferralTable.timeDeleted),
-            ),
-          ),
       ])
 
+      // Hide pending invitee rewards until the referral_id index can be deployed and this lookup restored.
+      const inviteeRewards = inviteeReferral ? [{ referralID: inviteeReferral.id }] : []
       return { inviteeReferral, inviteeRewards, invites, rewards }
     })
 
