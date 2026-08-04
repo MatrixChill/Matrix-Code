@@ -890,11 +890,13 @@ export const dict = {
   "settings.general.row.showFileTree.title": "Дерево файлів",
   "settings.general.row.showFileTree.description": "Показувати панель дерева файлів у сесіях",
   "settings.general.row.showNavigation.title": "Елементи навігації",
-  "settings.general.row.showNavigation.description": "Показувати кнопки назад і вперед на панелі заголовка десктопного застосунку",
+  "settings.general.row.showNavigation.description":
+    "Показувати кнопки назад і вперед на панелі заголовка десктопного застосунку",
   "settings.general.row.showSearch.title": "Палітра команд",
   "settings.general.row.showSearch.description": "Показувати кнопку пошуку та палітри команд на панелі заголовка",
   "settings.general.row.showTerminal.title": "Термінал",
-  "settings.general.row.showTerminal.description": "Показувати кнопку термінала на панелі заголовка десктопного застосунку",
+  "settings.general.row.showTerminal.description":
+    "Показувати кнопку термінала на панелі заголовка десктопного застосунку",
   "settings.general.row.showStatus.title": "Статус сервера",
   "settings.general.row.showStatus.description": "Показувати кнопку стану сервера на панелі заголовка",
   "settings.general.row.mobileTitlebarBottom.title": "Нижня навігація",

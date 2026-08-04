@@ -814,8 +814,7 @@ export const dict = {
   "settings.general.row.uiFont.title": "Carattere dell'interfaccia utente",
   "settings.general.row.uiFont.description": "Personalizza il carattere utilizzato nell'interfaccia",
   "settings.general.row.followup.title": "Gestione dei prompt successivi",
-  "settings.general.row.followup.description":
-    "Scegli se i prompt successivi intervengono subito o attendono in coda",
+  "settings.general.row.followup.description": "Scegli se i prompt successivi intervengono subito o attendono in coda",
   "settings.general.row.followup.option.queue": "Coda",
   "settings.general.row.followup.option.steer": "Intervieni subito",
   "settings.general.row.showFileTree.title": "Albero dei file",
@@ -927,8 +926,7 @@ export const dict = {
   "settings.general.notifications.errors.title": "Errori",
   "settings.general.notifications.errors.description": "Mostra la notifica di sistema quando si verifica un errore",
   "settings.general.sounds.agent.title": "Agente",
-  "settings.general.sounds.agent.description":
-    "Riproduci un suono quando l'agente ha terminato o richiede attenzione",
+  "settings.general.sounds.agent.description": "Riproduci un suono quando l'agente ha terminato o richiede attenzione",
   "settings.general.sounds.permissions.title": "Autorizzazioni",
   "settings.general.sounds.permissions.description": "Riproduci l'audio quando è richiesta un'autorizzazione",
   "settings.general.sounds.errors.title": "Errori",

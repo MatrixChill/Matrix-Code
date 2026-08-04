@@ -882,8 +882,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Ler",
   "settings.permissions.tool.read.description": "Ler um arquivo (corresponde ao caminho do arquivo)",
   "settings.permissions.tool.edit.title": "Editar",
-  "settings.permissions.tool.edit.description":
-    "Modificar arquivos, incluindo edições, escritas e patches",
+  "settings.permissions.tool.edit.description": "Modificar arquivos, incluindo edições, escritas e patches",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Corresponder arquivos usando padrões glob",
   "settings.permissions.tool.grep.title": "Grep",

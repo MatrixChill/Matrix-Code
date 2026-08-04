@@ -26,7 +26,8 @@ export const dict: Record<string, string> = {
   "ui.sessionReviewV2.nextFile": "अगली फ़ाइल",
   "ui.sessionReviewV2.diffView": "डिफ़ दृश्य",
   "ui.sessionReviewV2.empty.noGit.title": "कोई ट्रैक किए गए परिवर्तन नहीं",
-  "ui.sessionReviewV2.empty.noGit.description": "इस प्रोजेक्ट में परिवर्तनों को ट्रैक करें, समीक्षा करें और पूर्ववत करें",
+  "ui.sessionReviewV2.empty.noGit.description":
+    "इस प्रोजेक्ट में परिवर्तनों को ट्रैक करें, समीक्षा करें और पूर्ववत करें",
   "ui.sessionReviewV2.empty.noGit.action": "Git रिपॉजिटरी बनाएं",
   "ui.sessionReviewV2.empty.noGit.actionLoading": "Git रिपॉजिटरी बनाई जा रही है...",
   "ui.sessionReviewV2.empty.changes.title": "अभी तक कोई फ़ाइल परिवर्तन नहीं हुआ",
@@ -67,10 +68,12 @@ export const dict: Record<string, string> = {
   "ui.sessionTurn.error.freeUsageExceeded": "मुफ़्त उपयोग की सीमा पार हो गई",
   "ui.sessionTurn.error.addCredits": "क्रेडिट जोड़ें",
   "dialog.usageExceeded.freeTier.title": "मुफ़्त सीमा पूरी हो गई",
-  "dialog.usageExceeded.freeTier.description": "$5/month से शुरू होने वाली सदस्यता के साथ सर्वोत्तम ओपन-सोर्स मॉडलों तक विश्वसनीय पहुँच के लिए OpenCode Go की सदस्यता लें।",
+  "dialog.usageExceeded.freeTier.description":
+    "$5/month से शुरू होने वाली सदस्यता के साथ सर्वोत्तम ओपन-सोर्स मॉडलों तक विश्वसनीय पहुँच के लिए OpenCode Go की सदस्यता लें।",
   "dialog.usageExceeded.freeTier.actionLabel": "सदस्यता लें",
   "dialog.usageExceeded.accountRateLimit.title": "Go सीमा पूरी हो गई",
-  "dialog.usageExceeded.accountRateLimit.description": "उपयोग सीमा पूरी हो गई। इस मॉडल का उपयोग अभी जारी रखने के लिए अपनी उपलब्ध शेष राशि से उपयोग सक्षम करें",
+  "dialog.usageExceeded.accountRateLimit.description":
+    "उपयोग सीमा पूरी हो गई। इस मॉडल का उपयोग अभी जारी रखने के लिए अपनी उपलब्ध शेष राशि से उपयोग सक्षम करें",
   "dialog.usageExceeded.accountRateLimit.actionLabel": "सेटिंग्स खोलें",
   "ui.sessionTurn.status.delegating": "कार्य सौंपना",
   "ui.sessionTurn.status.planning": "अगले चरणों की योजना बनाना",

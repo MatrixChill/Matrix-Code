@@ -750,7 +750,8 @@ export const dict = {
   "sidebar.workspaces.disable": "Schakel werkruimten uit",
   "sidebar.gettingStarted.title": "Aan de slag",
   "sidebar.gettingStarted.line1": "OpenCode bevat gratis modellen, zodat je direct aan de slag kunt.",
-  "sidebar.gettingStarted.line2": "Maak verbinding met een aanbieder om modellen te gebruiken, waaronder Claude, GPT en Gemini.",
+  "sidebar.gettingStarted.line2":
+    "Maak verbinding met een aanbieder om modellen te gebruiken, waaronder Claude, GPT en Gemini.",
   "sidebar.project.recentSessions": "Recente sessies",
   "sidebar.project.viewAllSessions": "Bekijk alle sessies",
   "sidebar.project.clearNotifications": "Meldingen wissen",

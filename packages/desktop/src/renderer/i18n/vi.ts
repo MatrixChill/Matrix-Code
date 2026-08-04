@@ -13,7 +13,8 @@ export const dict = {
   "desktop.updater.downloadFailed.title": "Cập nhật không thành công",
   "desktop.updater.downloadFailed.message": "Không tải được bản cập nhật xuống",
   "desktop.updater.downloaded.title": "Đã tải xuống bản cập nhật",
-  "desktop.updater.downloaded.prompt": "Phiên bản {{version}} của OpenCode đã được tải xuống, bạn có muốn cài đặt và khởi chạy lại không?",
+  "desktop.updater.downloaded.prompt":
+    "Phiên bản {{version}} của OpenCode đã được tải xuống, bạn có muốn cài đặt và khởi chạy lại không?",
   "desktop.updater.installFailed.title": "Cập nhật không thành công",
   "desktop.updater.installFailed.message": "Không cài đặt được bản cập nhật",
   "desktop.cli.installed.title": "Đã cài đặt CLI",

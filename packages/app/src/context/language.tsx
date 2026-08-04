@@ -230,8 +230,7 @@ const localeMatchers: Array<{ locale: Locale; match: (language: string) => boole
   },
   {
     locale: "az",
-    match: (language) =>
-      language.startsWith("az") && !language.includes("arab") && !language.includes("cyrl"),
+    match: (language) => language.startsWith("az") && !language.includes("arab") && !language.includes("cyrl"),
   },
   { locale: "fi", match: (language) => language.startsWith("fi") },
   { locale: "sv", match: (language) => language.startsWith("sv") },

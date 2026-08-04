@@ -705,7 +705,8 @@ export const dict = {
   "terminal.close": "Sulje terminaali",
   "terminal.connectionLost.title": "Yhteys katkesi",
   "terminal.connectionLost.abnormalClose": "WebSocket sulkeutui poikkeavasti: {{code}}",
-  "terminal.connectionLost.description": "Terminaaliyhteys katkesi. Näin voi tapahtua, kun palvelin käynnistyy uudelleen.",
+  "terminal.connectionLost.description":
+    "Terminaaliyhteys katkesi. Näin voi tapahtua, kun palvelin käynnistyy uudelleen.",
   "common.closeTab": "Sulje välilehti",
   "common.dismiss": "Hylkää",
   "common.moreCountSuffix": " (+{{count}} muuta)",
@@ -766,8 +767,7 @@ export const dict = {
   "debugBar.jank.label": "JANK",
   "debugBar.jank.tip": "Yli 32 ms kestäneet kuvat viimeisten 5 sekunnin aikana.",
   "debugBar.long.label": "PITKÄ",
-  "debugBar.long.tip":
-    "Estetty aika ja pitkien tehtävien määrä viimeisten 5 sekunnin aikana. Pisin tehtävä: {{max}}.",
+  "debugBar.long.tip": "Estetty aika ja pitkien tehtävien määrä viimeisten 5 sekunnin aikana. Pisin tehtävä: {{max}}.",
   "debugBar.delay.label": "VIIVE",
   "debugBar.delay.tip": "Pisin havaittu syöttöviive viimeisten 5 sekunnin aikana.",
   "debugBar.inp.label": "INP",
@@ -802,7 +802,8 @@ export const dict = {
   "settings.general.row.appearance.title": "Ulkonäkö",
   "settings.general.row.appearance.description": "Mukauta, miltä OpenCode näyttää laitteellasi",
   "settings.general.row.colorScheme.title": "Värimalli",
-  "settings.general.row.colorScheme.description": "Valitse, käyttääkö OpenCode järjestelmän mukaista, vaaleaa vai tummaa teemaa",
+  "settings.general.row.colorScheme.description":
+    "Valitse, käyttääkö OpenCode järjestelmän mukaista, vaaleaa vai tummaa teemaa",
   "settings.general.row.theme.title": "Teema",
   "settings.general.row.theme.description": "Mukauta OpenCoden teemaa.",
   "settings.general.row.font.title": "Koodifontti",

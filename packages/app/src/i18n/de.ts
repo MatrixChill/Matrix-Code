@@ -775,8 +775,7 @@ export const dict = {
   "settings.general.row.pinchZoom.title": "Zoom per Fingergeste",
   "settings.general.row.pinchZoom.description": "Zoomen per Zwei-Finger- und Ctrl-Scroll-Geste erlauben",
   "settings.general.row.wayland.title": "Natives Wayland verwenden",
-  "settings.general.row.wayland.description":
-    "X11-Fallback unter Wayland deaktivieren. Ein Neustart ist erforderlich.",
+  "settings.general.row.wayland.description": "X11-Fallback unter Wayland deaktivieren. Ein Neustart ist erforderlich.",
   "settings.general.row.wayland.tooltip":
     "Unter Linux mit Monitoren unterschiedlicher Bildwiederholraten kann natives Wayland stabiler sein.",
   "settings.general.row.releaseNotes.title": "Versionshinweise",
@@ -1008,7 +1007,8 @@ export const dict = {
   "debugBar.jank.label": "JANK",
   "debugBar.jank.tip": "Frames über 32 ms in den letzten 5 Sekunden.",
   "debugBar.long.label": "LONG",
-  "debugBar.long.tip": "Blockierte Zeit und Anzahl langer Aufgaben in den letzten 5 Sekunden. Längste Aufgabe: {{max}}.",
+  "debugBar.long.tip":
+    "Blockierte Zeit und Anzahl langer Aufgaben in den letzten 5 Sekunden. Längste Aufgabe: {{max}}.",
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Schlechteste beobachtete Eingabeverzögerung in den letzten 5 Sekunden.",
   "debugBar.inp.label": "INP",

@@ -175,7 +175,8 @@ export const dict = {
   "provider.custom.field.baseURL.placeholder": "https://api.miproveedor.com/v1",
   "provider.custom.field.apiKey.label": "Clave API",
   "provider.custom.field.apiKey.placeholder": "Clave API",
-  "provider.custom.field.apiKey.description": "Opcional. Déjalo vacío si gestionas la autenticación mediante encabezados.",
+  "provider.custom.field.apiKey.description":
+    "Opcional. Déjalo vacío si gestionas la autenticación mediante encabezados.",
   "provider.custom.models.label": "Modelos",
   "provider.custom.models.id.label": "ID",
   "provider.custom.models.id.placeholder": "id-modelo",
@@ -300,7 +301,8 @@ export const dict = {
 
   "prompt.toast.pasteUnsupported.title": "Adjunto no compatible",
   "prompt.toast.attachmentDuplicate.title": "Este archivo ya se ha subido",
-  "prompt.toast.pasteUnsupported.description": "Aquí solo se pueden adjuntar imágenes, archivos PDF o archivos de texto.",
+  "prompt.toast.pasteUnsupported.description":
+    "Aquí solo se pueden adjuntar imágenes, archivos PDF o archivos de texto.",
   "prompt.toast.modelAgentRequired.title": "Selecciona un agente y modelo",
   "prompt.toast.modelAgentRequired.description": "Elige un agente y modelo antes de enviar un prompt.",
   "prompt.toast.worktreeCreateFailed.title": "Fallo al crear el árbol de trabajo",
@@ -962,8 +964,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "Leer",
   "settings.permissions.tool.read.description": "Leer un archivo (coincide con la ruta del archivo)",
   "settings.permissions.tool.edit.title": "Editar",
-  "settings.permissions.tool.edit.description":
-    "Modificar archivos mediante ediciones, escrituras y parches",
+  "settings.permissions.tool.edit.description": "Modificar archivos mediante ediciones, escrituras y parches",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Coincidir archivos usando patrones glob",
   "settings.permissions.tool.grep.title": "Grep",

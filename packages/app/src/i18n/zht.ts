@@ -241,7 +241,7 @@ export const dict = {
   "common.attachment": "附件",
 
   "prompt.placeholder.shell": "輸入 shell 命令... {{example}}",
-  "prompt.placeholder.normal": '想問什麼都可以…「{{example}}」',
+  "prompt.placeholder.normal": "想問什麼都可以…「{{example}}」",
   "prompt.placeholder.simple": "想問什麼都可以…",
   "prompt.placeholder.summarizeComments": "摘要留言…",
   "prompt.placeholder.summarizeComment": "摘要這則留言…",
@@ -565,7 +565,7 @@ export const dict = {
   "error.chain.didYouMean": "你是不是想輸入: {{suggestions}}",
   "error.chain.modelNotFound": "找不到模型: {{provider}}/{{model}}",
   "error.chain.checkConfig": "請檢查你的設定 (opencode.json) 中的 provider/model 名稱",
-  "error.chain.mcpFailed": 'MCP 伺服器「{{name}}」啟動失敗。注意：OpenCode 尚不支援 MCP 驗證。',
+  "error.chain.mcpFailed": "MCP 伺服器「{{name}}」啟動失敗。注意：OpenCode 尚不支援 MCP 驗證。",
   "error.chain.providerAuthFailed": "提供者驗證失敗（{{provider}}）：{{message}}",
   "error.chain.providerInitFailed": '無法初始化提供者 "{{provider}}"。請檢查憑證和設定。',
   "error.chain.configJsonInvalid": "設定檔 {{path}} 不是有效的 JSON(C)",

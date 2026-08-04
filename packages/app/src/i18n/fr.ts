@@ -406,8 +406,7 @@ export const dict = {
   "wsl.onboarding.version": "Version : {{version}}",
   "wsl.onboarding.unknown": "inconnue",
   "wsl.onboarding.desktopVersion": "application de bureau {{version}}",
-  "wsl.onboarding.versionMismatch":
-    "La version installée ne correspond pas à celle de l'application de bureau.",
+  "wsl.onboarding.versionMismatch": "La version installée ne correspond pas à celle de l'application de bureau.",
   "wsl.onboarding.adding": "Ajout...",
   "dialog.project.edit.title": "Modifier le projet",
   "dialog.project.edit.name": "Nom",
@@ -475,11 +474,9 @@ export const dict = {
   "toast.theme.title": "Thème changé",
   "toast.scheme.title": "Schéma de couleurs",
   "toast.workspace.enabled.title": "Espaces de travail activés",
-  "toast.workspace.enabled.description":
-    "Plusieurs arbres de travail sont désormais affichés dans la barre latérale",
+  "toast.workspace.enabled.description": "Plusieurs arbres de travail sont désormais affichés dans la barre latérale",
   "toast.workspace.disabled.title": "Espaces de travail désactivés",
-  "toast.workspace.disabled.description":
-    "Seul l'arbre de travail principal est affiché dans la barre latérale",
+  "toast.workspace.disabled.description": "Seul l'arbre de travail principal est affiché dans la barre latérale",
   "toast.permissions.autoaccept.on.title": "Acceptation automatique des permissions",
   "toast.permissions.autoaccept.on.description": "Les demandes de permission seront approuvées automatiquement",
   "toast.permissions.autoaccept.off.title": "Acceptation automatique des permissions désactivée",
@@ -533,8 +530,7 @@ export const dict = {
   "error.chain.responseBody": "Corps de la réponse :\n{{body}}",
   "error.chain.didYouMean": "Vouliez-vous dire : {{suggestions}}",
   "error.chain.modelNotFound": "Modèle introuvable : {{provider}}/{{model}}",
-  "error.chain.checkConfig":
-    "Vérifiez les noms de fournisseur et de modèle dans votre configuration (opencode.json)",
+  "error.chain.checkConfig": "Vérifiez les noms de fournisseur et de modèle dans votre configuration (opencode.json)",
   "error.chain.mcpFailed":
     "Le serveur MCP \"{{name}}\" a échoué. Notez qu'OpenCode ne prend pas encore en charge l'authentification MCP.",
   "error.chain.providerAuthFailed": "Échec de l'authentification du fournisseur ({{provider}}) : {{message}}",
@@ -785,7 +781,7 @@ export const dict = {
     "Sur Linux avec des moniteurs à taux de rafraîchissement mixte, Wayland natif peut être plus stable.",
   "settings.general.row.releaseNotes.title": "Notes de version",
   "settings.general.row.releaseNotes.description":
-    'Afficher les fenêtres contextuelles « Quoi de neuf » après les mises à jour',
+    "Afficher les fenêtres contextuelles « Quoi de neuf » après les mises à jour",
   "settings.updates.row.startup.title": "Vérifier les mises à jour au démarrage",
   "settings.updates.row.startup.description": "Vérifier automatiquement les mises à jour au lancement d'OpenCode",
   "settings.updates.row.check.title": "Vérifier les mises à jour",

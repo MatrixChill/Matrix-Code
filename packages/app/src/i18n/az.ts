@@ -802,7 +802,8 @@ export const dict = {
   "settings.general.row.appearance.title": "Görünüş",
   "settings.general.row.appearance.description": "OpenCode-un cihazınızda necə göründüyünü fərdiləşdirin",
   "settings.general.row.colorScheme.title": "Rəng sxemi",
-  "settings.general.row.colorScheme.description": "OpenCode-un sistem, açıq və ya tünd mövzudan istifadə etməsini seçin",
+  "settings.general.row.colorScheme.description":
+    "OpenCode-un sistem, açıq və ya tünd mövzudan istifadə etməsini seçin",
   "settings.general.row.theme.title": "Mövzu",
   "settings.general.row.theme.description": "OpenCode-un mövzusunu fərdiləşdirin.",
   "settings.general.row.font.title": "Kod şrifti",
@@ -819,7 +820,8 @@ export const dict = {
   "settings.general.row.showFileTree.title": "Fayl ağacı",
   "settings.general.row.showFileTree.description": "Seanslarda fayl ağacı panelini göstərin",
   "settings.general.row.showNavigation.title": "Naviqasiya nəzarətləri",
-  "settings.general.row.showNavigation.description": "Masaüstü tətbiqin başlıq zolağında geri və irəli düymələrini göstərin",
+  "settings.general.row.showNavigation.description":
+    "Masaüstü tətbiqin başlıq zolağında geri və irəli düymələrini göstərin",
   "settings.general.row.showSearch.title": "Komanda palitrası",
   "settings.general.row.showSearch.description": "Başlıq çubuğunda axtarış və əmr palitrası düyməsini göstərin",
   "settings.general.row.showTerminal.title": "Terminal",
@@ -848,7 +850,8 @@ export const dict = {
   "settings.general.row.newInterfaceNotice.description": "Əvvəlki tərtibat artıq mövcud deyil",
   "settings.general.row.newInterfaceNotice.dismiss": "Rədd et",
   "settings.general.row.pinchZoom.title": "Böyütmək üçün çimdikləyin",
-  "settings.general.row.pinchZoom.description": "Trekpadda çimdikləmə və Ctrl-sürüşdürmə jestləri ilə miqyaslamağa icazə verin",
+  "settings.general.row.pinchZoom.description":
+    "Trekpadda çimdikləmə və Ctrl-sürüşdürmə jestləri ilə miqyaslamağa icazə verin",
   "settings.general.row.wayland.title": "Nativ Wayland-dan istifadə et",
   "settings.general.row.wayland.description": "Wayland-da X11 geri dönüşünü deaktiv et. Yenidən başlatma tələb olunur.",
   "settings.general.row.wayland.tooltip":

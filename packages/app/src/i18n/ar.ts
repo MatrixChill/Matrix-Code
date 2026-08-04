@@ -731,7 +731,8 @@ export const dict = {
   "settings.general.row.mobileTitlebarBottom.description":
     "وضع شريط العنوان وعلامات تبويب الجلسات أسفل الشاشة على الأجهزة المحمولة",
   "settings.general.row.showCustomAgents.title": "إظهار الوكيل",
-  "settings.general.row.showCustomAgents.description": "التبديل بين الوكلاء في محرر الرسائل. عند إخفائه، يُستخدم وكيل Build افتراضيًا.",
+  "settings.general.row.showCustomAgents.description":
+    "التبديل بين الوكلاء في محرر الرسائل. عند إخفائه، يُستخدم وكيل Build افتراضيًا.",
   "settings.general.row.reasoningSummaries.title": "إظهار ملخصات الاستدلال",
   "settings.general.row.reasoningSummaries.description": "عرض ملخصات استدلال النموذج في الشريط الزمني",
   "settings.general.row.shellToolPartsExpanded.title": "توسيع أجزاء أداة shell",
@@ -867,8 +868,7 @@ export const dict = {
   "settings.permissions.tool.read.title": "قراءة",
   "settings.permissions.tool.read.description": "قراءة ملف (يطابق مسار الملف)",
   "settings.permissions.tool.edit.title": "تحرير",
-  "settings.permissions.tool.edit.description":
-    "تعديل الملفات، بما في ذلك عمليات التحرير والكتابة وتطبيق الرقع",
+  "settings.permissions.tool.edit.description": "تعديل الملفات، بما في ذلك عمليات التحرير والكتابة وتطبيق الرقع",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "مطابقة الملفات باستخدام أنماط glob",
   "settings.permissions.tool.grep.title": "Grep",

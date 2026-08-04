@@ -854,8 +854,7 @@ export const dict = {
   "settings.updates.row.startup.title": "Sök efter uppdateringar vid start",
   "settings.updates.row.startup.description": "Sök automatiskt efter uppdateringar när OpenCode startas",
   "settings.updates.row.check.title": "Sök efter uppdateringar",
-  "settings.updates.row.check.description":
-    "Sök manuellt efter uppdateringar och installera dem om de är tillgängliga",
+  "settings.updates.row.check.description": "Sök manuellt efter uppdateringar och installera dem om de är tillgängliga",
   "settings.updates.action.checkNow": "Kontrollera nu",
   "settings.updates.action.checking": "Kontrollerar...",
   "settings.updates.action.downloading": "Laddar ned...",

@@ -418,7 +418,8 @@ export const dict = {
   "wsl.onboarding.wslUnavailable.title": "WSL tidak tersedia",
   "wsl.onboarding.wslUnavailable.description": "OpenCode tidak dapat memverifikasi WSL di komputer ini.",
   "wsl.onboarding.installWsl": "Instal WSL",
-  "wsl.onboarding.windowsRestartRequired": "Mulai ulang Windows untuk menyelesaikan instalasi WSL, lalu buka kembali OpenCode.",
+  "wsl.onboarding.windowsRestartRequired":
+    "Mulai ulang Windows untuk menyelesaikan instalasi WSL, lalu buka kembali OpenCode.",
   "wsl.onboarding.next": "Berikutnya",
   "wsl.onboarding.refresh": "Muat ulang",
   "wsl.onboarding.allDistrosAdded": "Semua distro yang terinstal sudah ditambahkan.",
@@ -457,7 +458,7 @@ export const dict = {
   "dialog.releaseNotes.media.alt": "Pratinjau rilis",
 
   "context.breakdown.title": "Rincian Konteks",
-  "context.breakdown.note": "Perkiraan rincian token masukan. \"Lainnya\" mencakup definisi alat dan beban tambahan.",
+  "context.breakdown.note": 'Perkiraan rincian token masukan. "Lainnya" mencakup definisi alat dan beban tambahan.',
   "context.breakdown.system": "Sistem",
   "context.breakdown.user": "Pengguna",
   "context.breakdown.assistant": "Asisten",
@@ -630,7 +631,8 @@ export const dict = {
   "home.sessions.group.today": "Hari ini",
   "home.sessions.group.yesterday": "Kemarin",
   "home.sessions.group.older": "Lebih lama",
-  "home.providerTip": "Hubungkan ke 75+ penyedia untuk menggunakan model lain, termasuk Claude, GPT, Gemini, dan lainnya",
+  "home.providerTip":
+    "Hubungkan ke 75+ penyedia untuk menggunakan model lain, termasuk Claude, GPT, Gemini, dan lainnya",
 
   "session.tab.session": "Sesi",
   "session.tab.review": "Tinjauan",
@@ -651,7 +653,8 @@ export const dict = {
   "session.review.noVcs.createGit.description": "Lacak, tinjau, dan urungkan perubahan di proyek ini",
   "session.review.noVcs.createGit.actionLoading": "Membuat repositori Git...",
   "session.review.noVcs.createGit.action": "Buat repositori Git",
-  "session.review.noSnapshot": "Pelacakan snapshot dinonaktifkan di konfigurasi, sehingga perubahan sesi tidak tersedia",
+  "session.review.noSnapshot":
+    "Pelacakan snapshot dinonaktifkan di konfigurasi, sehingga perubahan sesi tidak tersedia",
   "session.review.noChanges": "Tidak ada perubahan",
   "session.review.noUncommittedChanges": "Belum ada perubahan yang belum dikomit",
   "session.review.noBranchChanges": "Belum ada perubahan cabang",
@@ -739,8 +742,7 @@ export const dict = {
   "status.popover.action.manageServers": "Kelola server",
 
   "session.share.popover.title": "Publikasikan di web",
-  "session.share.popover.description.shared":
-    "Sesi ini publik di web. Siapa pun dengan tautan dapat mengaksesnya.",
+  "session.share.popover.description.shared": "Sesi ini publik di web. Siapa pun dengan tautan dapat mengaksesnya.",
   "session.share.popover.description.unshared":
     "Bagikan sesi secara publik di web. Siapa pun dengan tautan dapat mengaksesnya.",
   "session.share.action.share": "Bagikan",
@@ -762,8 +764,7 @@ export const dict = {
   "terminal.close": "Tutup terminal",
   "terminal.connectionLost.title": "Koneksi Terputus",
   "terminal.connectionLost.abnormalClose": "WebSocket ditutup secara tidak normal: {{code}}",
-  "terminal.connectionLost.description":
-    "Koneksi terminal terputus. Ini bisa terjadi saat server dimulai ulang.",
+  "terminal.connectionLost.description": "Koneksi terminal terputus. Ini bisa terjadi saat server dimulai ulang.",
 
   "common.closeTab": "Tutup tab",
   "common.dismiss": "Tutup",
@@ -808,7 +809,8 @@ export const dict = {
   "sidebar.workspaces.disable": "Nonaktifkan ruang kerja",
   "sidebar.gettingStarted.title": "Memulai",
   "sidebar.gettingStarted.line1": "OpenCode menyertakan model gratis sehingga Anda dapat memulai dengan segera.",
-  "sidebar.gettingStarted.line2": "Hubungkan penyedia mana pun untuk menggunakan model, termasuk Claude, GPT, Gemini, dll.",
+  "sidebar.gettingStarted.line2":
+    "Hubungkan penyedia mana pun untuk menggunakan model, termasuk Claude, GPT, Gemini, dll.",
   "sidebar.project.recentSessions": "Sesi terbaru",
   "sidebar.project.viewAllSessions": "Lihat semua sesi",
   "sidebar.project.clearNotifications": "Hapus notifikasi",
@@ -831,8 +833,7 @@ export const dict = {
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Penundaan masukan terburuk yang diamati dalam 5 detik terakhir.",
   "debugBar.inp.label": "INP",
-  "debugBar.inp.tip":
-    "Perkiraan durasi interaksi selama 5 detik terakhir. Ini mirip INP, bukan INP Web Vitals resmi.",
+  "debugBar.inp.tip": "Perkiraan durasi interaksi selama 5 detik terakhir. Ini mirip INP, bukan INP Web Vitals resmi.",
   "debugBar.cls.label": "CLS",
   "debugBar.cls.tip": "Pergeseran tata letak kumulatif untuk masa pakai aplikasi saat ini.",
   "debugBar.mem.label": "MEM",
@@ -876,7 +877,8 @@ export const dict = {
   "settings.general.row.uiFont.title": "Font UI",
   "settings.general.row.uiFont.description": "Sesuaikan font yang digunakan di seluruh antarmuka",
   "settings.general.row.followup.title": "Perilaku lanjutan",
-  "settings.general.row.followup.description": "Pilih apakah prompt lanjutan segera mengarahkan atau menunggu dalam antrean",
+  "settings.general.row.followup.description":
+    "Pilih apakah prompt lanjutan segera mengarahkan atau menunggu dalam antrean",
   "settings.general.row.followup.option.queue": "Antrean",
   "settings.general.row.followup.option.steer": "Arahkan",
   "settings.general.row.showFileTree.title": "Pohon berkas",
@@ -911,7 +913,8 @@ export const dict = {
   "settings.general.row.newInterfaceNotice.description": "Tata letak sebelumnya sudah tidak tersedia",
   "settings.general.row.newInterfaceNotice.dismiss": "Tutup",
   "settings.general.row.pinchZoom.title": "Cubit untuk zum",
-  "settings.general.row.pinchZoom.description": "Izinkan gerakan cubit pada trackpad dan Ctrl-gulir untuk melakukan zum",
+  "settings.general.row.pinchZoom.description":
+    "Izinkan gerakan cubit pada trackpad dan Ctrl-gulir untuk melakukan zum",
 
   "settings.general.row.wayland.title": "Gunakan Wayland asli",
   "settings.general.row.wayland.description": "Nonaktifkan sistem cadangan X11 di Wayland. Memerlukan mulai ulang.",

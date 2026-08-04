@@ -13,7 +13,8 @@ export const dict: Record<string, string> = {
   "ui.sessionReview.image.loading": "Caricamento...",
   "ui.sessionReview.image.placeholder": "Immagine",
   "ui.sessionReview.largeDiff.title": "Diff troppo grande per essere visualizzato",
-  "ui.sessionReview.largeDiff.meta": "Limite: {{limit}} righe modificate. Numero attuale: {{current}} righe modificate.",
+  "ui.sessionReview.largeDiff.meta":
+    "Limite: {{limit}} righe modificate. Numero attuale: {{current}} righe modificate.",
   "ui.sessionReview.largeDiff.renderAnyway": "Visualizza comunque",
   "ui.sessionReviewV2.expandMode": "Espandi o comprimi il diff",
   "ui.sessionReviewV2.filterFiles": "Filtra file",

@@ -16,8 +16,7 @@ export const dict = {
   "ui.sessionReview.image.loading": "กำลังโหลด...",
   "ui.sessionReview.image.placeholder": "รูปภาพ",
   "ui.sessionReview.largeDiff.title": "Diff มีขนาดใหญ่เกินกว่าจะแสดงผลได้",
-  "ui.sessionReview.largeDiff.meta":
-    "ขีดจำกัด: บรรทัดที่เปลี่ยนแปลง {{limit}} บรรทัด ปัจจุบัน: {{current}} บรรทัด",
+  "ui.sessionReview.largeDiff.meta": "ขีดจำกัด: บรรทัดที่เปลี่ยนแปลง {{limit}} บรรทัด ปัจจุบัน: {{current}} บรรทัด",
   "ui.sessionReview.largeDiff.renderAnyway": "แสดงผลต่อไป",
   "ui.sessionReviewV2.expandMode": "ขยายหรือย่อ diff",
   "ui.sessionReviewV2.filterFiles": "กรองไฟล์",

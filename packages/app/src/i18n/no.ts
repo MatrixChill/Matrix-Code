@@ -917,8 +917,7 @@ export const dict = {
   "debugBar.jank.label": "JANK",
   "debugBar.jank.tip": "Bilder som tar over 32 ms i de siste 5 sekundene.",
   "debugBar.long.label": "LONG",
-  "debugBar.long.tip":
-    "Blokkert tid og antall lange oppgaver i de siste 5 sekundene. Lengste oppgave: {{max}}.",
+  "debugBar.long.tip": "Blokkert tid og antall lange oppgaver i de siste 5 sekundene. Lengste oppgave: {{max}}.",
   "debugBar.delay.label": "DELAY",
   "debugBar.delay.tip": "Lengste observerte inndataforsinkelse i de siste 5 sekundene.",
   "debugBar.inp.label": "INP",
