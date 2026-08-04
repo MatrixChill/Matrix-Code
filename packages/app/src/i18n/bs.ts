@@ -49,7 +49,8 @@ export const dict = {
   "desktop.updater.dialog.checkFailed.title": "Greška pri ažuriranju",
   "desktop.updater.dialog.upToDate.message": "Sve je ažurno.",
   "desktop.updater.dialog.upToDate.title": "Nema ažuriranja",
-  "desktop.updater.dialog.ready.message": "Ažuriranje {{version}} je preuzeto. Želiš li sada ponovo pokrenuti aplikaciju?",
+  "desktop.updater.dialog.ready.message":
+    "Ažuriranje {{version}} je preuzeto. Želiš li sada ponovo pokrenuti aplikaciju?",
   "desktop.updater.dialog.ready.title": "Ažuriranje je spremno",
   "desktop.updater.dialog.restart": "Ponovo pokreni",
   "desktop.updater.dialog.later": "Kasnije",
@@ -61,8 +62,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCode se nije uspio učitati",
   "desktop.recovery.terminated": "Prozor OpenCode-a neočekivano je zatvoren",
   "desktop.recovery.unresponsive": "OpenCode ne reaguje",
-  "desktop.recovery.unresponsive.detail":
-    "Možeš ponovo pokrenuti aplikaciju, otvoriti zapisnike ili nastaviti čekati.",
+  "desktop.recovery.unresponsive.detail": "Možeš ponovo pokrenuti aplikaciju, otvoriti zapisnike ili nastaviti čekati.",
   "desktop.recovery.loadFailed.detail": "Prozor: {{window}}\nURL: {{url}}\nGreška: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Prozor: {{window}}\nRazlog: {{reason}}\nKod: {{code}}",
   "desktop.recovery.unknown": "<nepoznato>",

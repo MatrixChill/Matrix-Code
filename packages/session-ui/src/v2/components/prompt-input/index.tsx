@@ -188,11 +188,9 @@ export function PromptInputV2(props: PromptInputV2Props) {
               classList={{ "font-mono!": state.mode === "shell" }}
             >
               {view.placeholder?.() ??
-                (state.mode === "shell" ? (
-                  i18n.t("ui.promptInput.placeholder.shell")
-                ) : (
-                  i18n.t("ui.promptInput.placeholder.normal", { slash: "/", at: "@" })
-                ))}
+                (state.mode === "shell"
+                  ? i18n.t("ui.promptInput.placeholder.shell")
+                  : i18n.t("ui.promptInput.placeholder.normal", { slash: "/", at: "@" }))}
             </div>
           </Show>
         </div>

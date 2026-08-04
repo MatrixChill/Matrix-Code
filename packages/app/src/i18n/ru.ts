@@ -61,8 +61,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "Не удалось загрузить OpenCode",
   "desktop.recovery.terminated": "Окно OpenCode неожиданно завершило работу",
   "desktop.recovery.unresponsive": "OpenCode не отвечает",
-  "desktop.recovery.unresponsive.detail":
-    "Можно снова запустить приложение, открыть журналы или продолжить ожидание.",
+  "desktop.recovery.unresponsive.detail": "Можно снова запустить приложение, открыть журналы или продолжить ожидание.",
   "desktop.recovery.loadFailed.detail": "Окно: {{window}}\nURL: {{url}}\nОшибка: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Окно: {{window}}\nПричина: {{reason}}\nКод: {{code}}",
   "desktop.recovery.unknown": "<неизвестно>",
@@ -88,14 +87,12 @@ export const dict = {
   "desktop.wsl.error.updateVersion":
     "Обновление OpenCode завершено, но {{distro}} по-прежнему сообщает версию {{installed}}; ожидалась {{expected}}",
   "desktop.wsl.error.noVersion": "нет версии",
-  "desktop.wsl.error.serverExited":
-    "Сервер WSL завершил работу после запуска (код={{code}}, сигнал={{signal}})",
+  "desktop.wsl.error.serverExited": "Сервер WSL завершил работу после запуска (код={{code}}, сигнал={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "Сервер WSL завершил работу до перехода в рабочее состояние (код={{code}}, сигнал={{signal}}){{output}}",
   "desktop.wsl.error.healthTimeout":
     "Истекло время ожидания проверки работоспособности Sidecar для {{distro}} ({{timeout}} мс)",
-  "desktop.wsl.error.commandTimeout":
-    "Истекло время ожидания выполнения {{command}} {{args}} ({{timeout}} мс)",
+  "desktop.wsl.error.commandTimeout": "Истекло время ожидания выполнения {{command}} {{args}} ({{timeout}} мс)",
   "desktop.wsl.error.failedPort": "Не удалось получить порт",
 
   "desktop.picker.error.notSelected": "В средстве выбора не выбран файл",

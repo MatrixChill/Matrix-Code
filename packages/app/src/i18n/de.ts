@@ -1112,8 +1112,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCode konnte nicht geladen werden",
   "desktop.recovery.terminated": "Das OpenCode-Fenster wurde unerwartet beendet",
   "desktop.recovery.unresponsive": "OpenCode reagiert nicht",
-  "desktop.recovery.unresponsive.detail":
-    "Sie können die App neu starten, die Protokolle öffnen oder weiter warten.",
+  "desktop.recovery.unresponsive.detail": "Sie können die App neu starten, die Protokolle öffnen oder weiter warten.",
   "desktop.recovery.loadFailed.detail": "Fenster: {{window}}\nURL: {{url}}\nFehler: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Fenster: {{window}}\nGrund: {{reason}}\nCode: {{code}}",
   "desktop.recovery.unknown": "<unbekannt>",
@@ -1147,8 +1146,7 @@ export const dict = {
   "desktop.picker.error.notSelected": "Im Auswahldialog wurde keine Datei ausgewählt",
   "desktop.picker.error.sizeLimit": "Die ausgewählten Anhänge überschreiten das Limit von {{limit}} MB",
   "command.logs.export": "Protokolle exportieren",
-  "help.tabs.toast.ariaLabel":
-    "Neu: Tabs. Organisieren Sie Ihre Arbeit und aktiven Sitzungen mithilfe von Tabs",
+  "help.tabs.toast.ariaLabel": "Neu: Tabs. Organisieren Sie Ihre Arbeit und aktiven Sitzungen mithilfe von Tabs",
   "help.tabs.toast.dismiss": "Informationen zu Tabs schließen",
   "help.tabs.title": "Neu: Tabs",
   "help.tabs.description": "Organisieren Sie Ihre Arbeit und aktiven Sitzungen mithilfe von Tabs",

@@ -91,8 +91,7 @@ export const dict = {
   "desktop.wsl.error.serverExited": "WSL सर्वर स्टार्टअप के बाद बंद हो गया (code={{code}} signal={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "WSL सर्वर के सुचारु होने से पहले बंद हो गया (code={{code}} signal={{signal}}){{output}}",
-  "desktop.wsl.error.healthTimeout":
-    "{{distro}} के Sidecar की स्वास्थ्य जाँच {{timeout}}ms के बाद समय-सीमा पार कर गई",
+  "desktop.wsl.error.healthTimeout": "{{distro}} के Sidecar की स्वास्थ्य जाँच {{timeout}}ms के बाद समय-सीमा पार कर गई",
   "desktop.wsl.error.commandTimeout": "{{command}} {{args}} ने {{timeout}}ms के बाद समय-सीमा पार कर दी",
   "desktop.wsl.error.failedPort": "पोर्ट प्राप्त नहीं किया जा सका",
 
@@ -524,8 +523,7 @@ export const dict = {
     "किसी टैब में नया सेशन शुरू करें या अपने किसी भी प्रोजेक्ट से मौजूदा सेशन खोलें। कुछ नया शुरू करते समय नया टैब खोलें और काम पूरा होने पर उसे बंद कर दें।",
   "help.tabs.organize":
     "कुछ टैब खुले रखने से सक्रिय सेशन व्यवस्थित करना आसान होता है। यदि आप टैब खुले रखना चाहते हैं, तो उन्हें कोई याद रहने वाला नाम दें।",
-  "help.tabs.home":
-    "आपके सभी सेशन और प्रोजेक्ट नई होम स्क्रीन पर मिलेंगे। किसी सेशन को चुनने पर वह टैब में खुलता है।",
+  "help.tabs.home": "आपके सभी सेशन और प्रोजेक्ट नई होम स्क्रीन पर मिलेंगे। किसी सेशन को चुनने पर वह टैब में खुलता है।",
   "help.tabs.persistence": "ऐप दोबारा खोलने पर भी आपके टैब खुले रहते हैं।",
   "help.tabs.worktrees":
     "नया डिज़ाइन अभी Git Worktrees का समर्थन नहीं करता है, यह सुविधा जल्द आ रही है। इसलिए यदि आप पिछले लेआउट का उपयोग जारी रखना चाहते हैं, तो सेटिंग्स में लेआउट के बीच स्विच कर सकते हैं। ध्यान रखें कि नया लेआउट कुछ सप्ताह में स्थायी हो जाएगा।",
@@ -823,7 +821,8 @@ export const dict = {
   "terminal.connectionLost.title": "कनेक्शन टूट गया",
   "terminal.connectionLost.abnormalClose": "WebSocket असामान्य रूप से बंद हुआ: {{code}}",
   "terminal.connectionLost.description": "टर्मिनल कनेक्शन बाधित हो गया था। ऐसा तब हो सकता है जब सर्वर पुनरारंभ हो।",
-  "terminal.connectTicket.csrfError": "ओरिजिन या CSRF जाँच के कारण PTY कनेक्ट टिकट अस्वीकार कर दिया गया। सर्वर का CORS कॉन्फ़िगरेशन जाँचें।",
+  "terminal.connectTicket.csrfError":
+    "ओरिजिन या CSRF जाँच के कारण PTY कनेक्ट टिकट अस्वीकार कर दिया गया। सर्वर का CORS कॉन्फ़िगरेशन जाँचें।",
   "terminal.connectTicket.statusError": "PTY कनेक्ट टिकट विफल रहा (स्थिति: {{status}})",
   "titlebar.update": "अपडेट करें",
   "titlebar.updateVersion": "अपडेट करें {{version}}",

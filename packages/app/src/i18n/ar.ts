@@ -90,8 +90,7 @@ export const dict = {
   "desktop.wsl.error.serverExited": "خرج خادم WSL بعد بدء التشغيل (code={{code}} signal={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "خرج خادم WSL قبل أن يصبح سليمًا (code={{code}} signal={{signal}}){{output}}",
-  "desktop.wsl.error.healthTimeout":
-    "انتهت مهلة فحص سلامة العملية المصاحبة للتوزيعة {{distro}} بعد {{timeout}}ms",
+  "desktop.wsl.error.healthTimeout": "انتهت مهلة فحص سلامة العملية المصاحبة للتوزيعة {{distro}} بعد {{timeout}}ms",
   "desktop.wsl.error.commandTimeout": "انتهت مهلة {{command}} {{args}} بعد {{timeout}}ms",
   "desktop.wsl.error.failedPort": "فشل الحصول على المنفذ",
 

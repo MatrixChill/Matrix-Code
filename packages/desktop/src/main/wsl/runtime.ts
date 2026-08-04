@@ -70,9 +70,7 @@ function runCommand(command: string, args: string[], opts: RunWslOptions = {}) {
         /* ignore */
       }
       reject(
-        new Error(
-          nativeT("desktop.wsl.error.commandTimeout", { command, args: args.join(" "), timeout: timeoutMs }),
-        ),
+        new Error(nativeT("desktop.wsl.error.commandTimeout", { command, args: args.join(" "), timeout: timeoutMs })),
       )
     }, timeoutMs)
 
@@ -145,9 +143,7 @@ function runInteractiveCommand(command: string, args: string[], opts: RunWslOpti
       settled = true
       cleanup()
       reject(
-        new Error(
-          nativeT("desktop.wsl.error.commandTimeout", { command, args: args.join(" "), timeout: timeoutMs }),
-        ),
+        new Error(nativeT("desktop.wsl.error.commandTimeout", { command, args: args.join(" "), timeout: timeoutMs })),
       )
     }, timeoutMs)
 

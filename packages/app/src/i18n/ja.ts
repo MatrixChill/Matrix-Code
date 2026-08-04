@@ -90,8 +90,7 @@ export const dict = {
   "desktop.wsl.error.serverExited": "WSLサーバーが起動後に終了しました (code={{code}} signal={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "WSLサーバーが正常に稼働する前に終了しました (code={{code}} signal={{signal}}){{output}}",
-  "desktop.wsl.error.healthTimeout":
-    "{{distro}}のSidecarのヘルスチェックが{{timeout}}ms後にタイムアウトしました",
+  "desktop.wsl.error.healthTimeout": "{{distro}}のSidecarのヘルスチェックが{{timeout}}ms後にタイムアウトしました",
   "desktop.wsl.error.commandTimeout": "{{command}} {{args}}が{{timeout}}ms後にタイムアウトしました",
   "desktop.wsl.error.failedPort": "ポートを取得できませんでした",
 

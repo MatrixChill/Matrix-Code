@@ -54,9 +54,7 @@ describe("promptDesignPlaceholder", () => {
   }
 
   test("composes the design placeholder from localized fragments", () => {
-    expect(promptDesignPlaceholder("normal", "fallback", t)).toBe(
-      "Ask anything, / for commands, @ for context...",
-    )
+    expect(promptDesignPlaceholder("normal", "fallback", t)).toBe("Ask anything, / for commands, @ for context...")
   })
 
   test("preserves the shell placeholder", () => {

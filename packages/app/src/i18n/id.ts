@@ -61,8 +61,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCode gagal dimuat",
   "desktop.recovery.terminated": "Jendela OpenCode berhenti secara tidak terduga",
   "desktop.recovery.unresponsive": "OpenCode tidak merespons",
-  "desktop.recovery.unresponsive.detail":
-    "Anda dapat meluncurkan ulang aplikasi, membuka log, atau tetap menunggu.",
+  "desktop.recovery.unresponsive.detail": "Anda dapat meluncurkan ulang aplikasi, membuka log, atau tetap menunggu.",
   "desktop.recovery.loadFailed.detail": "Jendela: {{window}}\nURL: {{url}}\nKesalahan: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Jendela: {{window}}\nAlasan: {{reason}}\nKode: {{code}}",
   "desktop.recovery.unknown": "<tidak diketahui>",
@@ -554,8 +553,7 @@ export const dict = {
     "Mulai sesi baru di tab, atau buka sesi yang sudah ada dari proyek Anda. Buka tab baru saat Anda memulai sesuatu yang baru, lalu tutup setelah selesai.",
   "help.tabs.organize":
     "Membiarkan beberapa tab tetap terbuka memudahkan Anda mengatur sesi aktif. Ganti nama tab agar mudah diingat jika Anda berencana mempertahankannya.",
-  "help.tabs.home":
-    "Semua sesi dan proyek Anda tersedia di layar Beranda baru. Memilih sesi akan membukanya di tab.",
+  "help.tabs.home": "Semua sesi dan proyek Anda tersedia di layar Beranda baru. Memilih sesi akan membukanya di tab.",
   "help.tabs.persistence": "Saat Anda membuka kembali aplikasi, tab Anda tetap terbuka.",
   "help.tabs.worktrees":
     "Desain baru belum mendukung Git Worktrees, tetapi dukungan tersebut akan segera hadir. Jika Anda ingin tetap menggunakan tata letak sebelumnya, Anda dapat beralih antartata letak di Pengaturan. Perlu diingat bahwa tata letak baru akan menjadi permanen dalam beberapa minggu.",

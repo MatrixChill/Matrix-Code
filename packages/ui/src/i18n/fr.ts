@@ -126,7 +126,8 @@ export const dict = {
   "ui.promptInput.removeAttachment": "Supprimer la pièce jointe",
   "ui.promptInput.label": "Invite",
   "ui.promptInput.placeholder.shell": "Entrez une commande shell...",
-  "ui.promptInput.placeholder.normal": "Demandez n'importe quoi, {{slash}} pour les commandes, {{at}} pour le contexte...",
+  "ui.promptInput.placeholder.normal":
+    "Demandez n'importe quoi, {{slash}} pour les commandes, {{at}} pour le contexte...",
   "ui.promptInput.add": "Ajouter des images et des fichiers",
   "ui.promptInput.attachments": "Images et fichiers",
   "ui.promptInput.context": "Contexte",

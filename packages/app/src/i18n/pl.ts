@@ -61,8 +61,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "Nie udało się wczytać OpenCode",
   "desktop.recovery.terminated": "Okno OpenCode zostało nieoczekiwanie zamknięte",
   "desktop.recovery.unresponsive": "OpenCode nie odpowiada",
-  "desktop.recovery.unresponsive.detail":
-    "Możesz ponownie uruchomić aplikację, otworzyć dzienniki lub nadal czekać.",
+  "desktop.recovery.unresponsive.detail": "Możesz ponownie uruchomić aplikację, otworzyć dzienniki lub nadal czekać.",
   "desktop.recovery.loadFailed.detail": "Okno: {{window}}\nURL: {{url}}\nBłąd: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Okno: {{window}}\nPrzyczyna: {{reason}}\nKod: {{code}}",
   "desktop.recovery.unknown": "<nieznane>",
@@ -93,8 +92,7 @@ export const dict = {
     "Serwer WSL zakończył działanie przed osiągnięciem gotowości (code={{code}} signal={{signal}}){{output}}",
   "desktop.wsl.error.healthTimeout":
     "Przekroczono limit czasu {{timeout}}ms podczas sprawdzania kondycji procesu sidecar dla dystrybucji {{distro}}",
-  "desktop.wsl.error.commandTimeout":
-    "Polecenie {{command}} {{args}} przekroczyło limit czasu {{timeout}}ms",
+  "desktop.wsl.error.commandTimeout": "Polecenie {{command}} {{args}} przekroczyło limit czasu {{timeout}}ms",
   "desktop.wsl.error.failedPort": "Nie udało się uzyskać portu",
 
   "desktop.picker.error.notSelected": "Nie wybrano pliku w oknie wyboru",

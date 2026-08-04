@@ -1170,8 +1170,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCode kunne ikke indlæses",
   "desktop.recovery.terminated": "OpenCode-vinduet blev uventet afsluttet",
   "desktop.recovery.unresponsive": "OpenCode svarer ikke",
-  "desktop.recovery.unresponsive.detail":
-    "Du kan starte appen igen, åbne logfilerne eller fortsætte med at vente.",
+  "desktop.recovery.unresponsive.detail": "Du kan starte appen igen, åbne logfilerne eller fortsætte med at vente.",
   "desktop.recovery.loadFailed.detail": "Vindue: {{window}}\nURL: {{url}}\nFejl: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Vindue: {{window}}\nÅrsag: {{reason}}\nKode: {{code}}",
   "desktop.recovery.unknown": "<ukendt>",

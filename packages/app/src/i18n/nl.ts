@@ -59,8 +59,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCode kan niet worden geladen",
   "desktop.recovery.terminated": "Het OpenCode-venster is onverwacht beëindigd",
   "desktop.recovery.unresponsive": "OpenCode reageert niet",
-  "desktop.recovery.unresponsive.detail":
-    "Je kunt de app opnieuw openen, de logboeken openen of blijven wachten.",
+  "desktop.recovery.unresponsive.detail": "Je kunt de app opnieuw openen, de logboeken openen of blijven wachten.",
   "desktop.recovery.loadFailed.detail": "Venster: {{window}}\nURL: {{url}}\nFout: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Venster: {{window}}\nReden: {{reason}}\nCode: {{code}}",
   "desktop.recovery.unknown": "<onbekend>",
@@ -87,8 +86,7 @@ export const dict = {
   "desktop.wsl.error.serverExited": "WSL-server is na het opstarten afgesloten (code={{code}} signaal={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "WSL-server is afgesloten voordat deze gereed was (code={{code}} signaal={{signal}}){{output}}",
-  "desktop.wsl.error.healthTimeout":
-    "Time-out bij statuscontrole van sidecar voor {{distro}} na {{timeout}} ms",
+  "desktop.wsl.error.healthTimeout": "Time-out bij statuscontrole van sidecar voor {{distro}} na {{timeout}} ms",
   "desktop.wsl.error.commandTimeout": "Time-out voor {{command}} {{args}} na {{timeout}} ms",
   "desktop.wsl.error.failedPort": "Kan poort niet ophalen",
   "desktop.picker.error.notSelected": "Er is geen bestand geselecteerd in de bestandskiezer",
@@ -509,8 +507,7 @@ export const dict = {
   "wsl.onboarding.desktopVersion": "desktop {{version}}",
   "wsl.onboarding.versionMismatch": "De geïnstalleerde versie komt niet overeen met de versie van de desktop-app.",
   "wsl.onboarding.adding": "Toevoegen...",
-  "help.tabs.toast.ariaLabel":
-    "Introductie van tabbladen. Organiseer je werk en actieve sessies met tabbladen",
+  "help.tabs.toast.ariaLabel": "Introductie van tabbladen. Organiseer je werk en actieve sessies met tabbladen",
   "help.tabs.toast.dismiss": "Informatie over tabbladen sluiten",
   "help.tabs.title": "Introductie van tabbladen",
   "help.tabs.description": "Organiseer je werk en actieve sessies met tabbladen",

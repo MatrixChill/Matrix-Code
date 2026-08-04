@@ -1095,8 +1095,7 @@ export const dict = {
   "desktop.recovery.loadFailed": "OpenCoden lataaminen epäonnistui",
   "desktop.recovery.terminated": "OpenCode-ikkuna sulkeutui odottamatta",
   "desktop.recovery.unresponsive": "OpenCode ei vastaa",
-  "desktop.recovery.unresponsive.detail":
-    "Voit käynnistää sovelluksen uudelleen, avata lokit tai jatkaa odottamista.",
+  "desktop.recovery.unresponsive.detail": "Voit käynnistää sovelluksen uudelleen, avata lokit tai jatkaa odottamista.",
   "desktop.recovery.loadFailed.detail": "Ikkuna: {{window}}\nURL: {{url}}\nVirhe: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Ikkuna: {{window}}\nSyy: {{reason}}\nKoodi: {{code}}",
   "desktop.recovery.unknown": "<tuntematon>",
@@ -1120,20 +1119,17 @@ export const dict = {
   "desktop.wsl.error.updateVersion":
     "OpenCoden päivitys valmistui, mutta {{distro}} ilmoittaa yhä version {{installed}}; odotettu versio on {{expected}}",
   "desktop.wsl.error.noVersion": "ei versiota",
-  "desktop.wsl.error.serverExited":
-    "WSL-palvelin sulkeutui käynnistyksen jälkeen (koodi={{code}} signaali={{signal}})",
+  "desktop.wsl.error.serverExited": "WSL-palvelin sulkeutui käynnistyksen jälkeen (koodi={{code}} signaali={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "WSL-palvelin sulkeutui ennen toimintavalmiutta (koodi={{code}} signaali={{signal}}){{output}}",
   "desktop.wsl.error.healthTimeout":
     "Jakelun {{distro}} sivuprosessin kuntotarkistus aikakatkaistiin {{timeout}} ms:n jälkeen",
-  "desktop.wsl.error.commandTimeout":
-    "Komento {{command}} {{args}} aikakatkaistiin {{timeout}} ms:n jälkeen",
+  "desktop.wsl.error.commandTimeout": "Komento {{command}} {{args}} aikakatkaistiin {{timeout}} ms:n jälkeen",
   "desktop.wsl.error.failedPort": "Portin noutaminen epäonnistui",
   "desktop.picker.error.notSelected": "Tiedostovalitsimessa ei valittu tiedostoa",
   "desktop.picker.error.sizeLimit": "Valitut liitteet ylittävät {{limit}} Mt:n rajan",
   "command.logs.export": "Vie lokit",
-  "help.tabs.toast.ariaLabel":
-    "Esittelyssä välilehdet. Järjestä työsi ja aktiiviset istuntosi välilehtien avulla",
+  "help.tabs.toast.ariaLabel": "Esittelyssä välilehdet. Järjestä työsi ja aktiiviset istuntosi välilehtien avulla",
   "help.tabs.toast.dismiss": "Sulje välilehtien tiedot",
   "help.tabs.title": "Esittelyssä välilehdet",
   "help.tabs.description": "Järjestä työsi ja aktiiviset istuntosi välilehtien avulla",

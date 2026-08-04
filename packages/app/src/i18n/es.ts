@@ -88,14 +88,12 @@ export const dict = {
   "desktop.wsl.error.updateVersion":
     "La actualización de OpenCode finalizó, pero {{distro}} sigue indicando {{installed}}; se esperaba {{expected}}",
   "desktop.wsl.error.noVersion": "sin versión",
-  "desktop.wsl.error.serverExited":
-    "El servidor WSL se cerró después de iniciarse (código={{code}} señal={{signal}})",
+  "desktop.wsl.error.serverExited": "El servidor WSL se cerró después de iniciarse (código={{code}} señal={{signal}})",
   "desktop.wsl.error.serverExitedBeforeHealthy":
     "El servidor WSL se cerró antes de estar operativo (código={{code}} señal={{signal}}){{output}}",
   "desktop.wsl.error.healthTimeout":
     "Se agotó el tiempo de espera de la comprobación de estado del sidecar de {{distro}} tras {{timeout}} ms",
-  "desktop.wsl.error.commandTimeout":
-    "Se agotó el tiempo de espera de {{command}} {{args}} tras {{timeout}} ms",
+  "desktop.wsl.error.commandTimeout": "Se agotó el tiempo de espera de {{command}} {{args}} tras {{timeout}} ms",
   "desktop.wsl.error.failedPort": "No se pudo obtener el puerto",
 
   "desktop.picker.error.notSelected": "No se seleccionó ningún archivo en el selector",
@@ -540,8 +538,7 @@ export const dict = {
   "wsl.onboarding.versionMismatch": "La versión instalada no coincide con la versión de la aplicación de escritorio.",
   "wsl.onboarding.adding": "Añadiendo...",
 
-  "help.tabs.toast.ariaLabel":
-    "Presentamos las pestañas. Organiza tu trabajo y las sesiones activas con pestañas",
+  "help.tabs.toast.ariaLabel": "Presentamos las pestañas. Organiza tu trabajo y las sesiones activas con pestañas",
   "help.tabs.toast.dismiss": "Descartar información sobre las pestañas",
   "help.tabs.title": "Presentamos las pestañas",
   "help.tabs.description": "Organiza tu trabajo y las sesiones activas con pestañas",

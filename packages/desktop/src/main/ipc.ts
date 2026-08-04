@@ -104,12 +104,7 @@ export function registerIpcHandlers(deps: Deps) {
   )
   ipcMain.handle("set-native-translations", (event: IpcMainInvokeEvent, value: unknown) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    if (
-      !win ||
-      win.isDestroyed() ||
-      win.webContents !== event.sender ||
-      event.senderFrame !== event.sender.mainFrame
-    ) {
+    if (!win || win.isDestroyed() || win.webContents !== event.sender || event.senderFrame !== event.sender.mainFrame) {
       throw new Error("Invalid native translation sender")
     }
     const bundle = parseDesktopNativeBundle(value)

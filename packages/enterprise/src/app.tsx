@@ -5,12 +5,7 @@ import { MetaProvider } from "@solidjs/meta"
 import { MarkedProvider } from "@opencode-ai/ui/context/marked"
 import { DialogProvider } from "@opencode-ai/ui/context/dialog"
 import { I18nProvider } from "@opencode-ai/ui/context"
-import {
-  pluralCategory,
-  pluralKey,
-  type UiI18nParams,
-  type UiI18nPluralKey,
-} from "@opencode-ai/ui/context/i18n"
+import { pluralCategory, pluralKey, type UiI18nParams, type UiI18nPluralKey } from "@opencode-ai/ui/context/i18n"
 import { dict as uiEn } from "@opencode-ai/ui/i18n/en"
 import { dict as uiZh } from "@opencode-ai/ui/i18n/zh"
 import { createEffect, createMemo, Suspense, type ParentProps } from "solid-js"
