@@ -977,6 +977,14 @@ export const dict = {
   "debugBar.mem.label": "MEM",
   "debugBar.mem.tipUnavailable": "Використана купа JS проти ліміту купи. Тільки Chromium.",
   "debugBar.mem.tip": "Використана купа JS проти ліміту купи. {{used}} з {{limit}}.",
+  "debugBar.focus.label": "FOCUS",
+  "debugBar.focus.tip": "Примусово застосувати стилі фокуса до всіх інтерактивних елементів",
+  "debugBar.focus.on": "УВІМК.",
+  "debugBar.focus.off": "ВИМК.",
+  "debugBar.direction.label": "DIR",
+  "debugBar.direction.tip": "Примусово задати напрямок макета всієї програми, не змінюючи вибрану мову",
+  "debugBar.direction.ltr": "LTR",
+  "debugBar.direction.rtl": "RTL",
 
   "app.name.desktop": "OpenCode Desktop",
 

@@ -868,6 +868,14 @@ export const dict = {
   "debugBar.mem.label": "MEM",
   "debugBar.mem.tipUnavailable": "Used JS heap vs heap limit. Chromium only.",
   "debugBar.mem.tip": "Used JS heap vs heap limit. {{used}} of {{limit}}.",
+  "debugBar.focus.label": "FOCUS",
+  "debugBar.focus.tip": "Force focus styles on all interactive elements",
+  "debugBar.focus.on": "ON",
+  "debugBar.focus.off": "OFF",
+  "debugBar.direction.label": "DIR",
+  "debugBar.direction.tip": "Force the full app layout direction without changing the selected language",
+  "debugBar.direction.ltr": "LTR",
+  "debugBar.direction.rtl": "RTL",
 
   "app.name.desktop": "OpenCode Desktop",
 

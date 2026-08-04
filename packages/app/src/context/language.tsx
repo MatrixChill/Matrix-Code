@@ -15,8 +15,13 @@ import {
 } from "@/i18n/desktop-native"
 
 export type Locale = DesktopNativeLocale
+export type Direction = "ltr" | "rtl"
 
 const RTL_LOCALES: ReadonlySet<Locale> = new Set(["ar", "ur", "pa"])
+
+function localeDirection(locale: Locale): Direction {
+  return RTL_LOCALES.has(locale) ? "rtl" : "ltr"
+}
 
 type RawDictionary = typeof en & typeof uiEn
 type Dictionary = i18n.Flatten<RawDictionary>
@@ -242,6 +247,13 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
 
     const locale = createMemo<Locale>(() => normalizeLocale(store.locale))
     const intl = createMemo(() => INTL[locale()])
+    const [layout, setLayout] = createStore({ direction: undefined as Direction | undefined })
+    const direction = createMemo(() => layout.direction ?? localeDirection(locale()))
+    const layoutLocale = createMemo(() => {
+      if (!layout.direction) return intl()
+      // Kobalte derives menu direction from locale rather than accepting a direction override.
+      return layout.direction === "rtl" ? "ar" : "en"
+    })
 
     const [dict] = createResource(locale, loadDict, {
       initialValue: dicts.get(initial) ?? base,
@@ -270,7 +282,7 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       if (typeof document !== "object") return
       const value = locale()
       document.documentElement.lang = value
-      document.documentElement.dir = RTL_LOCALES.has(value) ? "rtl" : "ltr"
+      document.documentElement.dir = direction()
       document.cookie = cookie(value)
     })
 
@@ -287,12 +299,17 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
       ready,
       locale,
       intl,
+      direction,
+      layoutLocale,
       locales: LOCALES,
       label,
       t,
       plural,
       setLocale(next: Locale) {
         setStore("locale", normalizeLocale(next))
+      },
+      setDirection(next: Direction) {
+        setLayout("direction", next === localeDirection(locale()) ? undefined : next)
       },
     }
   },

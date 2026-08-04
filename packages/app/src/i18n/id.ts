@@ -963,6 +963,14 @@ export const dict = {
   "debugBar.mem.label": "MEM",
   "debugBar.mem.tipUnavailable": "Heap JS terpakai vs batas heap. Khusus Chromium.",
   "debugBar.mem.tip": "Heap JS terpakai vs batas heap. {{used}} dari {{limit}}.",
+  "debugBar.focus.label": "FOCUS",
+  "debugBar.focus.tip": "Paksa gaya fokus pada semua elemen interaktif",
+  "debugBar.focus.on": "AKTIF",
+  "debugBar.focus.off": "NONAKTIF",
+  "debugBar.direction.label": "DIR",
+  "debugBar.direction.tip": "Paksa arah tata letak seluruh aplikasi tanpa mengubah bahasa yang dipilih",
+  "debugBar.direction.ltr": "LTR",
+  "debugBar.direction.rtl": "RTL",
 
   "app.name.desktop": "OpenCode Desktop",
 
