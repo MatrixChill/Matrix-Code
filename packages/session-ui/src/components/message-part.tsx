@@ -107,7 +107,7 @@ function ShellSubmessage(props: { text: string; animate?: boolean }) {
   })
 
   return (
-    <span data-component="shell-submessage">
+    <span data-component="shell-submessage" dir="ltr">
       <span ref={widthRef} data-slot="shell-submessage-width" style={{ width: props.animate ? "0px" : undefined }}>
         <span data-slot="basic-tool-tool-subtitle">
           <span
@@ -1331,7 +1331,11 @@ export function UserMessageDisplay(props: {
         }
       >
         <div data-slot="user-message-body">
-          <div data-slot="user-message-text" data-comments={messageComments().length > 0 ? "true" : undefined}>
+          <div
+            data-slot="user-message-text"
+            dir="auto"
+            data-comments={messageComments().length > 0 ? "true" : undefined}
+          >
             <HighlightedText text={text()} references={inlineFiles()} agents={agents()} />
             <Show when={messageComments().length > 0}>
               <UserMessageComments comments={messageComments()} bounded />
@@ -2122,7 +2126,7 @@ ToolRegistry.register({
           </div>
         )}
       >
-        <div data-component="bash-output">
+        <div data-component="bash-output" dir="ltr">
           <div data-slot="bash-copy">
             <TooltipV2 value={copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy")} placement="top">
               <IconButtonV2

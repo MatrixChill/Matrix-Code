@@ -36,6 +36,8 @@ export type Locale =
   | "fi"
   | "sv"
 
+const RTL_LOCALES: ReadonlySet<Locale> = new Set(["ar", "ur", "pa"])
+
 type RawDictionary = typeof en & typeof uiEn
 type Dictionary = i18n.Flatten<RawDictionary>
 type PluralKey =
@@ -315,8 +317,10 @@ export const { use: useLanguage, provider: LanguageProvider } = createSimpleCont
 
     createEffect(() => {
       if (typeof document !== "object") return
-      document.documentElement.lang = locale()
-      document.cookie = cookie(locale())
+      const value = locale()
+      document.documentElement.lang = value
+      document.documentElement.dir = RTL_LOCALES.has(value) ? "rtl" : "ltr"
+      document.cookie = cookie(value)
     })
 
     return {
