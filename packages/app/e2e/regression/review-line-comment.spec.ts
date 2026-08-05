@@ -65,9 +65,7 @@ test("shows a comment button when a line number is hovered", async ({ page }) =>
 
 test("stages a submitted line comment in the prompt context", async ({ page }) => {
   page.on("request", (request) => {
-    expect
-      .soft(request.method(), `unexpected ${request.method()} ${new URL(request.url()).pathname}`)
-      .toBe("GET")
+    expect.soft(request.method(), `unexpected ${request.method()} ${new URL(request.url()).pathname}`).toBe("GET")
   })
 
   const review = page.locator('[data-component="session-review"]')
