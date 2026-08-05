@@ -389,12 +389,7 @@ function TopModelsSection(props: { data: UsagePoint[]; leaderboard: LeaderboardE
         when={props.data.some((item) => usageTotal(item) > 0)}
         fallback={<EmptyState title={i18n.t("home.noUsageTitle")} description={i18n.t("home.noUsageDescription")} />}
       >
-        <TopModelsChart
-          data={props.data}
-          range="2M"
-          activeModel={activeModel()}
-          onActiveModelChange={setActiveModel}
-        />
+        <TopModelsChart data={props.data} range="2M" activeModel={activeModel()} onActiveModelChange={setActiveModel} />
       </Show>
       <Show
         when={props.leaderboard.length > 0}

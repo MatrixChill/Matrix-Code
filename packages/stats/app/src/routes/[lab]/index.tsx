@@ -152,11 +152,7 @@ export default function StatsLab() {
                   <LabOverview lab={data()} data={stats() ?? null} />
                   <LabUsageSection lab={data()} data={stats() ?? null} />
                   <LabModelsSection lab={data()} usage={stats()?.models ?? []} />
-                  <LabRelatedSection
-                    lab={data()}
-                    labs={page()?.labs ?? []}
-                    market={page()?.market ?? []}
-                  />
+                  <LabRelatedSection lab={data()} labs={page()?.labs ?? []} market={page()?.market ?? []} />
                   <ComparisonCardsSection
                     pairs={labComparisonPairs(data(), stats()?.models ?? [])}
                     title={`${data().name} Model Comparisons`}

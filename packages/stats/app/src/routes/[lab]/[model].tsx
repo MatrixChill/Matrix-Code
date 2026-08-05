@@ -16,12 +16,7 @@ import { LocaleLinks } from "../../component/locale-links"
 import { useI18n } from "../../context/i18n"
 import { useLanguage } from "../../context/language"
 import { localizedUrl } from "../../lib/language"
-import {
-  findModelCatalogEntry,
-  formatCatalogLabName,
-  loadModelCatalog,
-  type ModelCatalogEntry,
-} from "../model-catalog"
+import { findModelCatalogEntry, formatCatalogLabName, loadModelCatalog, type ModelCatalogEntry } from "../model-catalog"
 import { geoMapHeight, geoMapWidth, worldBorderPath, worldCountryMarkers, worldCountryPaths } from "../geo-map"
 import { SectionHeading } from "../section-heading"
 import { runStatsEffect } from "../../stats-runtime"
