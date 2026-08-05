@@ -610,9 +610,7 @@ it.live("session.processor effect tests retry OpenAI-compatible midstream server
       Effect.gen(function* () {
         const { processors, session, provider } = yield* boot()
 
-        yield* llm.push(
-          raw({ chunks: [{ error: { type: "server_error", code: "server_error", message: "xxx" } }] }),
-        )
+        yield* llm.push(raw({ chunks: [{ error: { type: "server_error", code: "server_error", message: "xxx" } }] }))
         yield* llm.text("after")
 
         const chat = yield* session.create({})
