@@ -17,7 +17,7 @@ export type ComparisonPair = {
   description?: string
 }
 
-export function modelRefFromCatalog(entry: ModelCatalogEntry): ComparisonModelRef {
+export function modelRefFromCatalog(entry: Pick<ModelCatalogEntry, "name" | "lab" | "slug">): ComparisonModelRef {
   return {
     name: entry.name,
     lab: entry.lab,
