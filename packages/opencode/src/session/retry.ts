@@ -86,7 +86,8 @@ export function retryable(error: Err, provider: string) {
       !(status !== undefined && status >= 500) &&
       !matchesRetryableMessage(error.data.message) &&
       !matchesRetryableMessage(error.data.responseBody)
-    ) return undefined
+    )
+      return undefined
     if (error.data.responseBody?.includes("FreeUsageLimitError")) {
       return {
         message: GO_UPSELL_MESSAGE,
