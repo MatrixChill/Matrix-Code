@@ -1,11 +1,7 @@
-import { Link, Meta, Title } from "@solidjs/meta"
+import { Meta, Title } from "@solidjs/meta"
 import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { scaleSqrt } from "d3-scale"
 import countryCodesSource from "i18n-iso-countries/codes.json?raw"
-import ibmPlexMonoRegularLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Regular-Latin1.woff2?url"
-import ibmPlexMonoMediumLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Medium-Latin1.woff2?url"
-import ibmPlexMonoSemiBoldLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-SemiBold-Latin1.woff2?url"
-import ibmPlexMonoBoldLatin1 from "@ibm/plex/IBM-Plex-Mono/fonts/split/woff2/IBMPlexMono-Bold-Latin1.woff2?url"
 import {
   getStatsHomeData,
   type CacheRatioEntry,
@@ -142,10 +138,6 @@ export default function StatsHome() {
       <Meta name="twitter:description" content={i18n.t("app.description")} />
       <Meta name="twitter:image" content={statsUnfurlUrl} />
       <Meta name="twitter:image:alt" content={i18n.t("app.unfurlAlt")} />
-      <Link rel="preload" href={ibmPlexMonoRegularLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
-      <Link rel="preload" href={ibmPlexMonoMediumLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
-      <Link rel="preload" href={ibmPlexMonoSemiBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
-      <Link rel="preload" href={ibmPlexMonoBoldLatin1} as="font" type="font/woff2" crossorigin="anonymous" />
       <Header githubStars={githubStars() ?? githubLink.fallbackStars} />
       <div data-component="container">
         <div data-component="content">
@@ -227,7 +219,8 @@ function Hero(props: { updatedAt: string | null }) {
 
   return (
     <section data-section="hero">
-      <p data-slot="hero-meta" aria-live="polite" aria-atomic="true" aria-label={currentUpdatedLabel()}>
+      <p data-slot="hero-meta" role="status" aria-atomic="true">
+        <span data-slot="visually-hidden">{currentUpdatedLabel()}</span>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
           <path
             fill-rule="evenodd"
@@ -696,7 +689,7 @@ function isDenseColumnRange(range: UsageRange) {
 function scrollDenseChartToEnd(element: HTMLDivElement | undefined, range: UsageRange, count: number) {
   if (!element || count <= 0 || !isDenseColumnRange(range) || typeof window === "undefined") return
   window.requestAnimationFrame(() => {
-    element.scrollLeft = element.scrollWidth - element.clientWidth
+    element.scrollLeft = Number.MAX_SAFE_INTEGER
   })
 }
 
@@ -735,12 +728,11 @@ function Leaderboard(props: {
   activeModel: string | undefined
   onActiveModelChange: (model: string | undefined) => void
 }) {
-  const i18n = useI18n()
   const featured = createMemo(() => props.data.slice(0, 3))
   const compact = createMemo(() => props.data.slice(3))
 
   return (
-    <div id="leaderboard" data-component="leaderboard" role="list" aria-label={i18n.t("chart.leaderboardAria")}>
+    <div id="leaderboard" data-component="leaderboard">
       <div data-slot="leaderboard-featured">
         <For each={featured()}>
           {(entry) => (
@@ -766,7 +758,7 @@ function Leaderboard(props: {
           )}
         </For>
       </div>
-      <div data-slot="leaderboard-mobile" aria-label={i18n.t("chart.scrollableLeaderboardAria")}>
+      <div data-slot="leaderboard-mobile">
         <For each={props.data}>
           {(entry) => (
             <LeaderboardCard
@@ -798,9 +790,6 @@ function LeaderboardCard(props: {
       href={language.route(
         `${import.meta.env.BASE_URL}${modelSlug(props.entry.provider)}/${modelSlug(props.entry.model)}`,
       )}
-      role="listitem"
-      tabIndex={0}
-      aria-label={`${String(props.entry.rank).padStart(2, "0")} ${props.entry.model} ${i18n.t("chart.byAuthor", { author: props.entry.author })}`}
       onPointerEnter={() => props.onActiveModelChange(props.entry.model)}
       onPointerLeave={(event) => {
         if (event.pointerType === "touch") return
@@ -956,6 +945,7 @@ function MarketShare(props: {
           {(day, index) => (
             <button
               type="button"
+              aria-label={`${day.date} ${formatTrillions(day.total)}`}
               data-active={props.inspecting && props.activeIndex === index() ? "true" : undefined}
               data-label-hidden={isColumnLabelHidden(index(), props.data.length) ? "true" : undefined}
               data-mobile-hidden={isMarketMobileLabelHidden(index(), props.data.length) ? "true" : undefined}
@@ -1031,14 +1021,11 @@ function MarketShareList(props: {
   activeAuthor: string | undefined
   onActiveAuthorChange: (author: string) => void
 }) {
-  const i18n = useI18n()
   const language = useLanguage()
   return (
     <ol data-component="market-share-list">
       <For each={props.data}>
         {(item, index) => {
-          const label = () =>
-            `${item.author} ${formatTrillions(item.tokens)} ${item.share.toFixed(1)} ${i18n.t("chart.percent")}`
           const content = () => (
             <>
               <span>{String(index() + 1).padStart(2, "0")}</span>
@@ -1060,7 +1047,6 @@ function MarketShareList(props: {
                 fallback={
                   <button
                     type="button"
-                    aria-label={label()}
                     onClick={() => props.onActiveAuthorChange(item.author)}
                     onFocus={() => props.onActiveAuthorChange(item.author)}
                   >
@@ -1071,7 +1057,6 @@ function MarketShareList(props: {
                 {(href) => (
                   <a
                     href={href()}
-                    aria-label={label()}
                     onClick={() => props.onActiveAuthorChange(item.author)}
                     onFocus={() => props.onActiveAuthorChange(item.author)}
                   >
@@ -1259,7 +1244,6 @@ function GeoCountryList(props: {
               type="button"
               data-active={props.activeCountry === country.country ? "true" : undefined}
               style={{ "--geo-row-opacity": String(opacityScale()(country.tokens)) } as JSX.CSSProperties}
-              aria-label={`${formatCountryName(country.country, language.tag(language.locale()), i18n.t("home.unknown"))} ${formatGeoTokens(country.tokens)} ${formatGeoShare(country.share)}`}
               onClick={() => props.onActiveCountryChange(country.country)}
               onPointerEnter={() => props.onActiveCountryChange(country.country)}
               onFocus={() => props.onActiveCountryChange(country.country)}

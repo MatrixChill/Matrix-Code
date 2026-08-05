@@ -86,7 +86,6 @@ function FeaturedComparisonCard(props: { pair: ComparisonPair }) {
     <a
       data-component="compare-home-card"
       href={canonicalComparisonHref(props.pair.first, props.pair.second)}
-      aria-label={`${props.pair.detail}: ${props.pair.first.name} vs ${props.pair.second.name}`}
     >
       <span data-slot="compare-home-card-head">
         <span>
