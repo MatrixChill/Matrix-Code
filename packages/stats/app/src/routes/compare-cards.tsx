@@ -83,10 +83,7 @@ export function ComparisonCardsSection(props: {
 
 function FeaturedComparisonCard(props: { pair: ComparisonPair }) {
   return (
-    <a
-      data-component="compare-home-card"
-      href={canonicalComparisonHref(props.pair.first, props.pair.second)}
-    >
+    <a data-component="compare-home-card" href={canonicalComparisonHref(props.pair.first, props.pair.second)}>
       <span data-slot="compare-home-card-head">
         <span>
           <strong>{props.pair.detail}</strong>

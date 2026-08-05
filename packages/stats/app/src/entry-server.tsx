@@ -24,8 +24,7 @@ export default createHandler(
         const event = getRequestEvent() as PageEvent | undefined
         const locale = event ? localeFromRequest(event.request) : "en"
         const stylesheet = (event?.assets as Asset[] | undefined)?.find(
-          (asset): asset is Extract<Asset, { tag: "link" }> =>
-            asset.tag === "link" && asset.attrs.rel === "stylesheet",
+          (asset): asset is Extract<Asset, { tag: "link" }> => asset.tag === "link" && asset.attrs.rel === "stylesheet",
         )
         const stylesheetHref = import.meta.env.DEV ? statsStylesheetUrl : stylesheet?.attrs.href
 
