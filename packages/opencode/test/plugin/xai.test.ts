@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  accessTokenIsExpiring,
-  pollDeviceCodeToken,
-  requestDeviceCode,
-  XaiAuthPlugin,
-} from "../../src/plugin/xai"
+import { accessTokenIsExpiring, pollDeviceCodeToken, requestDeviceCode, XaiAuthPlugin } from "../../src/plugin/xai"
 import { OAUTH_DUMMY_KEY } from "../../src/auth"
 
 function makeJwt(payload: object): string {
@@ -397,8 +392,7 @@ describe("plugin.xai", () => {
       })
       const hooks = await XaiAuthPlugin({} as any, serverOptions(server))
       const headless = hooks.auth!.methods.find(
-        (m): m is Extract<typeof m, { type: "oauth" }> =>
-          m.type === "oauth" && m.label === "SuperGrok Subscription",
+        (m): m is Extract<typeof m, { type: "oauth" }> => m.type === "oauth" && m.label === "SuperGrok Subscription",
       )!
       const result = await headless.authorize!()
 
@@ -421,8 +415,7 @@ describe("plugin.xai", () => {
         return new Response("unexpected request", { status: 500 })
       })
       const headless = (await XaiAuthPlugin({} as any, serverOptions(server))).auth!.methods.find(
-        (m): m is Extract<typeof m, { type: "oauth" }> =>
-          m.type === "oauth" && m.label === "SuperGrok Subscription",
+        (m): m is Extract<typeof m, { type: "oauth" }> => m.type === "oauth" && m.label === "SuperGrok Subscription",
       )!
       expect((await headless.authorize!()).url).toBe("https://x.ai/device")
     })
@@ -584,8 +577,7 @@ describe("plugin.xai", () => {
         return Response.json({ error: "access_denied" }, { status: 400 })
       })
       const headless = (await XaiAuthPlugin({} as any, serverOptions(server))).auth!.methods.find(
-        (m): m is Extract<typeof m, { type: "oauth" }> =>
-          m.type === "oauth" && m.label === "SuperGrok Subscription",
+        (m): m is Extract<typeof m, { type: "oauth" }> => m.type === "oauth" && m.label === "SuperGrok Subscription",
       )!
       expect(await ((await headless.authorize!()) as any).callback()).toEqual({ type: "failed" })
     })
