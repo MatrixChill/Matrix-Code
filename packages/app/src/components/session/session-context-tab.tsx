@@ -358,7 +358,12 @@ export function SessionContextTab() {
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <div class="text-12-regular text-text-weak">{language.t("context.rawMessages.title")}</div>
-            <Button size="small" variant="ghost" class="gap-1.5 px-2 text-text-weak hover:text-text-base" onClick={exportSession}>
+            <Button
+              size="small"
+              variant="ghost"
+              class="gap-1.5 px-2 text-text-weak hover:text-text-base"
+              onClick={exportSession}
+            >
               <Icon name="download" size="small" />
               <span>{language.t("context.export.session")}</span>
             </Button>
