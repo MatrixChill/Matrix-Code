@@ -180,10 +180,7 @@ test("lists the default directory when empty search is unsupported", async () =>
         list: (input: { location?: { directory?: string } }) => {
           calls.push(input.location?.directory ?? "")
           return Promise.resolve({
-            data: [
-              ...directories,
-              { path: "README.md", type: "file" },
-            ],
+            data: [...directories, { path: "README.md", type: "file" }],
           })
         },
       },
