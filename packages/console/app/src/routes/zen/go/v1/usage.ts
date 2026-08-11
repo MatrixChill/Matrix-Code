@@ -31,7 +31,6 @@ export async function GET(input: APIEvent) {
   const auth = await Database.use((tx) =>
     tx
       .select({
-        lite: BillingTable.lite,
         userID: KeyTable.userID,
         workspaceID: KeyTable.workspaceID,
       })
@@ -115,24 +114,31 @@ export async function GET(input: APIEvent) {
 
   return new Response(
     JSON.stringify({
-      useBalance: auth.lite?.useBalance ?? false,
-      rollingUsage: Subscription.analyzeRollingUsage({
-        limit: limits.rollingLimit,
-        window: limits.rollingWindow,
-        usage: row.rollingUsage ?? 0,
-        timeUpdated: row.timeRollingUpdated ?? new Date(),
-      }),
-      weeklyUsage: Subscription.analyzeWeeklyUsage({
-        limit: limits.weeklyLimit,
-        usage: row.weeklyUsage ?? 0,
-        timeUpdated: row.timeWeeklyUpdated ?? new Date(),
-      }),
-      monthlyUsage: Subscription.analyzeMonthlyUsage({
-        limit: limits.monthlyLimit,
-        usage: row.monthlyUsage ?? 0,
-        timeUpdated: row.timeMonthlyUpdated ?? new Date(),
-        timeSubscribed: row.timeCreated,
-      }),
+      usage: {
+        rolling: formatUsage(
+          Subscription.analyzeRollingUsage({
+            limit: limits.rollingLimit,
+            window: limits.rollingWindow,
+            usage: row.rollingUsage ?? 0,
+            timeUpdated: row.timeRollingUpdated ?? new Date(),
+          }),
+        ),
+        weekly: formatUsage(
+          Subscription.analyzeWeeklyUsage({
+            limit: limits.weeklyLimit,
+            usage: row.weeklyUsage ?? 0,
+            timeUpdated: row.timeWeeklyUpdated ?? new Date(),
+          }),
+        ),
+        monthly: formatUsage(
+          Subscription.analyzeMonthlyUsage({
+            limit: limits.monthlyLimit,
+            usage: row.monthlyUsage ?? 0,
+            timeUpdated: row.timeMonthlyUpdated ?? new Date(),
+            timeSubscribed: row.timeCreated,
+          }),
+        ),
+      },
     }),
     {
       status: 200,
@@ -141,4 +147,12 @@ export async function GET(input: APIEvent) {
       },
     },
   )
+}
+
+function formatUsage(usage: { status: "ok" | "rate-limited"; resetInSec: number; usagePercent: number }) {
+  return {
+    status: usage.status,
+    percent: usage.usagePercent,
+    resetsAt: new Date(Date.now() + usage.resetInSec * 1000).toISOString(),
+  }
 }
