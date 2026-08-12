@@ -105,15 +105,11 @@ describe("inference stat normalization", () => {
   })
 
   test("aligns periods to UTC calendar boundaries", () => {
-    const queries = buildStatsQueries(
-      new Date("2026-06-17T15:56:00.000Z"),
-      new Date("2026-06-19T15:56:00.000Z"),
-      {
-        namespace: "inference",
-        table: "generation",
-        dataset: "zen",
-      },
-    )
+    const queries = buildStatsQueries(new Date("2026-06-17T15:56:00.000Z"), new Date("2026-06-19T15:56:00.000Z"), {
+      namespace: "inference",
+      table: "generation",
+      dataset: "zen",
+    })
 
     expect(queries).toHaveLength(8)
     expect(queries[0]).toContain("'2026-W25' AS period_key")
@@ -126,19 +122,13 @@ describe("inference stat normalization", () => {
   })
 
   test("uses an exclusive live and legacy source handoff", () => {
-    const [query] = buildStatsQueries(
-      new Date("2026-08-11T00:00:00.000Z"),
-      new Date("2026-08-12T00:00:00.000Z"),
-      {
-        namespace: "inference",
-        table: "generation",
-        dataset: "zen",
-      },
-    )
+    const [query] = buildStatsQueries(new Date("2026-08-11T00:00:00.000Z"), new Date("2026-08-12T00:00:00.000Z"), {
+      namespace: "inference",
+      table: "generation",
+      dataset: "zen",
+    })
 
-    expect(query).toContain(
-      "(source = 'inference-legacy' AND started_at < '2026-08-11T10:57:48.186Z')",
-    )
+    expect(query).toContain("(source = 'inference-legacy' AND started_at < '2026-08-11T10:57:48.186Z')")
     expect(query).toContain("(source = 'inference' AND started_at >= '2026-08-11T10:57:48.186Z')")
   })
 })
