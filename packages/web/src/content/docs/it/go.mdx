@@ -99,7 +99,7 @@ La tabella seguente fornisce una stima del conteggio delle richieste in base a p
 | GPT 5.6 Luna      | 2,050                | 5,100                 | 10,250            |
 | GLM-5.2           | 880                  | 2,150                 | 4,300             |
 | GLM-5.1           | 880                  | 2,150                 | 4,300             |
-| Gemini 3.7 Flash | 220 | 500 | 980 |
+| Gemini 3.7 Flash  | 220                  | 500                   | 980               |
 | Kimi K3           | 110                  | 250                   | 490               |
 | Kimi K2.7 Code    | 1,350                | 3,380                 | 6,750             |
 | Kimi K2.6         | 1,150                | 2,880                 | 5,750             |
@@ -144,7 +144,7 @@ Le stime si basano anche sui seguenti prezzi per 1M token e sull'utilizzo mensil
 | GPT 5.6 Luna (> 272K tokens) | $0.40  | $1.80  | $0.04       | $0.50        | $15      |
 | GLM-5.2                      | $1.40  | $4.40  | $0.26       | -            | $60      |
 | GLM-5.1                      | $1.40  | $4.40  | $0.26       | -            | $60      |
-| Gemini 3.7 Flash | $1.50 | $7.50 | $0.15 | - | $15 |
+| Gemini 3.7 Flash             | $1.50  | $7.50  | $0.15       | -            | $15      |
 | Kimi K3                      | $3.00  | $15.00 | $0.30       | -            | $15      |
 | Kimi K2.7 Code               | $0.95  | $4.00  | $0.19       | -            | $60      |
 | Kimi K2.6                    | $0.95  | $4.00  | $0.16       | -            | $60      |
@@ -197,28 +197,28 @@ Per questi modelli, ottieni comunque un po' più di utilizzo rispetto a quanto o
 
 Puoi anche accedere ai modelli Go tramite i seguenti endpoint API.
 
-| Modello           | ID Modello        | Endpoint                                         | Pacchetto AI SDK            |
-| ----------------- | ----------------- | ------------------------------------------------ | --------------------------- |
-| Grok 4.5          | grok-4.5          | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
-| GPT 5.6 Luna      | gpt-5.6-luna      | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
-| GLM-5.2           | glm-5.2           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| GLM-5.1           | glm-5.1           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Gemini 3.7 Flash | gemini-3.7-flash | `https://opencode.ai/zen/go/v1/models/gemini-3.7-flash` | `@ai-sdk/google` |
-| Kimi K3           | kimi-k3           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Kimi K2.7 Code    | kimi-k2.7-code    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Kimi K2.6         | kimi-k2.6         | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| DeepSeek V4 Pro   | deepseek-v4-pro   | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| DeepSeek V4 Flash | deepseek-v4-flash | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiMo-V2.5         | mimo-v2.5         | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiMo-V2.5-Pro     | mimo-v2.5-pro     | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiniMax M3        | minimax-m3        | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| MiniMax M2.7      | minimax-m2.7      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| MiniMax M2.5      | minimax-m2.5      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.8 Max       | qwen3.8-max       | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.7 Max       | qwen3.7-max       | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.7 Plus      | qwen3.7-plus      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.6 Plus      | qwen3.6-plus      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Hy3               | hy3               | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| Modello           | ID Modello        | Endpoint                                                | Pacchetto AI SDK            |
+| ----------------- | ----------------- | ------------------------------------------------------- | --------------------------- |
+| Grok 4.5          | grok-4.5          | `https://opencode.ai/zen/go/v1/responses`               | `@ai-sdk/openai`            |
+| GPT 5.6 Luna      | gpt-5.6-luna      | `https://opencode.ai/zen/go/v1/responses`               | `@ai-sdk/openai`            |
+| GLM-5.2           | glm-5.2           | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| GLM-5.1           | glm-5.1           | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| Gemini 3.7 Flash  | gemini-3.7-flash  | `https://opencode.ai/zen/go/v1/models/gemini-3.7-flash` | `@ai-sdk/google`            |
+| Kimi K3           | kimi-k3           | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| Kimi K2.7 Code    | kimi-k2.7-code    | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| Kimi K2.6         | kimi-k2.6         | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| DeepSeek V4 Pro   | deepseek-v4-pro   | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| DeepSeek V4 Flash | deepseek-v4-flash | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| MiMo-V2.5         | mimo-v2.5         | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| MiMo-V2.5-Pro     | mimo-v2.5-pro     | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
+| MiniMax M3        | minimax-m3        | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| MiniMax M2.7      | minimax-m2.7      | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| MiniMax M2.5      | minimax-m2.5      | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| Qwen3.8 Max       | qwen3.8-max       | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| Qwen3.7 Max       | qwen3.7-max       | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| Qwen3.7 Plus      | qwen3.7-plus      | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| Qwen3.6 Plus      | qwen3.6-plus      | `https://opencode.ai/zen/go/v1/messages`                | `@ai-sdk/anthropic`         |
+| Hy3               | hy3               | `https://opencode.ai/zen/go/v1/chat/completions`        | `@ai-sdk/openai-compatible` |
 
 Il [model id](/docs/config/#models) nella tua OpenCode config
 utilizza il formato `opencode-go/<model-id>`. Ad esempio, per Kimi K3, useresti
@@ -244,7 +244,7 @@ https://opencode.ai/zen/go/v1/models
 | GPT 5.6 Luna      | Non utilizzato            | 30 giorni              |
 | GLM-5.2           | Non utilizzato            | 0 giorni               |
 | GLM-5.1           | Non utilizzato            | 0 giorni               |
-| Gemini 3.7 Flash           | Non utilizzato            | 0 giorni               |
+| Gemini 3.7 Flash  | Non utilizzato            | 0 giorni               |
 | Kimi K3           | Non utilizzato            | 0 giorni               |
 | Kimi K2.7 Code    | Non utilizzato            | 0 giorni               |
 | Kimi K2.6         | Non utilizzato            | 0 giorni               |
