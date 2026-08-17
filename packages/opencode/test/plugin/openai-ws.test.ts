@@ -17,13 +17,18 @@ describe("plugin.openai.ws", () => {
 
     const socket = await OpenAIWebSocket.connectResponsesWebSocket({
       url: server.wsUrl,
-      headers: { authorization: "Bearer test", "content-length": "123" },
+      headers: {
+        authorization: "Bearer test",
+        "content-length": "123",
+        "x-openai-internal-codex-residency": "eu",
+      },
     })
 
     expect(OpenAIWebSocket.toWebSocketUrl("http://example.com/v1/responses")).toBe("ws://example.com/v1/responses")
     expect(OpenAIWebSocket.toWebSocketUrl("https://example.com/v1/responses")).toBe("wss://example.com/v1/responses")
     expect(headers?.authorization).toBe("Bearer test")
     expect(headers?.["openai-beta"]).toBe(OpenAIWebSocket.PROTOCOL_HEADER)
+    expect(headers?.["x-openai-internal-codex-residency"]).toBe("eu")
     expect(headers?.["content-length"]).toBeUndefined()
     socket.terminate()
   })
