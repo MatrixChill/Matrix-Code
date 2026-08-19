@@ -341,12 +341,16 @@ export const dict = {
   "go.faq.a5.retention": "Data retention",
   "go.faq.a5.retention30": "30 days",
   "go.faq.a5.retention0": "0 days",
+  "go.faq.a5.used": "Used",
   "go.faq.a5.notUsed": "Not used",
   "go.faq.a5.noAgreement": "No agreement",
+  "go.faq.a5.notZdr": "Not ZDR",
   "go.faq.a5.grokRetention":
     "ZDR disables important API features that depend on stored data, including the stateful Responses API, Files and Collections, and the Batch API.",
   "go.faq.a5.gptRetention":
     "Abuse monitoring logs are generated for all API feature usage and retained for up to 30 days.",
+  "go.faq.a5.museRetention":
+    "Heavily discounted token pricing in exchange for permission to use your prompts and completions to train future Meta models.",
   "go.faq.a5.deepseekRetention":
     "ZDR agreement is renewed monthly. The current agreement is valid through August 31, 2026.",
   "go.faq.a5.learnMore": "Learn more",

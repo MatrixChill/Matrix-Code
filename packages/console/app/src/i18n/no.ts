@@ -343,8 +343,10 @@ export const dict = {
   "go.faq.a5.retention": "Dataoppbevaring",
   "go.faq.a5.retention30": "30 dager",
   "go.faq.a5.retention0": "0 dager",
+  "go.faq.a5.used": "Brukes",
   "go.faq.a5.notUsed": "Brukes ikke",
   "go.faq.a5.noAgreement": "Ingen avtale",
+  "go.faq.a5.notZdr": "Ikke ZDR",
   "go.faq.a5.grokRetention":
     "ZDR deaktiverer viktige API-funksjoner som er avhengige av lagrede data, inkludert den tilstandsbaserte Responses API, Files and Collections og Batch API.",
   "go.faq.a5.gptRetention":
@@ -352,6 +354,8 @@ export const dict = {
   "go.faq.a5.learnMore": "Les mer",
   "go.faq.a5.deepseekRetention":
     "ZDR-avtalen fornyes månedlig. Den gjeldende avtalen er gyldig til og med 31. august 2026.",
+  "go.faq.a5.museRetention":
+    "Kraftig rabatterte tokenpriser i bytte mot tillatelse til å bruke ledetekstene og fullføringene dine til å trene fremtidige Meta-modeller.",
 
   "go.faq.a5.beforeExceptions":
     "Go-modeller hostes i USA. Leverandører følger en policy om null oppbevaring og bruker ikke dataene dine til modelltrening, med",

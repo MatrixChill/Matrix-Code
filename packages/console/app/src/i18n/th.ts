@@ -340,12 +340,16 @@ export const dict = {
   "go.faq.a5.retention": "การเก็บรักษาข้อมูล",
   "go.faq.a5.retention30": "30 วัน",
   "go.faq.a5.retention0": "0 วัน",
+  "go.faq.a5.used": "นำไปใช้",
   "go.faq.a5.notUsed": "ไม่นำไปใช้",
   "go.faq.a5.noAgreement": "ไม่มีข้อตกลง",
+  "go.faq.a5.notZdr": "ไม่ใช่ ZDR",
   "go.faq.a5.grokRetention":
     "ZDR ปิดใช้งานฟีเจอร์ API สำคัญที่ต้องอาศัยข้อมูลที่จัดเก็บไว้ ซึ่งรวมถึง Responses API แบบมีสถานะ, Files and Collections และ Batch API",
   "go.faq.a5.gptRetention":
     "ระบบจะสร้างบันทึกการตรวจสอบการใช้งานในทางที่ผิดสำหรับการใช้งานฟีเจอร์ API ทั้งหมด และเก็บรักษาไว้นานสูงสุด 30 วัน",
+  "go.faq.a5.museRetention":
+    "ราคาของ token ลดลงอย่างมาก โดยแลกกับการอนุญาตให้นำพรอมต์และผลลัพธ์ที่สร้างขึ้นของคุณไปใช้ฝึกโมเดล Meta ในอนาคต",
   "go.faq.a5.learnMore": "ดูข้อมูลเพิ่มเติม",
   "go.faq.a5.deepseekRetention": "ข้อตกลง ZDR จะต่ออายุทุกเดือน ข้อตกลงปัจจุบันมีผลใช้ถึงวันที่ 31 สิงหาคม 2026",
 

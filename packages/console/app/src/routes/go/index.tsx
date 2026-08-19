@@ -39,6 +39,7 @@ const models = [
   { name: "Qwen3.6 Plus", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
   { name: "MiniMax M3", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
   { name: "MiniMax M2.7", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
+  { name: "Muse Spark 1.2 Contributor", training: "go.faq.a5.used", retention: "go.faq.a5.notZdr" },
   { name: "DeepSeek V4 Pro", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
   { name: "DeepSeek V4 Flash", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
   { name: "Hy3", training: "go.faq.a5.notUsed", retention: "go.faq.a5.retention0" },
@@ -78,6 +79,7 @@ function LimitsGraph(props: { href: string }) {
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", req: 7600, d: "330ms" },
     { id: "mimo-v2.5", name: "MiMo-V2.5", req: 30100, d: "340ms" },
     { id: "hy3", name: "Hy3", req: 34400, baseReq: 4300, d: "320ms" },
+    { id: "muse-spark-1.2-contributor", name: "Muse Spark 1.2 Contributor", req: 45300, edge: true, d: "360ms" },
   ]
 
   const w = 1040
@@ -507,6 +509,13 @@ export default function Home() {
                     <p>
                       <strong>GPT 5.6 Luna:</strong> {i18n.t("go.faq.a5.gptRetention")}{" "}
                       <a href="https://developers.openai.com/api/docs/guides/your-data#data-retention-controls-for-abuse-monitoring">
+                        {i18n.t("go.faq.a5.learnMore")}
+                      </a>
+                      .
+                    </p>
+                    <p>
+                      <strong>Muse Spark 1.2 Contributor:</strong> {i18n.t("go.faq.a5.museRetention")}{" "}
+                      <a href="https://dev.meta.ai/docs/pricing-rate-limits#contributor-tier">
                         {i18n.t("go.faq.a5.learnMore")}
                       </a>
                       .
