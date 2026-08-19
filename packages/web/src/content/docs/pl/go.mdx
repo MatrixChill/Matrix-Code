@@ -89,27 +89,27 @@ Limity są zdefiniowane w wartości w dolarach. Oznacza to, że rzeczywista licz
 
 Poniższa tabela przedstawia szacunkową liczbę żądań na podstawie typowych wzorców korzystania z Go:
 
-| Model             | żądania na 5 godzin | żądania na tydzień | żądania na miesiąc |
-| ----------------- | ------------------- | ------------------ | ------------------ |
-| Grok 4.5          | 120                 | 300                | 600                |
-| GPT 5.6 Luna      | 2,050               | 5,100              | 10,250             |
-| GLM-5.3           | 220                 | 540                | 1,080              |
-| GLM-5.2           | 880                 | 2,150              | 4,300              |
-| GLM-5.1           | 880                 | 2,150              | 4,300              |
-| Kimi K3           | 110                 | 250                | 490                |
-| Kimi K2.7 Code    | 1,350               | 3,380              | 6,750              |
-| Kimi K2.6         | 1,150               | 2,880              | 5,750              |
-| MiMo-V2.5         | 30,100              | 75,200             | 150,400            |
-| MiMo-V2.5-Pro     | 3,250               | 8,150              | 16,300             |
-| MiniMax M3        | 3,200               | 8,000              | 16,000             |
-| MiniMax M2.7      | 3,400               | 8,500              | 17,000             |
-| Qwen3.8 Max       | 160                 | 400                | 810                |
-| Qwen3.7 Max       | 340                 | 840                | 1,690              |
-| Qwen3.7 Plus      | 4,300               | 10,800             | 21,600             |
-| Qwen3.6 Plus      | 3,300               | 8,200              | 16,300             |
-| DeepSeek V4 Pro   | 1,050               | 2,600              | 5,200              |
-| DeepSeek V4 Flash | 7,600               | 18,900             | 37,800             |
-| Hy3               | 4,300               | 10,750             | 21,500             |
+| Model                      | żądania na 5 godzin | żądania na tydzień | żądania na miesiąc |
+| -------------------------- | ------------------- | ------------------ | ------------------ |
+| Grok 4.5                   | 120                 | 300                | 600                |
+| GPT 5.6 Luna               | 2,050               | 5,100              | 10,250             |
+| GLM-5.3                    | 220                 | 540                | 1,080              |
+| GLM-5.2                    | 880                 | 2,150              | 4,300              |
+| GLM-5.1                    | 880                 | 2,150              | 4,300              |
+| Kimi K3                    | 110                 | 250                | 490                |
+| Kimi K2.7 Code             | 1,350               | 3,380              | 6,750              |
+| Kimi K2.6                  | 1,150               | 2,880              | 5,750              |
+| MiMo-V2.5                  | 30,100              | 75,200             | 150,400            |
+| MiMo-V2.5-Pro              | 3,250               | 8,150              | 16,300             |
+| MiniMax M3                 | 3,200               | 8,000              | 16,000             |
+| MiniMax M2.7               | 3,400               | 8,500              | 17,000             |
+| Qwen3.8 Max                | 160                 | 400                | 810                |
+| Qwen3.7 Max                | 340                 | 840                | 1,690              |
+| Qwen3.7 Plus               | 4,300               | 10,800             | 21,600             |
+| Qwen3.6 Plus               | 3,300               | 8,200              | 16,300             |
+| DeepSeek V4 Pro            | 1,050               | 2,600              | 5,200              |
+| DeepSeek V4 Flash          | 7,600               | 18,900             | 37,800             |
+| Hy3                        | 4,300               | 10,750             | 21,500             |
 
 Szacunki te opierają się na zaobserwowanych wzorcach żądań:
 
@@ -194,28 +194,28 @@ W przypadku tych modeli nadal otrzymujesz nieco więcej, niż płacąc bezpośre
 
 Możesz również uzyskać dostęp do modeli Go za pośrednictwem następujących punktów końcowych API.
 
-| Model             | ID modelu         | Punkt końcowy                                    | Pakiet AI SDK               |
-| ----------------- | ----------------- | ------------------------------------------------ | --------------------------- |
-| Grok 4.5          | grok-4.5          | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
-| GPT 5.6 Luna      | gpt-5.6-luna      | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
-| GLM-5.3           | glm-5.3           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| GLM-5.2           | glm-5.2           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| GLM-5.1           | glm-5.1           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Kimi K3           | kimi-k3           | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Kimi K2.7 Code    | kimi-k2.7-code    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| Kimi K2.6         | kimi-k2.6         | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| DeepSeek V4 Pro   | deepseek-v4-pro   | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| DeepSeek V4 Flash | deepseek-v4-flash | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiMo-V2.5         | mimo-v2.5         | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiMo-V2.5-Pro     | mimo-v2.5-pro     | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
-| MiniMax M3        | minimax-m3        | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| MiniMax M2.7      | minimax-m2.7      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| MiniMax M2.5      | minimax-m2.5      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.8 Max       | qwen3.8-max       | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.7 Max       | qwen3.7-max       | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.7 Plus      | qwen3.7-plus      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Qwen3.6 Plus      | qwen3.6-plus      | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
-| Hy3               | hy3               | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| Model                      | ID modelu                  | Punkt końcowy                                    | Pakiet AI SDK               |
+| -------------------------- | -------------------------- | ------------------------------------------------ | --------------------------- |
+| Grok 4.5                   | grok-4.5                   | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
+| GPT 5.6 Luna               | gpt-5.6-luna               | `https://opencode.ai/zen/go/v1/responses`        | `@ai-sdk/openai`            |
+| GLM-5.3                    | glm-5.3                    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| GLM-5.2                    | glm-5.2                    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| GLM-5.1                    | glm-5.1                    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| Kimi K3                    | kimi-k3                    | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| Kimi K2.7 Code             | kimi-k2.7-code             | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| Kimi K2.6                  | kimi-k2.6                  | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| DeepSeek V4 Pro            | deepseek-v4-pro            | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| DeepSeek V4 Flash          | deepseek-v4-flash          | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| MiMo-V2.5                  | mimo-v2.5                  | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| MiMo-V2.5-Pro              | mimo-v2.5-pro              | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
+| MiniMax M3                 | minimax-m3                 | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| MiniMax M2.7               | minimax-m2.7               | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| MiniMax M2.5               | minimax-m2.5               | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| Qwen3.8 Max                | qwen3.8-max                | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| Qwen3.7 Max                | qwen3.7-max                | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| Qwen3.7 Plus               | qwen3.7-plus               | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| Qwen3.6 Plus               | qwen3.6-plus               | `https://opencode.ai/zen/go/v1/messages`         | `@ai-sdk/anthropic`         |
+| Hy3                        | hy3                        | `https://opencode.ai/zen/go/v1/chat/completions` | `@ai-sdk/openai-compatible` |
 
 [ID modelu](/docs/config/#models) w Twojej konfiguracji OpenCode
 używa formatu `opencode-go/<model-id>`. Na przykład dla Kimi K3 należy użyć
@@ -235,27 +235,27 @@ https://opencode.ai/zen/go/v1/models
 
 ## Prywatność
 
-| Model             | Trenowanie modelu | Retencja danych |
-| ----------------- | ----------------- | --------------- |
-| Grok 4.5          | Niewykorzystywane | 30 dni          |
-| GPT 5.6 Luna      | Niewykorzystywane | 30 dni          |
-| GLM-5.3           | Niewykorzystywane | 0 dni           |
-| GLM-5.2           | Niewykorzystywane | 0 dni           |
-| GLM-5.1           | Niewykorzystywane | 0 dni           |
-| Kimi K3           | Niewykorzystywane | 0 dni           |
-| Kimi K2.7 Code    | Niewykorzystywane | 0 dni           |
-| Kimi K2.6         | Niewykorzystywane | 0 dni           |
-| MiMo-V2.5-Pro     | Niewykorzystywane | 0 dni           |
-| MiMo-V2.5         | Niewykorzystywane | 0 dni           |
-| Qwen3.8 Max       | Niewykorzystywane | 0 dni           |
-| Qwen3.7 Max       | Niewykorzystywane | 0 dni           |
-| Qwen3.7 Plus      | Niewykorzystywane | 0 dni           |
-| Qwen3.6 Plus      | Niewykorzystywane | 0 dni           |
-| MiniMax M3        | Niewykorzystywane | 0 dni           |
-| MiniMax M2.7      | Niewykorzystywane | 0 dni           |
-| DeepSeek V4 Pro   | Niewykorzystywane | 0 dni           |
-| DeepSeek V4 Flash | Niewykorzystywane | 0 dni           |
-| Hy3               | Niewykorzystywane | 0 dni           |
+| Model                      | Trenowanie modelu | Retencja danych |
+| -------------------------- | ----------------- | --------------- |
+| Grok 4.5                   | Niewykorzystywane | 30 dni          |
+| GPT 5.6 Luna               | Niewykorzystywane | 30 dni          |
+| GLM-5.3                    | Niewykorzystywane | 0 dni           |
+| GLM-5.2                    | Niewykorzystywane | 0 dni           |
+| GLM-5.1                    | Niewykorzystywane | 0 dni           |
+| Kimi K3                    | Niewykorzystywane | 0 dni           |
+| Kimi K2.7 Code             | Niewykorzystywane | 0 dni           |
+| Kimi K2.6                  | Niewykorzystywane | 0 dni           |
+| MiMo-V2.5-Pro              | Niewykorzystywane | 0 dni           |
+| MiMo-V2.5                  | Niewykorzystywane | 0 dni           |
+| Qwen3.8 Max                | Niewykorzystywane | 0 dni           |
+| Qwen3.7 Max                | Niewykorzystywane | 0 dni           |
+| Qwen3.7 Plus               | Niewykorzystywane | 0 dni           |
+| Qwen3.6 Plus               | Niewykorzystywane | 0 dni           |
+| MiniMax M3                 | Niewykorzystywane | 0 dni           |
+| MiniMax M2.7               | Niewykorzystywane | 0 dni           |
+| DeepSeek V4 Pro            | Niewykorzystywane | 0 dni           |
+| DeepSeek V4 Flash          | Niewykorzystywane | 0 dni           |
+| Hy3                        | Niewykorzystywane | 0 dni           |
 
 - **Grok 4.5:** ZDR wyłącza ważne funkcje API zależne od przechowywanych danych, w tym stanowy Responses API, Files and Collections oraz Batch API. [Dowiedz się więcej](https://docs.x.ai/developers/faq/security#what-is-zero-data-retention-zdr).
 - **GPT 5.6 Luna:** Dzienniki monitorowania nadużyć są generowane dla każdego użycia funkcji API i przechowywane przez maksymalnie 30 dni. [Dowiedz się więcej](https://developers.openai.com/api/docs/guides/your-data#data-retention-controls-for-abuse-monitoring).
