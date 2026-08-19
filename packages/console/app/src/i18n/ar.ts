@@ -385,6 +385,9 @@ export const dict = {
   "zen.api.error.modelDisabled": "النموذج معطل",
   "zen.api.error.regionNotAllowed":
     "لا يتوفر أحدث إصدار من هذا النموذج إلا مستضافًا في الصين، ويتطلب تفعيلًا صريحًا: {{consoleGoUrl}}",
+  "zen.api.error.countryNotAllowed": "هذا النموذج غير متاح في بلدك.",
+  "zen.api.error.trainingNotAllowed":
+    "يجمع هذا النموذج بيانات تُستخدم لتحسين جودته، ويتطلب موافقتك الصريحة: {{consoleGoUrl}}",
   "zen.api.error.trialEnded":
     "انتهى العرض المجاني لـ {{model}}. يمكنك مواصلة استخدام النموذج بالاشتراك في OpenCode Go - {{link}}",
 
