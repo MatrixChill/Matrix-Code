@@ -398,6 +398,9 @@ export const dict = {
   "zen.api.error.modelDisabled": "Model devre dışı",
   "zen.api.error.regionNotAllowed":
     "Bu modelin en son sürümü yalnızca Çin'de barındırılıyor ve kullanabilmek için açıkça onay vermeniz gerekiyor: {{consoleGoUrl}}",
+  "zen.api.error.countryNotAllowed": "Bu model ülkenizde kullanılamıyor.",
+  "zen.api.error.trainingNotAllowed":
+    "Bu model, kalitesini artırmak için kullanılan verileri toplar. Modeli kullanabilmek için açıkça onay vermeniz gerekir: {{consoleGoUrl}}",
   "zen.api.error.trialEnded":
     "{{model}} için ücretsiz promosyon sona erdi. OpenCode Go'ya abone olarak modeli kullanmaya devam edebilirsiniz - {{link}}",
 

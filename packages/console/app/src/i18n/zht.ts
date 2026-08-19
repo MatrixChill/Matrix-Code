@@ -370,6 +370,8 @@ export const dict = {
   "zen.api.error.userMonthlyLimitReached": "你已達到每月支出限額 ${{amount}}。請在此處管理你的限額：{{membersUrl}}",
   "zen.api.error.modelDisabled": "模型已停用",
   "zen.api.error.regionNotAllowed": "此模型的最新版本僅於中國託管，且需明確選擇啟用：{{consoleGoUrl}}",
+  "zen.api.error.countryNotAllowed": "此模型無法在你所在的國家或地區使用。",
+  "zen.api.error.trainingNotAllowed": "此模型會收集用於提升其品質的資料，使用前須經你明確同意：{{consoleGoUrl}}",
   "zen.api.error.trialEnded": "{{model}} 的限免活动已結束。您可以訂閱 OpenCode Go 繼續使用該模型 - {{link}}",
 
   "black.meta.title": "OpenCode Black | 存取全球最佳編碼模型",

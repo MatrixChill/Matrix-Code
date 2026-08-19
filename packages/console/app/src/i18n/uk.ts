@@ -394,6 +394,9 @@ export const dict = {
   "zen.api.error.modelDisabled": "Модель вимкнено",
   "zen.api.error.regionNotAllowed":
     "Остання версія цієї моделі доступна лише на серверах у Китаї, і для її використання потрібно надати явну згоду: {{consoleGoUrl}}",
+  "zen.api.error.countryNotAllowed": "Ця модель недоступна у вашій країні.",
+  "zen.api.error.trainingNotAllowed":
+    "Ця модель збирає дані, які використовуються для покращення її якості; для її використання потрібна ваша явна згода: {{consoleGoUrl}}",
   "zen.api.error.trialEnded":
     "Безкоштовна акція для {{model}} закінчилася. Ви можете продовжити використання, підписавшись на OpenCode Go — {{link}}",
 

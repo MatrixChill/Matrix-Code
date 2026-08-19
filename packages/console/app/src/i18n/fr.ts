@@ -398,6 +398,9 @@ export const dict = {
   "zen.api.error.modelDisabled": "Le modèle est désactivé",
   "zen.api.error.regionNotAllowed":
     "La dernière version de ce modèle est uniquement disponible avec un hébergement en Chine et nécessite votre consentement explicite : {{consoleGoUrl}}",
+  "zen.api.error.countryNotAllowed": "Ce modèle n’est pas disponible dans votre pays.",
+  "zen.api.error.trainingNotAllowed":
+    "Ce modèle collecte des données utilisées pour améliorer sa qualité et nécessite votre consentement explicite : {{consoleGoUrl}}",
   "zen.api.error.trialEnded":
     "La promotion gratuite de {{model}} est terminée. Vous pouvez continuer à utiliser le modèle en vous abonnant à OpenCode Go - {{link}}",
 
