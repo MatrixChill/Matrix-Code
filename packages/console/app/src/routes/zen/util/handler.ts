@@ -22,6 +22,7 @@ import {
   UserLimitError,
   ModelError,
   RegionError,
+  DataPolicyError,
   RateLimitError,
   FreeUsageLimitError,
   GoUsageLimitError,
@@ -128,6 +129,12 @@ export async function handler(
       : createKeyRateLimiter(modelInfo.id, modelInfo.rateLimit, zenApiKey, input.request)
     await rateLimiter?.check()
     const authInfo = await authenticate(modelInfo, zenApiKey)
+    if (authInfo && opts.modelList === "lite" && modelInfo.id === "muse-spark-1.2" && !authInfo.allowNonZdr)
+      throw new DataPolicyError(
+        t("zen.api.error.nonZdrNotAllowed", {
+          consoleGoUrl: `https://opencode.ai/workspace/${authInfo.workspaceID}/go`,
+        }),
+      )
     const allowedRegions = authInfo?.region
       ? authInfo.region
       : await (async () => {
@@ -477,7 +484,7 @@ export async function handler(
       } catch {}
     }
 
-    if (error instanceof RegionError)
+    if (error instanceof RegionError || error instanceof DataPolicyError)
       return new Response(
         JSON.stringify({
           type: "error",
@@ -708,6 +715,7 @@ export async function handler(
           workspace: {
             id: WorkspaceTable.id,
             region: WorkspaceTable.region,
+            allowNonZdr: WorkspaceTable.allow_non_zdr,
             isBlocked: WorkspaceTable.is_blocked,
             isFlaggedByAnthropic: WorkspaceTable.is_flagged_by_anthropic,
             isFlaggedByOpenAI: WorkspaceTable.is_flagged_by_openai,
@@ -820,6 +828,7 @@ export async function handler(
       apiKeyId: data.apiKey,
       workspaceID: data.workspace.id,
       region: data.workspace.region,
+      allowNonZdr: data.workspace.allowNonZdr ?? false,
       billing: data.billing,
       user: data.user,
       black: data.black,

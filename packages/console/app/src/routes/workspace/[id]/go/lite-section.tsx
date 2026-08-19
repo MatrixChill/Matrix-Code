@@ -39,6 +39,7 @@ export const queryLiteSubscription = query(async (workspaceID: string) => {
           timeCreated: LiteTable.timeCreated,
           lite: BillingTable.lite,
           region: WorkspaceTable.region,
+          allowNonZdr: WorkspaceTable.allow_non_zdr,
         })
         .from(BillingTable)
         .innerJoin(LiteTable, eq(LiteTable.workspaceID, BillingTable.workspaceID))
@@ -54,6 +55,7 @@ export const queryLiteSubscription = query(async (workspaceID: string) => {
     return {
       mine,
       useBalance: row.lite?.useBalance ?? false,
+      allowNonZdr: row.allowNonZdr ?? false,
       region:
         row.region ?? (await Workspace.setDefaultRegion({ country: countryFromRequest(getRequestEvent()?.request) })),
       rollingUsage: Subscription.analyzeRollingUsage({
@@ -154,6 +156,24 @@ const setGoProviderRouting = action(async (form: FormData) => {
   )
 }, "go.providerRouting.set")
 
+const setGoAllowNonZdr = action(async (form: FormData) => {
+  "use server"
+  const workspaceID = form.get("workspaceID") as string | null
+  if (!workspaceID) return { error: formError.workspaceRequired }
+  const allowNonZdr = (form.get("allowNonZdr") as string | null) === "true"
+
+  return json(
+    await withActor(
+      () =>
+        Workspace.update({ allow_non_zdr: allowNonZdr })
+          .then(() => ({ error: undefined }))
+          .catch((e) => ({ error: e.message as string })),
+      workspaceID,
+    ),
+    { revalidate: queryLiteSubscription.key },
+  )
+}, "go.allowNonZdr.set")
+
 function LiteUsageItem(props: { label: string; usage: { usagePercent: number; resetInSec: number } }) {
   const i18n = useI18n()
 
@@ -186,6 +206,7 @@ export function LiteSection(props: { lite: LiteSubscription | undefined }) {
   const checkoutSubmission = useSubmission(createLiteCheckoutUrl)
   const useBalanceSubmission = useSubmission(setLiteUseBalance)
   const providerRoutingSubmission = useSubmission(setGoProviderRouting)
+  const allowNonZdrSubmission = useSubmission(setGoAllowNonZdr)
   const [store, setStore] = createStore({
     loading: undefined as undefined | "session" | "checkout" | "alipay" | "upi",
     showModal: false,
@@ -264,6 +285,20 @@ export function LiteSection(props: { lite: LiteSubscription | undefined }) {
                 <h3>{i18n.t("workspace.lite.providers.title")}</h3>
                 <p>{i18n.t("workspace.lite.providers.description")}</p>
               </div>
+              <form action={setGoAllowNonZdr} method="post" data-slot="setting-row">
+                <p>{i18n.t("workspace.lite.providers.allowNonZdr")}</p>
+                <input type="hidden" name="workspaceID" value={params.id} />
+                <input type="hidden" name="allowNonZdr" value={sub().allowNonZdr ? "false" : "true"} />
+                <label data-slot="toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={sub().allowNonZdr}
+                    disabled={allowNonZdrSubmission.pending}
+                    onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                  />
+                  <span></span>
+                </label>
+              </form>
               <form action={setGoProviderRouting} method="post" data-slot="setting-row">
                 <p>{i18n.t("workspace.lite.providers.useChina")}</p>
                 <input type="hidden" name="workspaceID" value={params.id} />
