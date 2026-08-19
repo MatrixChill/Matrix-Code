@@ -597,7 +597,6 @@ body {
           font-weight: 600;
           white-space: nowrap;
         }
-
       }
 
       [data-slot="plot-labels"] {
