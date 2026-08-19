@@ -1,9 +1,9 @@
 {
   "version": "6",
   "dialect": "mysql",
-  "id": "39a41b57-a092-4356-a8ed-2a51cde2da1d",
+  "id": "e365c1d7-fb02-44ad-b681-87bb51d01964",
   "prevIds": [
-    "2752a0ba-95b5-492a-83fd-3dfe7fa77734"
+    "39a41b57-a092-4356-a8ed-2a51cde2da1d"
   ],
   "ddl": [
     {
@@ -2600,7 +2600,7 @@
       "charSet": null,
       "collation": null,
       "generated": null,
-      "name": "allow_non_zdr",
+      "name": "allow_training",
       "entityType": "columns",
       "table": "workspace"
     },
