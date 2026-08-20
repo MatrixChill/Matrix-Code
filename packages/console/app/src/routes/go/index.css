@@ -592,6 +592,12 @@ body {
           white-space: nowrap;
         }
 
+        [data-regions] {
+          color: var(--color-text-weak);
+          pointer-events: auto;
+          white-space: nowrap;
+        }
+
         [data-value] {
           color: var(--color-text-strong);
           font-weight: 600;

@@ -192,7 +192,7 @@ function LimitsGraph(props: { href: string }) {
           </For>
         </div>
 
-        <div data-slot="pills" aria-hidden="true">
+        <div data-slot="pills">
           <For each={graph}>
             {(m, i) => (
               <span
@@ -204,6 +204,11 @@ function LimitsGraph(props: { href: string }) {
               >
                 <span data-value>{m.req.toLocaleString()}</span>
                 <span data-name>{m.name}</span>
+                {m.id === "muse-spark-1.2-contributor" && (
+                  <a data-regions href="https://ai.developer.meta.com/legal/geographic-use-policy">
+                    {i18n.t("go.graph.limitedRegions")}
+                  </a>
+                )}
                 {m.baseReq && <span data-bonus>8x usage</span>}
               </span>
             )}
