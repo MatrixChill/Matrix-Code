@@ -110,10 +110,9 @@ OpenCode Zen は、OpenCode のほかのプロバイダーと同じように動�
 | Big Pickle                  | big-pickle                  | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
 | MiMo-V2.5 Free              | mimo-v2.5-free              | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
 | Hy3 Free                    | hy3-free                    | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
-| Laguna S 2.1 Free           | laguna-s-2.1-free           | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
 | Nemotron 3 Ultra Free       | nemotron-3-ultra-free       | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
 | Nemotron 3.5 Lightning Free | nemotron-3.5-lightning-free | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
-| DeepSeek V4 Flash Free      | deepseek-v4-flash-free      | `https://opencode.ai/zen/v1/chat/completions`             | `@ai-sdk/openai-compatible` |
+| Muse Spark 1.2 Contributor Free | muse-spark-1.2-contributor-free | `https://opencode.ai/zen/v1/responses`                | `@ai-sdk/openai`            |
 
 OpenCode 設定で使う [model id](/docs/config/#models) は `opencode/<model-id>` 形式です。たとえば、GPT 5.5 では設定に `opencode/gpt-5.5` を使用します。
 
@@ -136,12 +135,11 @@ https://opencode.ai/zen/v1/models
 | Model                             | Input  | Output  | Cached Read | Cached Write |
 | --------------------------------- | ------ | ------- | ----------- | ------------ |
 | Big Pickle                        | Free   | Free    | Free        | -            |
-| DeepSeek V4 Flash Free            | Free   | Free    | Free        | -            |
 | MiMo-V2.5 Free                    | Free   | Free    | Free        | -            |
 | Hy3 Free                          | Free   | Free    | Free        | -            |
-| Laguna S 2.1 Free                 | Free   | Free    | Free        | -            |
 | Nemotron 3 Ultra Free             | Free   | Free    | Free        | -            |
 | Nemotron 3.5 Lightning Free       | Free   | Free    | Free        | -            |
+| Muse Spark 1.2 Contributor Free   | Free   | Free    | Free        | -            |
 | MiniMax M3                        | $0.30  | $1.20   | $0.06       | -            |
 | MiniMax M2.7                      | $0.30  | $1.20   | $0.06       | -            |
 | MiniMax M2.5                      | $0.30  | $1.20   | $0.06       | -            |
@@ -220,13 +218,12 @@ https://opencode.ai/zen/v1/models
 
 無料モデル:
 
-- DeepSeek V4 Flash Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
 - MiMo-V2.5 Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
 - Hy3 Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
-- Laguna S 2.1 Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
 - Nemotron 3 Ultra Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
 - Nemotron 3.5 Lightning Free は期間限定で OpenCode で利用できます。チームはこの期間中にフィードバックを集め、モデルを改善しています。
 - Big Pickle はステルスモデルで、期間限定で OpenCode で無料提供されています。チームはこの期間中にフィードバックを集め、モデルを改善しています。
+- Muse Spark 1.2 Contributor Free は期間限定で OpenCode で利用できます。チームはこの期間を活用してフィードバックを収集し、モデルを改善しています。
 
 ご不明な点があれば、<a href={email}>お問い合わせください</a>。
 
@@ -278,14 +275,13 @@ https://opencode.ai/zen/v1/models
 すべてのモデルは米国でホストされています。私たちのプロバイダーはゼロ保持ポリシーに従っており、以下の例外を除き、モデル学習にあなたのデータを使用しません。
 
 - Big Pickle: 無料提供期間中、収集されたデータがモデル改善に使われる場合があります。
-- DeepSeek V4 Flash Free: 無料提供期間中、収集されたデータがモデル改善に使われる場合があります。
 - MiMo-V2.5 Free: 無料提供期間中、収集されたデータがモデル改善に使われる場合があります。
 - Hy3 Free: 無料提供期間中、収集されたデータがモデル改善に使われる場合があります。
-- Laguna S 2.1 Free: 無料提供期間中、収集されたデータがモデル改善に使われる場合があります。
 - Nemotron 3 Ultra Free（NVIDIA の無料エンドポイント）: 試用専用です — 個人情報や機密データは送信しないでください。お客様の利用は、セキュリティ目的および NVIDIA の製品とサービスの改善のために記録されます。改善目的で記録されたセッションデータは、お客様の身元や永続的な識別子とは関連付けられません。当社のデータ処理慣行の詳細については、[プライバシーポリシー](https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf)をご覧ください。このエンドポイントを利用することで、お客様はそのような情報の当社による収集、記録、利用、および [NVIDIA API Trial Terms of Service](https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf) に同意したものとみなされます。
 - Nemotron 3.5 Lightning Free（NVIDIA の無料エンドポイント）: 試用専用です — 個人情報や機密データは送信しないでください。お客様の利用は、セキュリティ目的および NVIDIA の製品とサービスの改善のために記録されます。改善目的で記録されたセッションデータは、お客様の身元や永続的な識別子とは関連付けられません。当社のデータ処理慣行の詳細については、[プライバシーポリシー](https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf)をご覧ください。このエンドポイントを利用することで、お客様はそのような情報の当社による収集、記録、利用、および [NVIDIA API Trial Terms of Service](https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf) に同意したものとみなされます。
 - OpenAI APIs: リクエストは [OpenAI's Data Policies](https://platform.openai.com/docs/guides/your-data) に従って 30 日間保持されます。
 - Anthropic APIs: リクエストは [Anthropic's Data Policies](https://docs.anthropic.com/en/docs/claude-code/data-usage) に従って 30 日間保持されます。
+- Muse Spark 1.2 Contributor Free: 将来の Meta モデルのトレーニングにプロンプトと生成結果を使用する許可と引き換えに、トークン料金が大幅に割引されます。[詳しく見る](https://dev.meta.ai/docs/pricing-rate-limits#contributor-tier)。
 
 ---
 
