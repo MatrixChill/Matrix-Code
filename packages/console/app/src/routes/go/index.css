@@ -594,8 +594,11 @@ body {
 
         [data-regions] {
           color: var(--color-text-weak);
-          pointer-events: auto;
           white-space: nowrap;
+
+          a {
+            pointer-events: auto;
+          }
         }
 
         [data-value] {
