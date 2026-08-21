@@ -203,7 +203,9 @@ function LimitsGraph(props: { href: string }) {
                 data-model={m.id}
                 data-edge={"edge" in m ? "" : undefined}
                 data-infinite={"infinite" in m ? "" : undefined}
-                style={{ "--x": px("infinite" in m ? infiniteX : x(ratio(m.req))), "--y": py(gy(i())), "--d": m.d } as any}
+                style={
+                  { "--x": px("infinite" in m ? infiniteX : x(ratio(m.req))), "--y": py(gy(i())), "--d": m.d } as any
+                }
               >
                 <span data-value>{"infinite" in m ? "∞" : m.req.toLocaleString()}</span>
                 <span data-name>{m.name}</span>
