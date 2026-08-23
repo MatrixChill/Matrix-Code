@@ -100,11 +100,8 @@ export async function handler(
     const url = input.request.url
     const body = await input.request.text()
     const model =
-      opts.format === "google"
-        ? opts.parseModel(url, undefined)
-        : body.match(/"model"\s*:\s*"([^"]+)"/)?.[1] ?? ""
-    const isStream =
-      opts.format === "google" ? opts.parseIsStream(url, undefined) : /"stream"\s*:\s*true/.test(body)
+      opts.format === "google" ? opts.parseModel(url, undefined) : (body.match(/"model"\s*:\s*"([^"]+)"/)?.[1] ?? "")
+    const isStream = opts.format === "google" ? opts.parseIsStream(url, undefined) : /"stream"\s*:\s*true/.test(body)
     const rawIp = input.request.headers.get("x-real-ip") ?? ""
     const ip = rawIp.includes(":") ? rawIp.split(":").slice(0, 4).join(":") : rawIp
     const rawZenApiKey = opts.parseApiKey(input.request.headers)
@@ -209,42 +206,41 @@ export async function handler(
             providerInfo.model.startsWith("global.anthropic.") ||
             providerInfo.model.startsWith("databricks-claude-"))
         if (providerInfo.format === opts.format && !providerInfo.payloadModifier && !specialAnthropic) {
-          const patched = body.replace(
-            /"model"\s*:\s*"[^"]+"/,
-            `"model":${JSON.stringify(providerInfo.model)}`,
-          )
+          const patched = body.replace(/"model"\s*:\s*"[^"]+"/, `"model":${JSON.stringify(providerInfo.model)}`)
           if (providerInfo.format !== "oa-compat" || !isStream) return patched
           return patched.replace(/}\s*$/, ',"stream_options":{"include_usage":true}}')
         }
         return undefined
       })()
-      const reqBody = directBody ?? JSON.stringify(
-        providerInfo.modifyBody({
-          ...createBodyConverter(opts.format, providerInfo.format)(JSON.parse(body)),
-          model: providerInfo.model,
-          ...(() => {
-            const replacer = (obj: Record<string, any>): Record<string, any> =>
-              Object.fromEntries(
-                Object.entries(obj).flatMap(([k, v]) => {
-                  if (Array.isArray(v)) return [[k, v]]
-                  if (typeof v === "object") return [[k, replacer(v)]]
-                  if (typeof v === "string") {
-                    if (v === "$workspace") return authInfo?.workspaceID ? [[k, authInfo.workspaceID]] : []
-                    if (v === "$org")
-                      return authInfo?.workspaceID ? [[k, authInfo.workspaceID.replace("wrk_", "org_")]] : []
-                    if (v === "$user") return stickyId ? [[k, stickyId]] : []
-                    if (v.startsWith("$header.")) {
-                      const headerValue = input.request.headers.get(v.slice(8))
-                      return headerValue ? [[k, headerValue]] : []
+      const reqBody =
+        directBody ??
+        JSON.stringify(
+          providerInfo.modifyBody({
+            ...createBodyConverter(opts.format, providerInfo.format)(JSON.parse(body)),
+            model: providerInfo.model,
+            ...(() => {
+              const replacer = (obj: Record<string, any>): Record<string, any> =>
+                Object.fromEntries(
+                  Object.entries(obj).flatMap(([k, v]) => {
+                    if (Array.isArray(v)) return [[k, v]]
+                    if (typeof v === "object") return [[k, replacer(v)]]
+                    if (typeof v === "string") {
+                      if (v === "$workspace") return authInfo?.workspaceID ? [[k, authInfo.workspaceID]] : []
+                      if (v === "$org")
+                        return authInfo?.workspaceID ? [[k, authInfo.workspaceID.replace("wrk_", "org_")]] : []
+                      if (v === "$user") return stickyId ? [[k, stickyId]] : []
+                      if (v.startsWith("$header.")) {
+                        const headerValue = input.request.headers.get(v.slice(8))
+                        return headerValue ? [[k, headerValue]] : []
+                      }
                     }
-                  }
-                  return [[k, v]]
-                }),
-              )
-            return replacer(providerInfo.payloadModifier ?? {})
-          })(),
-        }),
-      )
+                    return [[k, v]]
+                  }),
+                )
+              return replacer(providerInfo.payloadModifier ?? {})
+            })(),
+          }),
+        )
       logger.debug("REQUEST URL: " + reqUrl)
       logger.debug("REQUEST: " + reqBody.substring(0, 300) + "...")
       const isNewInference =
