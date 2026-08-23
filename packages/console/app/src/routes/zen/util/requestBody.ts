@@ -92,7 +92,11 @@ function replace(chunks: Uint8Array[], start: number, end: number, value: string
   })
 }
 
-function passthrough(initial: Array<Uint8Array | undefined>, reader: ReadableStreamDefaultReader<Uint8Array>, sourceDone: boolean) {
+function passthrough(
+  initial: Array<Uint8Array | undefined>,
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  sourceDone: boolean,
+) {
   let done = sourceDone
   let index = 0
   return new ReadableStream<Uint8Array>({
