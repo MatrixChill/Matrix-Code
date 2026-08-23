@@ -28,12 +28,7 @@ import {
   GoUsageLimitError,
   BlackUsageLimitError,
 } from "./error"
-import {
-  buildCostChunk,
-  createStreamPartConverter,
-  createResponseConverter,
-  UsageInfo,
-} from "./provider/provider"
+import { buildCostChunk, createStreamPartConverter, createResponseConverter, UsageInfo } from "./provider/provider"
 import { anthropicHelper } from "./provider/anthropic"
 import { googleHelper } from "./provider/google"
 import { openaiHelper } from "./provider/openai"
@@ -97,8 +92,7 @@ export async function handler(
     const body = input.request.body
     if (!body) throw new Error("Missing request body")
     requestBody = opts.format === "google" ? undefined : await prepareRequestBody(body)
-    const model =
-      opts.format === "google" ? opts.parseModel(url, undefined) : (requestBody?.model ?? "")
+    const model = opts.format === "google" ? opts.parseModel(url, undefined) : (requestBody?.model ?? "")
     const googleStream = opts.format === "google" ? opts.parseIsStream(url, undefined) : undefined
     const rawIp = input.request.headers.get("x-real-ip") ?? ""
     const ip = rawIp.includes(":") ? rawIp.split(":").slice(0, 4).join(":") : rawIp
@@ -201,7 +195,8 @@ export async function handler(
           providerInfo.model.startsWith("global.anthropic.") ||
           providerInfo.model.startsWith("databricks-claude-"))
       if (providerInfo.format !== opts.format) throw new Error("Zen provider format must match request format")
-      if (providerInfo.payloadModifier) throw new Error("Zen provider payload modifiers are incompatible with streaming")
+      if (providerInfo.payloadModifier)
+        throw new Error("Zen provider payload modifiers are incompatible with streaming")
       if (specialAnthropic) throw new Error("Anthropic provider body modifiers are incompatible with streaming")
       const prepared = requestBody
 
