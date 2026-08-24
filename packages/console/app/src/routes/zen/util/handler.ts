@@ -864,6 +864,8 @@ export async function handler(
 
     // Validate lite subscription billing
     if (opts.modelList === "lite" && authInfo.billing.lite && authInfo.lite) {
+      if (Object.values(modelInfo.cost).every((price) => price === 0)) return "lite"
+
       try {
         const consoleGoUrl = `https://opencode.ai/workspace/${authInfo.workspaceID}/go`
         const sub = authInfo.lite
