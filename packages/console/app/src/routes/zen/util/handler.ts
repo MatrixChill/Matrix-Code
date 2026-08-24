@@ -242,10 +242,11 @@ export async function handler(
           return headers
         })(),
         body: reqBody,
+        duplex: "half",
         // Propagate caller disconnects to the upstream provider request so
         // abandoned Console requests do not leave orphaned inference work open.
         signal: input.request.signal,
-      })
+      } as RequestInit & { duplex: "half" })
       const isStream = res.headers.get("content-type")?.toLowerCase().includes("text/event-stream") ?? false
       logger.metric({ is_stream: isStream })
 
