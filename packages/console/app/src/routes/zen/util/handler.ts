@@ -244,6 +244,7 @@ export async function handler(
             headers.delete("x-opencode-project")
             headers.delete("x-opencode-client")
             headers.delete("x-opencode-request")
+            headers.delete("x-opencode-model")
           }
           return headers
         })(),
