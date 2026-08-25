@@ -140,7 +140,9 @@ export const queryLiteUsageDetails = query(async (workspaceID: string, window: L
     const now = new Date()
     const detail = (() => {
       if (window === "rolling") {
-        const active = !!row.timeRollingUpdated && row.timeRollingUpdated >= new Date(now.getTime() - limits.rollingWindow * 3600 * 1000)
+        const active =
+          !!row.timeRollingUpdated &&
+          row.timeRollingUpdated >= new Date(now.getTime() - limits.rollingWindow * 3600 * 1000)
         return {
           start: active ? row.timeRollingUpdated! : now,
           usage: active ? (row.rollingUsage ?? 0) : 0,
@@ -356,7 +358,12 @@ function LiteUsageItem(props: {
   )
 }
 
-function LiteUsageDetails(props: { id: LiteUsageWindow; label: string; quotaLabel: string; usage: LiteUsageDetailsData }) {
+function LiteUsageDetails(props: {
+  id: LiteUsageWindow
+  label: string
+  quotaLabel: string
+  usage: LiteUsageDetailsData
+}) {
   const i18n = useI18n()
   const language = useLanguage()
   const money = (amount: number) =>
@@ -480,12 +487,7 @@ function LiteUsageGroup(props: { lite: NonNullable<LiteSubscription> }) {
               }
             >
               {(usage) => (
-                <LiteUsageDetails
-                  id={item().id}
-                  label={item().label}
-                  quotaLabel={item().quotaLabel}
-                  usage={usage()}
-                />
+                <LiteUsageDetails id={item().id} label={item().label} quotaLabel={item().quotaLabel} usage={usage()} />
               )}
             </Show>
           )

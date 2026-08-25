@@ -17,11 +17,7 @@ export type LiteUsageBreakdownItem = {
   estimated: boolean
 }
 
-export function buildLiteUsageBreakdown(input: {
-  usage: number
-  limit: number
-  sources: LiteUsageBreakdownSource[]
-}) {
+export function buildLiteUsageBreakdown(input: { usage: number; limit: number; sources: LiteUsageBreakdownSource[] }) {
   const rows: LiteUsageBreakdownItem[] = input.sources
     .filter((item) => item.cost !== 0 || item.quotaCost !== 0)
     .sort((a, b) => b.quotaCost - a.quotaCost)
