@@ -332,6 +332,136 @@ export function Prompt(props: PromptProps) {
     }
   })
 
+  let voiceProcess: any
+  let voiceStopFile: string | undefined
+  let voiceRunning = false
+
+  async function toggleVoice() {
+    if (!voiceRunning) {
+      const userProfile = process.env.USERPROFILE
+
+      if (!userProfile) {
+        toast.show({
+          variant: "error",
+          message: "Matrix Voice: USERPROFILE nao encontrado",
+        })
+        return
+      }
+
+      const helper = path.join(userProfile, "Matrix-Code", "matrix-voice-helper.py")
+
+      if (!(await Bun.file(helper).exists())) {
+        toast.show({
+          variant: "error",
+          message: "Matrix Voice: helper nao encontrado",
+        })
+        return
+      }
+
+      const temp = process.env.TEMP ?? process.env.TMP ?? userProfile
+
+      voiceStopFile = path.join(
+        temp,
+        `matrix-voice-${Date.now()}-${Math.random().toString(36).slice(2)}.stop`,
+      )
+
+      try {
+        voiceProcess = Bun.spawn(
+          ["python", helper, "--stop-file", voiceStopFile],
+          {
+            stdout: "pipe",
+            stderr: "pipe",
+            env: {
+              ...process.env,
+              PYTHONUTF8: "1",
+              PYTHONIOENCODING: "utf-8",
+            },
+          },
+        )
+
+        voiceRunning = true
+
+        toast.show({
+          variant: "info",
+          message: "Matrix Voice: ouvindo... F8 para terminar",
+        })
+      } catch (error) {
+        voiceProcess = undefined
+        voiceStopFile = undefined
+        voiceRunning = false
+
+        toast.show({
+          variant: "error",
+          message: `Matrix Voice: ${errorMessage(error)}`,
+        })
+      }
+
+      return
+    }
+
+    const processRef = voiceProcess
+    const stopFile = voiceStopFile
+
+    voiceRunning = false
+    voiceProcess = undefined
+    voiceStopFile = undefined
+
+    if (!processRef || !stopFile) return
+
+    toast.show({
+      variant: "info",
+      message: "Matrix Voice: transcrevendo...",
+    })
+
+    try {
+      await Bun.write(stopFile, "stop")
+
+      const stdoutPromise = new Response(
+        processRef.stdout as ReadableStream<Uint8Array>,
+      ).text()
+
+      const stderrPromise = new Response(
+        processRef.stderr as ReadableStream<Uint8Array>,
+      ).text()
+
+      const exitCode = await processRef.exited
+      const transcription = (await stdoutPromise).trim()
+      const stderr = (await stderrPromise).trim()
+
+      if (exitCode !== 0 || !transcription) {
+        toast.show({
+          variant: "error",
+          message: stderr || "Matrix Voice: nao consegui reconhecer a fala",
+        })
+        return
+      }
+
+      const current = store.prompt.input
+      const separator = current.length > 0 && !current.endsWith(" ") ? " " : ""
+      const next = `${current}${separator}${transcription}`
+
+      input.setText(next)
+
+      setStore("prompt", {
+        ...store.prompt,
+        input: next,
+      })
+
+      input.gotoBufferEnd()
+      input.focus()
+
+      toast.show({
+        variant: "success",
+        message: "Matrix Voice: texto inserido",
+      })
+    } catch (error) {
+      toast.show({
+        variant: "error",
+        message: `Matrix Voice: ${errorMessage(error)}`,
+      })
+    }
+  }
+
   const promptCommands = createMemo(() =>
     [
       {
@@ -342,6 +472,14 @@ export function Prompt(props: PromptProps) {
         run: () => {
           clearPrompt()
           dialog.clear()
+        },
+      },
+      {
+        title: "Voice input",
+        name: "prompt.voice",
+        category: "Prompt",
+        run: async () => {
+          await toggleVoice()
         },
       },
       {
@@ -567,6 +705,7 @@ export function Prompt(props: PromptProps) {
     mode: OPENCODE_BASE_MODE,
     bindings: tuiConfig.keybinds.gather("prompt.palette", [
       "prompt.submit",
+      "prompt.voice",
       "prompt.editor",
       "prompt.editor_context.clear",
       "prompt.stash",
