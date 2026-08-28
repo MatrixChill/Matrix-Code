@@ -151,6 +151,7 @@ export const Definitions = {
   display_thinking: keybind("none", "Toggle thinking blocks visibility"),
 
   prompt_submit: keybind("none", "Submit prompt"),
+  prompt_voice: keybind("f8", "Toggle voice input"),
   prompt_editor_context_clear: keybind("none", "Clear editor context"),
   prompt_skills: keybind("none", "Open skill selector"),
   prompt_stash: keybind("none", "Stash prompt"),
@@ -355,6 +356,7 @@ export const CommandMap = {
   tool_details: "session.toggle.actions",
   display_thinking: "session.toggle.thinking",
   prompt_submit: "prompt.submit",
+  prompt_voice: "prompt.voice",
   prompt_editor_context_clear: "prompt.editor_context.clear",
   prompt_skills: "prompt.skills",
   prompt_stash: "prompt.stash",
