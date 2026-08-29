@@ -5,6 +5,7 @@ import { Show, createEffect, createSignal, onMount, type JSX } from "solid-js"
 import { Spinner } from "../component/spinner"
 import { useTuiConfig } from "../config"
 import { useBindings, useCommandShortcut } from "../keymap"
+import { t, tx } from "../i18n"
 
 export type DialogPromptProps = {
   title: string
@@ -38,8 +39,8 @@ export function DialogPrompt(props: DialogPromptProps) {
     commands: [
       {
         name: "dialog.prompt.submit",
-        title: "Submit dialog prompt",
-        category: "Dialog",
+        title: t("submitDialogPrompt"),
+        category: t("categoryDialog"),
         run: confirm,
       },
     ],
@@ -76,7 +77,7 @@ export function DialogPrompt(props: DialogPromptProps) {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          {props.title}
+          {tx(props.title)}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
@@ -91,7 +92,7 @@ export function DialogPrompt(props: DialogPromptProps) {
             setTextareaTarget(val)
           }}
           initialValue={props.value}
-          placeholder={props.placeholder ?? "Enter text"}
+          placeholder={tx(props.placeholder) ?? t("enterText")}
           placeholderColor={theme.textMuted}
           textColor={props.busy ? theme.textMuted : theme.text}
           focusedTextColor={props.busy ? theme.textMuted : theme.text}
@@ -99,14 +100,14 @@ export function DialogPrompt(props: DialogPromptProps) {
           cursorStyle={tuiConfig.cursor}
         />
         <Show when={props.busy}>
-          <Spinner color={theme.textMuted}>{props.busyText ?? "Working..."}</Spinner>
+          <Spinner color={theme.textMuted}>{tx(props.busyText) ?? t("working")}</Spinner>
         </Show>
       </box>
       <box paddingBottom={1} gap={1} flexDirection="row">
-        <Show when={!props.busy} fallback={<text fg={theme.textMuted}>processing...</text>}>
+        <Show when={!props.busy} fallback={<text fg={theme.textMuted}>{t("processing")}</text>}>
           <Show when={submitShortcut()}>
             <text fg={theme.text}>
-              {submitShortcut()} <span style={{ fg: theme.textMuted }}>submit</span>
+              {submitShortcut()} <span style={{ fg: theme.textMuted }}>{t("submit")}</span>
             </text>
           </Show>
         </Show>

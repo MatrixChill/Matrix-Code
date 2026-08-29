@@ -16,6 +16,7 @@ import { getScrollAcceleration } from "../../util/scroll"
 import { useTuiConfig } from "../../config"
 import { OPENCODE_BASE_MODE, useBindings, useCommandShortcut } from "../../keymap"
 import { usePathFormatter } from "../../context/path-format"
+import { t, tx } from "../../i18n"
 
 type PermissionStage = "permission" | "always" | "reject"
 
@@ -80,7 +81,7 @@ function EditBody(props: { request: PermissionRequest }) {
       </Show>
       <Show when={!diff()}>
         <box paddingLeft={1}>
-          <text fg={theme.textMuted}>No diff provided</text>
+          <text fg={theme.textMuted}>{tx("No diff provided")}</text>
         </box>
       </Show>
     </box>
@@ -97,11 +98,11 @@ function TextBody(props: { title: string; description?: string; icon?: string })
             {props.icon}
           </text>
         </Show>
-        <text fg={theme.textMuted}>{props.title}</text>
+        <text fg={theme.textMuted}>{tx(props.title)}</text>
       </box>
       <Show when={props.description}>
         <box paddingLeft={1}>
-          <text fg={theme.text}>{props.description}</text>
+          <text fg={theme.text}>{tx(props.description)}</text>
         </box>
       </Show>
     </>
@@ -145,7 +146,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
               </Match>
               <Match when={true}>
                 <box paddingLeft={1} gap={1}>
-                  <text fg={theme.textMuted}>This will allow the following patterns until OpenCode is restarted</text>
+                  <text fg={theme.textMuted}>{tx("This will allow the following patterns until OpenCode is restarted")}</text>
                   <box>
                     <For each={props.request.always}>
                       {(pattern) => (
@@ -347,7 +348,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
                 body: (
                   <Show when={patterns.length > 0}>
                     <box paddingLeft={1} gap={1}>
-                      <text fg={theme.textMuted}>Patterns</text>
+                      <text fg={theme.textMuted}>{tx("Patterns")}</text>
                       <box>
                         <For each={patterns}>{(p) => <text fg={theme.text}>{"- " + p}</text>}</For>
                       </box>
@@ -363,7 +364,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
                 title: "Continue after repeated failures",
                 body: (
                   <box paddingLeft={1}>
-                    <text fg={theme.textMuted}>This keeps the session running despite repeated failures.</text>
+                    <text fg={theme.textMuted}>{tx("This keeps the session running despite repeated failures.")}</text>
                   </box>
                 ),
               }
@@ -386,7 +387,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
             <box flexDirection="column" gap={0}>
               <box flexDirection="row" gap={1} flexShrink={0}>
                 <text fg={theme.warning}>{"△"}</text>
-                <text fg={theme.text}>Permission required</text>
+                <text fg={theme.text}>{tx("Permission required")}</text>
               </box>
               <box flexDirection="row" gap={1} paddingLeft={2} flexShrink={0}>
                 <text fg={theme.textMuted} flexShrink={0}>
@@ -480,10 +481,10 @@ function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: (
       <box gap={1} paddingLeft={1} paddingRight={3} paddingTop={1} paddingBottom={1}>
         <box flexDirection="row" gap={1} paddingLeft={1}>
           <text fg={theme.error}>{"△"}</text>
-          <text fg={theme.text}>Reject permission</text>
+          <text fg={theme.text}>{tx("Reject permission")}</text>
         </box>
         <box paddingLeft={1}>
-          <text fg={theme.textMuted}>Tell OpenCode what to do differently</text>
+          <text fg={theme.textMuted}>{tx("Tell OpenCode what to do differently")}</text>
         </box>
       </box>
       <box
@@ -511,10 +512,10 @@ function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: (
         />
         <box flexDirection="row" gap={2} flexShrink={0}>
           <text fg={theme.text}>
-            enter <span style={{ fg: theme.textMuted }}>confirm</span>
+            enter <span style={{ fg: theme.textMuted }}>{t("confirm")}</span>
           </text>
           <text fg={theme.text}>
-            esc <span style={{ fg: theme.textMuted }}>cancel</span>
+            esc <span style={{ fg: theme.textMuted }}>{t("cancel")}</span>
           </text>
         </box>
       </box>
@@ -652,7 +653,7 @@ function Prompt<const T extends Record<string, string>>(props: {
           fallback={
             <box flexDirection="row" gap={1} paddingLeft={1} flexShrink={0}>
               <text fg={theme.warning}>{"△"}</text>
-              <text fg={theme.text}>{props.title}</text>
+              <text fg={theme.text}>{tx(props.title)}</text>
             </box>
           }
         >
@@ -688,7 +689,7 @@ function Prompt<const T extends Record<string, string>>(props: {
                 }}
               >
                 <text fg={option === store.selected ? selectedForeground(theme, theme.warning) : theme.textMuted}>
-                  {props.options[option]}
+                  {tx(props.options[option])}
                 </text>
               </box>
             )}
@@ -701,10 +702,10 @@ function Prompt<const T extends Record<string, string>>(props: {
             </text>
           </Show>
           <text fg={theme.text}>
-            {"⇆"} <span style={{ fg: theme.textMuted }}>select</span>
+            {"⇆"} <span style={{ fg: theme.textMuted }}>{t("select")}</span>
           </text>
           <text fg={theme.text}>
-            enter <span style={{ fg: theme.textMuted }}>confirm</span>
+            enter <span style={{ fg: theme.textMuted }}>{t("confirm")}</span>
           </text>
         </box>
       </box>

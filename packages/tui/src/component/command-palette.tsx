@@ -9,6 +9,7 @@ import {
   useOpencodeKeymap,
 } from "../keymap"
 import { useTuiConfig } from "../config"
+import { t, tx } from "../i18n"
 
 type PaletteCommandEntry = ReturnType<OpenTuiKeymap["getCommandEntries"]>[number]
 
@@ -47,9 +48,12 @@ export function CommandPaletteDialog() {
   })
   const options = createMemo(() =>
     entries().map((entry) => ({
-      title: typeof entry.command.title === "string" ? entry.command.title : entry.command.name,
-      description: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
-      category: typeof entry.command.category === "string" ? entry.command.category : undefined,
+      title: typeof entry.command.title === "string" ? (tx(entry.command.title) ?? entry.command.name) : entry.command.name,
+      description: typeof entry.command.desc === "string" ? tx(entry.command.desc) : undefined,
+      category: typeof entry.command.category === "string" ? tx(entry.command.category) : undefined,
+      aliases: [entry.command.name, entry.command.title, entry.command.desc, entry.command.category].filter(
+        (value): value is string => typeof value === "string",
+      ),
       footer: formatKeyBindings(entry.bindings, config),
       value: entry.command.name,
       suggested: isSuggestedPaletteCommand(entry),
@@ -69,11 +73,11 @@ export function CommandPaletteDialog() {
         .map((option) => ({
           ...option,
           value: `suggested:${option.value}`,
-          category: "Suggested",
+          category: t("suggested"),
         })),
       ...options(),
     ]
   }
 
-  return <DialogSelect ref={(value) => (ref = value)} title="Commands" options={list()} />
+  return <DialogSelect ref={(value) => (ref = value)} title={t("commandsTitle")} options={list()} />
 }

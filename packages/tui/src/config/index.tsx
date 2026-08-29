@@ -58,8 +58,14 @@ export const Prompt = Schema.Struct({
   }),
 }).annotate({ description: "Prompt size settings" })
 
+export const Locale = Schema.Literals(["en", "pt-PT", "pt-BR"])
+export type Locale = Schema.Schema.Type<typeof Locale>
+
 export const Info = Schema.Struct({
   $schema: Schema.optional(Schema.String),
+  locale: Schema.optional(Locale).annotate({
+    description: "Matrix Code interface language",
+  }),
   theme: Schema.optional(Schema.String),
   keybinds: Schema.optional(TuiKeybind.KeybindOverrides),
   plugin: Schema.optional(Schema.Array(PluginSpec)),
@@ -125,6 +131,7 @@ export function resolve(input: Info, options: ResolveOptions): Resolved {
       bindingDefaults: TuiKeybind.bindingDefaults(),
     }),
     leader_timeout: input.leader_timeout ?? LeaderTimeoutDefault,
+    locale: input.locale ?? "en",
     mouse: input.mouse ?? true,
     cursor: input.cursor
       ? {

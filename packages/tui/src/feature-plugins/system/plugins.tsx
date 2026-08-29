@@ -5,17 +5,18 @@ import { fileURLToPath } from "url"
 import { DialogSelect, type DialogSelectOption } from "../../ui/dialog-select"
 import { Show, createEffect, createMemo, createSignal } from "solid-js"
 import { useBindings } from "../../keymap"
+import { t, tx } from "../../i18n"
 
 const id = "internal:plugin-manager"
 
 function state(api: TuiPluginApi, item: TuiPluginStatus) {
   if (!item.enabled) {
-    return <span style={{ fg: api.theme.current.textMuted }}>disabled</span>
+    return <span style={{ fg: api.theme.current.textMuted }}>{tx("disabled")}</span>
   }
 
   return (
     <span style={{ fg: item.active ? api.theme.current.success : api.theme.current.error }}>
-      {item.active ? "active" : "inactive"}
+      {tx(item.active ? "active" : "inactive")}
     </span>
   )
 }
@@ -27,8 +28,8 @@ function source(spec: string) {
 
 function meta(item: TuiPluginStatus, width: number) {
   if (item.source === "internal") {
-    if (width >= 120) return "Built-in plugin"
-    return "Built-in"
+    if (width >= 120) return tx("Built-in plugin") ?? "Built-in plugin"
+    return tx("Built-in") ?? "Built-in"
   }
   const next = source(item.spec)
   if (next) return next
@@ -52,12 +53,12 @@ function Install(props: { api: TuiPluginApi }) {
       busyText="Installing plugin..."
       description={() => (
         <box flexDirection="row" gap={1}>
-          <text fg={props.api.theme.current.textMuted}>scope:</text>
+          <text fg={props.api.theme.current.textMuted}>{tx("scope:")}</text>
           <text fg={busy() ? props.api.theme.current.textMuted : props.api.theme.current.text}>
-            {global() ? "global" : "local"}
+            {tx(global() ? "global" : "local")}
           </text>
           <Show when={!busy()}>
-            <text fg={props.api.theme.current.textMuted}>(tab toggle)</text>
+            <text fg={props.api.theme.current.textMuted}>{tx("(tab toggle)")}</text>
           </Show>
         </box>
       )}
@@ -93,7 +94,7 @@ function Install(props: { api: TuiPluginApi }) {
 
             props.api.ui.toast({
               variant: "success",
-              message: `Installed ${mod} (${global() ? "global" : "local"}: ${out.dir})`,
+              message: t("installedPlugin", { plugin: mod, scope: tx(global() ? "global" : "local") ?? "", directory: out.dir }),
             })
             if (!out.tui) {
               props.api.ui.toast({
@@ -116,7 +117,7 @@ function Install(props: { api: TuiPluginApi }) {
 
               props.api.ui.toast({
                 variant: "success",
-                message: `Loaded ${mod} in current session.`,
+                message: t("loadedPlugin", { plugin: mod }),
               })
               show(props.api)
             })
@@ -188,7 +189,7 @@ function View(props: { api: TuiPluginApi }) {
         if (!ok) {
           props.api.ui.toast({
             variant: "error",
-            message: `Failed to update plugin ${item.id}`,
+            message: t("failedUpdatePlugin", { plugin: item.id }),
           })
         }
         setList(props.api.plugins.list())

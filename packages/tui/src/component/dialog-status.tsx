@@ -4,6 +4,7 @@ import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 import { useSync } from "../context/sync"
 import { For, Match, Switch, Show, createMemo } from "solid-js"
+import { t } from "../i18n"
 
 export type DialogStatusProps = {}
 
@@ -50,7 +51,7 @@ export function DialogStatus() {
           esc
         </text>
       </box>
-      <Show when={Object.keys(sync.data.mcp).length > 0} fallback={<text fg={theme.text}>No MCP Servers</text>}>
+      <Show when={Object.keys(sync.data.mcp).length > 0} fallback={<text fg={theme.text}>{t("noMcpServers")}</text>}>
         <box>
           <text fg={theme.text}>{Object.keys(sync.data.mcp).length} MCP Servers</text>
           <For each={Object.entries(sync.data.mcp)}>
@@ -76,9 +77,9 @@ export function DialogStatus() {
                   <b>{key}</b>{" "}
                   <span style={{ fg: theme.textMuted }}>
                     <Switch fallback={item.status}>
-                      <Match when={item.status === "connected"}>Connected</Match>
+                      <Match when={item.status === "connected"}>{t("connected")}</Match>
                       <Match when={item.status === "failed" && item}>{(val) => val().error}</Match>
-                      <Match when={item.status === "disabled"}>Disabled in configuration</Match>
+                      <Match when={item.status === "disabled"}>{t("disabledConfiguration")}</Match>
                       <Match when={(item.status as string) === "needs_auth"}>
                         Needs authentication (run: opencode mcp auth {key})
                       </Match>
@@ -118,7 +119,7 @@ export function DialogStatus() {
           </For>
         </box>
       )}
-      <Show when={enabledFormatters().length > 0} fallback={<text fg={theme.text}>No Formatters</text>}>
+      <Show when={enabledFormatters().length > 0} fallback={<text fg={theme.text}>{t("noFormatters")}</text>}>
         <box>
           <text fg={theme.text}>{enabledFormatters().length} Formatters</text>
           <For each={enabledFormatters()}>
@@ -140,7 +141,7 @@ export function DialogStatus() {
           </For>
         </box>
       </Show>
-      <Show when={plugins().length > 0} fallback={<text fg={theme.text}>No Plugins</text>}>
+      <Show when={plugins().length > 0} fallback={<text fg={theme.text}>{t("noPlugins")}</text>}>
         <box>
           <text fg={theme.text}>{plugins().length} Plugins</text>
           <For each={plugins()}>

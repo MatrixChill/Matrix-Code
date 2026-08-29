@@ -9,6 +9,7 @@ import { useClipboard } from "../context/clipboard"
 import { useToast } from "../ui/toast"
 import { useBindings } from "../keymap"
 import { describeOS, describeTerminal } from "../util/system"
+import { t, tx } from "../i18n"
 
 export function DialogDebug() {
   const { theme } = useTheme()
@@ -41,7 +42,7 @@ export function DialogDebug() {
       .write?.(text)
       .then(() => {
         setCopied(true)
-        toast.show({ message: "Debug info copied to clipboard", variant: "info" })
+        toast.show({ message: tx("Debug info copied to clipboard") ?? "", variant: "info" })
       })
       .catch(toast.error)
   }
@@ -54,7 +55,7 @@ export function DialogDebug() {
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
-          Debug
+          {tx("Debug")}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
@@ -67,7 +68,7 @@ export function DialogDebug() {
           {(entry) => (
             <box flexDirection="row" gap={1}>
               <text flexShrink={0} fg={theme.textMuted}>
-                {entry.label.padEnd(10)}
+                {(tx(entry.label) ?? entry.label).padEnd(10)}
               </text>
               <text fg={theme.text} wrapMode="word">
                 {entry.value}
@@ -77,10 +78,10 @@ export function DialogDebug() {
         </For>
       </box>
       <box flexDirection="row" justifyContent="space-between">
-        <text fg={theme.textMuted}>Share this when reporting an issue.</text>
+        <text fg={theme.textMuted}>{t("shareIssueInfo")}</text>
         <text onMouseUp={copy}>
           <span style={{ fg: copied() ? theme.success : theme.text }}>
-            <b>{copied() ? "✓ copied" : "copy"}</b>{" "}
+            <b>{copied() ? `✓ ${t("copied").toLowerCase()}` : t("copy")}</b>{" "}
           </span>
           <span style={{ fg: theme.textMuted }}>enter</span>
         </text>

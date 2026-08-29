@@ -4,6 +4,7 @@ import { useTheme } from "../context/theme"
 import { useTerminalDimensions } from "@opentui/solid"
 import { SplitBorder } from "./border"
 import { TextAttributes } from "@opentui/core"
+import { t, tx } from "../i18n"
 export type ToastOptions = {
   title?: string
   message: string
@@ -38,11 +39,11 @@ export function Toast() {
         >
           <Show when={current().title}>
             <text attributes={TextAttributes.BOLD} marginBottom={1} fg={theme.text}>
-              {current().title}
+              {tx(current().title)}
             </text>
           </Show>
           <text fg={theme.text} wrapMode="word" width="100%">
-            {current().message}
+            {tx(current().message)}
           </text>
         </box>
       )}
@@ -74,7 +75,7 @@ function init() {
         })
       toast.show({
         variant: "error",
-        message: "An unknown error has occurred",
+        message: t("unknownError"),
       })
     },
     get currentToast(): ToastOptions | null {

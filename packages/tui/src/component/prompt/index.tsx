@@ -53,6 +53,7 @@ import { DialogWorkspaceUnavailable } from "../dialog-workspace-unavailable"
 import { useArgs } from "../../context/args"
 import { OPENCODE_BASE_MODE, useBindings, useCommandShortcut, useLeaderActive, useOpencodeKeymap } from "../../keymap"
 import { useTuiConfig } from "../../config"
+import { localeLabel, t, useI18n } from "../../i18n"
 import { usePromptWorkspace } from "./workspace"
 import { usePromptMove } from "./move"
 import { readLocalAttachment } from "./local-attachment"
@@ -166,11 +167,13 @@ export function Prompt(props: PromptProps) {
   const keymap = useOpencodeKeymap()
   const agentShortcut = useCommandShortcut("agent.cycle")
   const paletteShortcut = useCommandShortcut("command.palette.show")
+  const voiceShortcut = useCommandShortcut("prompt.voice")
   const renderer = useRenderer()
   const exit = useExit()
   const dimensions = useTerminalDimensions()
   const { theme, syntax } = useTheme()
   const kv = useKV()
+  const i18n = useI18n()
   const animationsEnabled = createMemo(() => kv.get("animations_enabled", true))
   const list = createMemo(() => props.placeholders?.normal ?? [])
   const shell = createMemo(() => props.placeholders?.shell ?? [])
@@ -343,17 +346,19 @@ export function Prompt(props: PromptProps) {
       if (!userProfile) {
         toast.show({
           variant: "error",
-          message: "Matrix Voice: USERPROFILE nao encontrado",
+          message: t("voiceUserProfileMissing"),
         })
         return
       }
 
-      const helper = path.join(userProfile, "Matrix-Code", "matrix-voice-helper.py")
+      const helper =
+        process.env.MATRIX_VOICE_HELPER ??
+        path.join(userProfile, "Matrix-Code", "matrix-voice-helper.py")
 
       if (!(await Bun.file(helper).exists())) {
         toast.show({
           variant: "error",
-          message: "Matrix Voice: helper nao encontrado",
+          message: t("voiceHelperMissing"),
         })
         return
       }
@@ -383,7 +388,7 @@ export function Prompt(props: PromptProps) {
 
         toast.show({
           variant: "info",
-          message: "Matrix Voice: ouvindo... F8 para terminar",
+          message: t("voiceListening"),
         })
       } catch (error) {
         voiceProcess = undefined
@@ -392,7 +397,7 @@ export function Prompt(props: PromptProps) {
 
         toast.show({
           variant: "error",
-          message: `Matrix Voice: ${errorMessage(error)}`,
+          message: t("matrixVoiceError", { error: errorMessage(error) }),
         })
       }
 
@@ -410,7 +415,7 @@ export function Prompt(props: PromptProps) {
 
     toast.show({
       variant: "info",
-      message: "Matrix Voice: transcrevendo...",
+      message: t("voiceTranscribing"),
     })
 
     try {
@@ -431,7 +436,7 @@ export function Prompt(props: PromptProps) {
       if (exitCode !== 0 || !transcription) {
         toast.show({
           variant: "error",
-          message: stderr || "Matrix Voice: nao consegui reconhecer a fala",
+          message: stderr || t("voiceRecognitionFailed"),
         })
         return
       }
@@ -452,12 +457,12 @@ export function Prompt(props: PromptProps) {
 
       toast.show({
         variant: "success",
-        message: "Matrix Voice: texto inserido",
+        message: t("voiceInserted"),
       })
     } catch (error) {
       toast.show({
         variant: "error",
-        message: `Matrix Voice: ${errorMessage(error)}`,
+        message: t("matrixVoiceError", { error: errorMessage(error) }),
       })
     }
   }
@@ -968,7 +973,7 @@ export function Prompt(props: PromptProps) {
       bindings: [
         {
           key: "!",
-          desc: "Shell mode",
+          desc: t("shellMode"),
           group: "Prompt",
           cmd: () => {
             setStore("placeholder", randomIndex(shell().length))
@@ -983,7 +988,7 @@ export function Prompt(props: PromptProps) {
     return {
       target: inputTarget,
       enabled: inputTarget() !== undefined && store.mode === "shell",
-      bindings: [{ key: "escape", desc: "Exit shell mode", group: "Prompt", cmd: () => setStore("mode", "normal") }],
+      bindings: [{ key: "escape", desc: t("exitShellMode"), group: "Prompt", cmd: () => setStore("mode", "normal") }],
     }
   })
 
@@ -994,7 +999,7 @@ export function Prompt(props: PromptProps) {
         cursorVersion()
         return inputTarget() !== undefined && store.mode === "shell" && input?.visualCursor.offset === 0
       })(),
-      bindings: [{ key: "backspace", desc: "Exit shell mode", group: "Prompt", cmd: () => setStore("mode", "normal") }],
+      bindings: [{ key: "backspace", desc: t("exitShellMode"), group: "Prompt", cmd: () => setStore("mode", "normal") }],
     }
   })
 
@@ -1452,10 +1457,10 @@ export function Prompt(props: PromptProps) {
     if (store.mode === "shell") {
       if (!shell().length) return undefined
       const example = shell()[store.placeholder % shell().length]
-      return `Run a command... "${example}"`
+      return t("runCommand", { example })
     }
     if (!list().length) return undefined
-    return `Ask anything... "${list()[store.placeholder % list().length]}"`
+    return `${t("askAnything")} "${list()[store.placeholder % list().length]}"`
   })
 
   const spinnerDef = createMemo(() => {
@@ -1699,7 +1704,7 @@ export function Prompt(props: PromptProps) {
                         const r = retry()
                         if (!r) return
                         if (isTruncated()) {
-                          void DialogAlert.show(dialog, "Retry Error", r.message)
+                          void DialogAlert.show(dialog, t("retryError"), r.message)
                         }
                       }
 
@@ -1707,9 +1712,10 @@ export function Prompt(props: PromptProps) {
                         const r = retry()
                         if (!r) return ""
                         const baseMessage = message()
-                        const truncatedHint = isTruncated() ? " (click to expand)" : ""
+                        const truncatedHint = isTruncated() ? ` (${t("clickToExpand")})` : ""
                         const duration = formatDuration(seconds())
-                        const retryInfo = ` [retrying ${duration ? `in ${duration} ` : ""}attempt #${r.attempt}]`
+                        const when = duration ? t("retryIn", { duration }) : ""
+                        const retryInfo = ` [${t("retrying", { when, attempt: r.attempt })}]`
                         return baseMessage + truncatedHint + retryInfo
                       }
 
@@ -1726,7 +1732,7 @@ export function Prompt(props: PromptProps) {
                 <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
                   esc{" "}
                   <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                    {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                    {store.interrupt > 0 ? t("interruptAgain") : t("interrupt")}
                   </span>
                 </text>
               </box>
@@ -1749,16 +1755,16 @@ export function Prompt(props: PromptProps) {
                       const item = label()
                       if (item.type === "new") {
                         if (workspace.creating())
-                          return `Creating ${item.workspaceType}${".".repeat(workspace.creatingDots())}`
+                          return `${t("workspaceCreating", { type: item.workspaceType })}${".".repeat(workspace.creatingDots())}`
                         return (
                           <>
-                            Workspace <span style={{ fg: theme.textMuted }}>(new {item.workspaceType})</span>
+                            {t("workspaceLabel")} <span style={{ fg: theme.textMuted }}>({t("workspaceNew", { type: item.workspaceType })})</span>
                           </>
                         )
                       }
                       return (
                         <>
-                          Workspace <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
+                          {t("workspaceLabel")} <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
                         </>
                       )
                     })()}
@@ -1778,7 +1784,7 @@ export function Prompt(props: PromptProps) {
             </Match>
             <Match when={move.pendingNew()}>
               <box paddingLeft={3}>
-                <text fg={theme.accent}>(new working copy)</text>
+                <text fg={theme.accent}>{t("newWorkingCopy")}</text>
               </box>
             </Match>
             <Match when={true}>
@@ -1810,17 +1816,23 @@ export function Prompt(props: PromptProps) {
                     </Match>
                     <Match when={true}>
                       <text fg={theme.text}>
-                        {agentShortcut()} <span style={{ fg: theme.textMuted }}>agents</span>
+                        {agentShortcut()} <span style={{ fg: theme.textMuted }}>{t("agents")}</span>
                       </text>
                     </Match>
                   </Switch>
                   <text fg={theme.text}>
-                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>commands</span>
+                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>{t("commands")}</span>
+                  </text>
+                  <text fg={theme.text}>
+                    {voiceShortcut()} <span style={{ fg: theme.textMuted }}>{t("voice")}</span>
+                  </text>
+                  <text fg={theme.text} onMouseDown={i18n.cycle}>
+                    f9 <span style={{ fg: theme.textMuted }}>{localeLabel()}</span>
                   </text>
                 </Match>
                 <Match when={store.mode === "shell"}>
                   <text fg={theme.text}>
-                    esc <span style={{ fg: theme.textMuted }}>exit shell mode</span>
+                    esc <span style={{ fg: theme.textMuted }}>{t("exitShellMode").toLowerCase()}</span>
                   </text>
                 </Match>
               </Switch>
