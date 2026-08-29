@@ -23,6 +23,7 @@ import { useFrecency } from "../../prompt/frecency"
 import { useBindings, useCommandSlashes, useOpencodeModeStack } from "../../keymap"
 import { displayCharAt, mentionTriggerIndex } from "../../prompt/display"
 import type { FileSystemEntry } from "@opencode-ai/sdk/v2"
+import { t, tx } from "../../i18n"
 
 function removeLineRange(input: string) {
   const hashIndex = input.lastIndexOf("#")
@@ -445,7 +446,11 @@ export function Autocomplete(props: {
   )
 
   const commands = createMemo((): AutocompleteOption[] => {
-    const results: AutocompleteOption[] = [...slashes()]
+    const results: AutocompleteOption[] = slashes().map((item) => ({
+      ...item,
+      description: tx(item.description),
+      aliases: [...(item.aliases ?? []), ...(item.description ? [item.description] : [])],
+    }))
 
     for (const serverCommand of sync.data.command) {
       if (serverCommand.source === "skill") continue
@@ -741,7 +746,7 @@ export function Autocomplete(props: {
           each={options()}
           fallback={
             <box paddingLeft={1} paddingRight={1}>
-              <text fg={theme.textMuted}>No matching items</text>
+              <text fg={theme.textMuted}>{t("noMatchingItems")}</text>
             </box>
           }
         >

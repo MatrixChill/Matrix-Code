@@ -19,6 +19,7 @@ import { Locale } from "../util/locale"
 import { getScrollAcceleration } from "../util/scroll"
 import { useTuiConfig } from "../config"
 import { formatKeyBindings, useBindings, useKeymapSelector } from "../keymap"
+import { t, tx } from "../i18n"
 
 export interface DialogSelectProps<T> {
   title: string
@@ -64,6 +65,8 @@ export interface DialogSelectOption<T = any> {
   truncateTitle?: boolean | "left"
   category?: string
   categoryView?: JSX.Element
+  aliases?: string[]
+  searchText?: string
   disabled?: boolean
   bg?: RGBA
   gutter?: () => JSX.Element
@@ -115,7 +118,35 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
 
   let input: InputRenderable
 
-  const actions = createMemo(() => props.actions ?? [])
+  const localizedOptions = createMemo(() =>
+    props.options.map((option) => {
+      const title = tx(option.title) ?? option.title
+      const description = tx(option.description)
+      const category = tx(option.category)
+      return {
+        ...option,
+        title,
+        description,
+        category,
+        details: option.details?.map((detail) => tx(detail) ?? detail),
+        footer: typeof option.footer === "string" ? tx(option.footer) : option.footer,
+        searchText: [
+          option.title,
+          option.description,
+          option.category,
+          title,
+          description,
+          category,
+          ...(option.aliases ?? []),
+        ]
+          .filter((value): value is string => Boolean(value))
+          .join(" "),
+      }
+    }),
+  )
+  const actions = createMemo(() =>
+    (props.actions ?? []).map((action) => ({ ...action, title: tx(action.title) ?? action.title })),
+  )
   const shownActions = createMemo(() => actions().filter((item) => !item.hidden))
   const actionBindings = useKeymapSelector((keymap) =>
     keymap.getCommandBindings({
@@ -138,7 +169,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
     ...shownActions()
       .map((item) => ({ ...item, label: actionLabels().get(item.command) ?? "" }))
       .filter((item) => item.label),
-    ...(props.footerHints ?? []),
+    ...(props.footerHints ?? []).map((hint) => ({ ...hint, title: tx(hint.title) ?? hint.title })),
   ])
   const actionItems = createMemo(() =>
     visibleActions()
@@ -152,20 +183,20 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
   })
 
   const filtered = createMemo(() => {
-    if (props.skipFilter || props.renderFilter === false) return props.options.filter((x) => x.disabled !== true)
+    if (props.skipFilter || props.renderFilter === false) return localizedOptions().filter((x) => x.disabled !== true)
     const needle = store.filter.toLowerCase()
-    const options = pipe(
-      props.options,
+    const filteredOptions = pipe(
+      localizedOptions(),
       filter((x) => x.disabled !== true),
     )
-    if (!needle) return options
+    if (!needle) return filteredOptions
 
     // prioritize title matches (weight: 2) over category matches (weight: 1).
     // users typically search by the item name, and not its category.
     const result = fuzzysort
-      .go(needle, options, {
-        keys: ["title", "category"],
-        scoreFn: (r) => r[0].score * 2 + r[1].score,
+      .go(needle, filteredOptions, {
+        keys: ["title", "category", "searchText"],
+        scoreFn: (result) => result[0].score * 2 + result[1].score + result[2].score,
       })
       .map((x) => x.obj)
 
@@ -216,7 +247,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
 
   createEffect(
     on(
-      () => props.options,
+      localizedOptions,
       () => {
         if (!props.preserveSelection) return
         if (resetSelection && store.filter.length > 0) {
@@ -560,7 +591,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         <box flexDirection="row" justifyContent="space-between">
           {props.titleView ?? (
             <text fg={theme.text} attributes={TextAttributes.BOLD}>
-              {props.title}
+              {tx(props.title)}
             </text>
           )}
           <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
@@ -590,7 +621,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
                   input.focus()
                 }, 1)
               }}
-              placeholder={props.placeholder ?? "Search"}
+              placeholder={tx(props.placeholder) ?? t("search")}
               placeholderColor={theme.textMuted}
             />
           </box>
@@ -602,7 +633,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           fallback={
             props.emptyView ?? (
               <box paddingLeft={4} paddingRight={4} paddingTop={1}>
-                <text fg={theme.textMuted}>No results found</text>
+                <text fg={theme.textMuted}>{tx("No results found")}</text>
               </box>
             )
           }

@@ -34,6 +34,7 @@ import {
   singlePatchFileIndex,
   toggleFileTreeDirectory,
 } from "./diff-viewer-file-tree-utils"
+import { tx } from "../../i18n"
 
 const ROUTE = "diff"
 const MIN_SPLIT_WIDTH = 100
@@ -754,10 +755,10 @@ function DiffViewer(props: { api: TuiPluginApi }) {
       <PanelGroup axis="y" width="100%" height="100%">
         <Panel border="none" flexShrink={0} padding={0} paddingLeft={1}>
           <text fg={theme().text}>Diff </text>
-          <text fg={theme().textMuted}>{diffSourceLabel(mode())}</text>
+          <text fg={theme().textMuted}>{tx(diffSourceLabel(mode()))}</text>
           <box flexGrow={1} />
           <text fg={theme().textMuted}>
-            {files().length} {files().length === 1 ? "file" : "files"}
+            {files().length} {tx(files().length === 1 ? "file" : "files")}
           </text>
         </Panel>
 
@@ -766,19 +767,19 @@ function DiffViewer(props: { api: TuiPluginApi }) {
             <Match when={diff.loading}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().textMuted}>Loading diff...</text>
+                <text fg={theme().textMuted}>{tx("Loading diff...")}</text>
               </box>
             </Match>
             <Match when={!diff.loading && files().length === 0}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().textMuted}>No diff!</text>
+                <text fg={theme().textMuted}>{tx("No diff!")}</text>
               </box>
             </Match>
             <Match when={!diff.loading && diff.error}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().error}>Failed to load diff</text>
+                <text fg={theme().error}>{tx("Failed to load diff")}</text>
               </box>
             </Match>
             <Match when={!diff.loading}>
@@ -836,7 +837,7 @@ function DiffViewer(props: { api: TuiPluginApi }) {
                             <Separator axis="x" start={showFileTree() ? "edge" : undefined} />
                             <Show
                               when={entry.file.patch}
-                              fallback={<text fg={theme().textMuted}>No patch available for this file.</text>}
+                              fallback={<text fg={theme().textMuted}>{tx("No patch available for this file.")}</text>}
                             >
                               {(patch) => (
                                 <box border={patchLeftBorder()} borderColor={theme().border}>
@@ -884,56 +885,56 @@ function DiffViewer(props: { api: TuiPluginApi }) {
           <Show when={switchFocusShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>focus file tree</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("focus file tree")}</span>
               </text>
             )}
           </Show>
           <Show when={nextFileShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>next file</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("next file")}</span>
               </text>
             )}
           </Show>
           <Show when={nextHunkShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>next hunk</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("next hunk")}</span>
               </text>
             )}
           </Show>
           <Show when={previousHunkShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>previous hunk</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("previous hunk")}</span>
               </text>
             )}
           </Show>
           <Show when={previousFileShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>previous file</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("previous file")}</span>
               </text>
             )}
           </Show>
           <Show when={switchSourceShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>switch source</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("switch source")}</span>
               </text>
             )}
           </Show>
           <Show when={markReviewedShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>mark reviewed</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("mark reviewed")}</span>
               </text>
             )}
           </Show>
           <Show when={helpShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>all</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{tx("all")}</span>
               </text>
             )}
           </Show>
@@ -1012,18 +1013,18 @@ function DiffViewerHelpDialog() {
     <box paddingLeft={2} paddingRight={2} paddingBottom={1} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Diff shortcuts
+          {tx("Diff shortcuts")}
         </text>
         <text fg={theme.textMuted}>esc</text>
       </box>
       <box flexDirection="row">
         <text fg={theme.textMuted} width={5} wrapMode="none">
-          Key
+          {tx("Key")}
         </text>
         <text fg={theme.textMuted} width={22} wrapMode="none">
-          Action
+          {tx("Action")}
         </text>
-        <text fg={theme.textMuted}>Description</text>
+        <text fg={theme.textMuted}>{tx("Description")}</text>
       </box>
       <For each={rows}>
         {(row) => (
@@ -1032,9 +1033,9 @@ function DiffViewerHelpDialog() {
               {row.shortcut() || "-"}
             </text>
             <text fg={theme.text} width={22} wrapMode="none">
-              {row.action}
+              {tx(row.action)}
             </text>
-            <text fg={theme.textMuted}>{row.description}</text>
+            <text fg={theme.textMuted}>{tx(row.description)}</text>
           </box>
         )}
       </For>

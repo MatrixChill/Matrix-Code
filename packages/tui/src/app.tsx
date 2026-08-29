@@ -1,4 +1,4 @@
-import { render, TimeToFirstDraw, useRenderer, useTerminalDimensions } from "@opentui/solid"
+import { render, TimeToFirstDraw, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { registerOpencodeSpinner } from "./component/register-spinner"
 import { createDefaultOpenTuiKeymap } from "@opentui/keymap/opentui"
 import { Deferred, Effect } from "effect"
@@ -86,6 +86,7 @@ import * as TuiAudio from "./audio"
 import { win32DisableProcessedInput, win32FlushInputBuffer } from "./terminal-win32"
 import { destroyRenderer } from "./util/renderer"
 import { cliErrorMessage, errorFormat } from "./util/error"
+import { I18nProvider, t, useI18n } from "./i18n"
 
 registerOpencodeSpinner()
 
@@ -315,10 +316,12 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
                                                               <PromptRefProvider>
                                                                 <EditorContextProvider>
                                                                   <LocationProvider>
-                                                                    <App
-                                                                      onSnapshot={input.onSnapshot}
-                                                                      pluginHost={input.pluginHost}
-                                                                    />
+                                                                    <I18nProvider>
+                                                                      <App
+                                                                        onSnapshot={input.onSnapshot}
+                                                                        pluginHost={input.pluginHost}
+                                                                      />
+                                                                    </I18nProvider>
                                                                   </LocationProvider>
                                                                 </EditorContextProvider>
                                                               </PromptRefProvider>
@@ -384,6 +387,14 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
   const pluginRuntime = usePluginRuntime()
   const attention = createTuiAttention({ renderer, config: tuiConfig, kv })
   const clipboard = useClipboard()
+  const i18n = useI18n()
+
+  useKeyboard((event) => {
+    if (event.name !== "f9") return
+    event.preventDefault()
+    event.stopPropagation()
+    i18n.cycle()
+  })
 
   const api = createTuiApi(
     createTuiApiAdapters({
@@ -439,7 +450,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
 
     await clipboard
       .write?.(text)
-      .then(() => toast.show({ message: "Copied to clipboard", variant: "info" }))
+      .then(() => toast.show({ message: t("copiedToClipboard"), variant: "info" }))
       .catch(toast.error)
 
     renderer.clearSelection()
@@ -484,7 +495,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         if (!providerID || !modelID)
           return toast.show({
             variant: "warning",
-            message: `Invalid model format: ${args.model}`,
+            message: t("invalidModelFormat", { model: args.model }),
             duration: 3000,
           })
         local.model.set({ providerID, modelID }, { recent: true })
@@ -619,7 +630,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
       },
       ...Array.from({ length: 9 }, (_, i) => ({
         name: `session.quick_switch.${i + 1}`,
-        title: `Switch to session in quick slot ${i + 1}`,
+        title: t("switchQuickSlot", { slot: i + 1 }),
         category: "Session",
         hidden: true,
         run: () => {
@@ -858,7 +869,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
           const files = await props.onSnapshot?.()
           toast.show({
             variant: "info",
-            message: `Heap snapshot written to ${files?.join(", ")}`,
+            message: t("heapSnapshotWritten", { files: files?.join(", ") ?? "" }),
             duration: 5000,
           })
           dialog.clear()
@@ -1051,7 +1062,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
 
     toast.show({
       variant: "info",
-      message: `Updating to v${version}...`,
+      message: t("updatingVersion", { version }),
       duration: 30000,
     })
 

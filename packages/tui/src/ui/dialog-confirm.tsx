@@ -5,6 +5,7 @@ import { createStore } from "solid-js/store"
 import { For } from "solid-js"
 import { Locale } from "../util/locale"
 import { useBindings } from "../keymap"
+import { t, tx } from "../i18n"
 
 export type DialogConfirmProps = {
   title: string
@@ -27,7 +28,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
     bindings: [
       {
         key: "return",
-        desc: "Confirm dialog selection",
+        desc: t("confirmDialogSelection"),
         group: "Dialog",
         cmd: () => {
           if (store.active === "confirm") props.onConfirm?.()
@@ -37,7 +38,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
       },
       {
         key: "left",
-        desc: "Previous dialog option",
+        desc: t("previousDialogOption"),
         group: "Dialog",
         cmd: () => {
           setStore("active", store.active === "confirm" ? "cancel" : "confirm")
@@ -45,7 +46,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
       },
       {
         key: "right",
-        desc: "Next dialog option",
+        desc: t("nextDialogOption"),
         group: "Dialog",
         cmd: () => {
           setStore("active", store.active === "confirm" ? "cancel" : "confirm")
@@ -57,14 +58,14 @@ export function DialogConfirm(props: DialogConfirmProps) {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          {props.title}
+          {tx(props.title)}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
         </text>
       </box>
       <box paddingBottom={1}>
-        <text fg={theme.textMuted}>{props.message}</text>
+        <text fg={theme.textMuted}>{tx(props.message)}</text>
       </box>
       <box flexDirection="row" justifyContent="flex-end" paddingBottom={1}>
         <For each={["cancel", "confirm"] as const}>
@@ -80,7 +81,7 @@ export function DialogConfirm(props: DialogConfirmProps) {
               }}
             >
               <text fg={key === store.active ? theme.selectedListItemText : theme.textMuted}>
-                {Locale.titlecase(key === "cancel" ? (props.label ?? key) : key)}
+                {key === "cancel" ? (tx(props.label) ?? t("cancel")) : t("confirm")}
               </text>
             </box>
           )}

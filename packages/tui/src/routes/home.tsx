@@ -12,13 +12,9 @@ import { useEditorContext } from "../context/editor"
 import { useTerminalDimensions } from "@opentui/solid"
 import { useTuiConfig } from "../config"
 import { HomeSessionDestinationProvider } from "./home/session-destination"
+import { t } from "../i18n"
 
 let once = false
-const placeholder = {
-  normal: ["Fix a TODO in the codebase", "What is the tech stack of this project?", "Fix broken tests"],
-  shell: ["ls -la", "git status", "pwd"],
-}
-
 export function Home() {
   const pluginRuntime = usePluginRuntime()
   const sync = useSync()
@@ -30,6 +26,10 @@ export function Home() {
   const editor = useEditorContext()
   const dimensions = useTerminalDimensions()
   const tuiConfig = useTuiConfig()
+  const placeholder = createMemo(() => ({
+    normal: [t("homeFixTodo"), t("homeTechStack"), t("homeFixTests")],
+    shell: ["ls -la", "git status", "pwd"],
+  }))
   const promptMaxWidth = createMemo(() => {
     const configured = tuiConfig.prompt?.max_width
     if (configured === "auto") return Math.max(75, Math.floor(dimensions().width * 0.7))
@@ -80,7 +80,7 @@ export function Home() {
         <box height={1} minHeight={0} flexShrink={1} />
         <box width="100%" maxWidth={promptMaxWidth()} zIndex={1000} paddingTop={1} flexShrink={0}>
           <pluginRuntime.Slot name="home_prompt" mode="replace" ref={bind}>
-            <Prompt ref={bind} right={<pluginRuntime.Slot name="home_prompt_right" />} placeholders={placeholder} />
+            <Prompt ref={bind} right={<pluginRuntime.Slot name="home_prompt_right" />} placeholders={placeholder()} />
           </pluginRuntime.Slot>
         </box>
         <pluginRuntime.Slot name="home_bottom" />

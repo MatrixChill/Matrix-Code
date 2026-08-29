@@ -6,16 +6,17 @@ import { DialogSelect, type DialogSelectRef, type DialogSelectOption } from "../
 import { useTheme } from "../context/theme"
 import { TextAttributes } from "@opentui/core"
 import { useSDK } from "../context/sdk"
+import { t, tx } from "../i18n"
 
 function Status(props: { enabled: boolean; loading: boolean }) {
   const { theme } = useTheme()
   if (props.loading) {
-    return <span style={{ fg: theme.textMuted }}>⋯ Loading</span>
+    return <span style={{ fg: theme.textMuted }}>⋯ {t("loading")}</span>
   }
   if (props.enabled) {
-    return <span style={{ fg: theme.success, attributes: TextAttributes.BOLD }}>✓ Enabled</span>
+    return <span style={{ fg: theme.success, attributes: TextAttributes.BOLD }}>✓ {tx("Enabled")}</span>
   }
-  return <span style={{ fg: theme.textMuted }}>○ Disabled</span>
+  return <span style={{ fg: theme.textMuted }}>○ {t("disabled")}</span>
 }
 
 export function DialogMcp() {

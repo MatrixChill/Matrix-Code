@@ -5,6 +5,7 @@ import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useBindings, useKeymapSelector } from "../../keymap"
 import type { ActiveKey } from "@opentui/keymap"
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
+import { t, tx } from "../../i18n"
 import type { BuiltinTuiPlugin } from "../builtins"
 
 const command = {
@@ -175,7 +176,8 @@ function HomeHint(props: { api: TuiPluginApi }) {
   return (
     <box width="100%" maxWidth={75} alignItems="center" paddingTop={1} flexShrink={0}>
       <text fg={look().muted} wrapMode="none">
-        Show keyboard shortcuts with <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
+        {t("keyboardShortcuts", { shortcut: "" })}
+        <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
       </text>
     </box>
   )
@@ -455,7 +457,7 @@ function WhichKeyPanel(props: {
           <box height={TAB_CONTENT_GAP} flexShrink={0} />
         </Show>
         <box height={rows()} flexShrink={0} flexDirection="column">
-          <Show when={shown().length > 0} fallback={<text fg={look().muted}>No reachable bindings</text>}>
+          <Show when={shown().length > 0} fallback={<text fg={look().muted}>{tx("No reachable bindings")}</text>}>
             <For each={rowIndexes()}>
               {(row) => (
                 <box width="100%" flexDirection="row" justifyContent="center" gap={COLUMN_GAP}>
@@ -487,7 +489,7 @@ function WhichKeyPanel(props: {
                                         wrapMode="none"
                                         truncate
                                       >
-                                        {binding().label}
+                                        {tx(binding().label)}
                                       </text>
                                     </box>
                                     <box flexShrink={0}>
@@ -514,12 +516,12 @@ function WhichKeyPanel(props: {
           <box width="100%" flexDirection="row" justifyContent="space-between" flexShrink={0}>
             <box>
               <text fg={look().text} wrapMode="none">
-                toggle <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
+                {tx("toggle")} <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
               </text>
             </box>
             <box>
               <text fg={look().text} wrapMode="none">
-                {nextMode()} <span style={{ fg: look().subtle }}>{modeTrigger() || command.toggleLayout}</span>
+                {tx(nextMode())} <span style={{ fg: look().subtle }}>{modeTrigger() || command.toggleLayout}</span>
               </text>
             </box>
           </box>

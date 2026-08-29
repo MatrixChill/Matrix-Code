@@ -7,6 +7,7 @@ import type { AssistantMessage } from "@opencode-ai/sdk/v2"
 import { Locale } from "../../util/locale"
 import { useTerminalDimensions } from "@opentui/solid"
 import { useCommandShortcut, useOpencodeKeymap } from "../../keymap"
+import { tx } from "../../i18n"
 
 export function SubagentFooter() {
   const route = useRouteData("session")
@@ -16,9 +17,9 @@ export function SubagentFooter() {
 
   const subagentInfo = createMemo(() => {
     const s = session()
-    if (!s) return { label: "Subagent", index: 0, total: 0 }
+    if (!s) return { label: tx("Subagent") ?? "Subagent", index: 0, total: 0 }
     const agentMatch = s.title.match(/@(\w+) subagent/)
-    const label = agentMatch ? Locale.titlecase(agentMatch[1]) : "Subagent"
+    const label = agentMatch ? Locale.titlecase(agentMatch[1]) : (tx("Subagent") ?? "Subagent")
 
     if (!s.parentID) return { label, index: 0, total: 0 }
 
@@ -101,7 +102,7 @@ export function SubagentFooter() {
               backgroundColor={hover() === "parent" ? theme.backgroundElement : theme.backgroundPanel}
             >
               <text fg={theme.text}>
-                Parent <span style={{ fg: theme.textMuted }}>{parentShortcut()}</span>
+                {tx("Parent")} <span style={{ fg: theme.textMuted }}>{parentShortcut()}</span>
               </text>
             </box>
             <box
@@ -111,7 +112,7 @@ export function SubagentFooter() {
               backgroundColor={hover() === "prev" ? theme.backgroundElement : theme.backgroundPanel}
             >
               <text fg={theme.text}>
-                Prev <span style={{ fg: theme.textMuted }}>{previousShortcut()}</span>
+                {tx("Prev")} <span style={{ fg: theme.textMuted }}>{previousShortcut()}</span>
               </text>
             </box>
             <box
@@ -121,7 +122,7 @@ export function SubagentFooter() {
               backgroundColor={hover() === "next" ? theme.backgroundElement : theme.backgroundPanel}
             >
               <text fg={theme.text}>
-                Next <span style={{ fg: theme.textMuted }}>{nextShortcut()}</span>
+                {tx("Next")} <span style={{ fg: theme.textMuted }}>{nextShortcut()}</span>
               </text>
             </box>
           </box>

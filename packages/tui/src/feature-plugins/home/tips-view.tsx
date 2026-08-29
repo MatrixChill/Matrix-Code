@@ -2,6 +2,7 @@ import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import { createMemo, For, type Accessor } from "solid-js"
 import { DEFAULT_THEMES, useTheme } from "../../context/theme"
 import { useCommandShortcut } from "../../keymap"
+import { t, tx, uiLocale } from "../../i18n"
 
 const themeCount = Object.keys(DEFAULT_THEMES).length
 
@@ -69,7 +70,6 @@ function parse(tip: string): TipPart[] {
 }
 
 const NO_MODELS_TIP = "Run {highlight}/connect{/highlight} to add an AI provider and start coding"
-const NO_MODELS_PARTS = parse(NO_MODELS_TIP)
 
 function shortcutText(value: string) {
   return `{highlight}${value}{/highlight}`
@@ -133,24 +133,28 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
     themeList: useCommandShortcut("theme.switch"),
   }
   const tip = createMemo(() => {
-    if (props.connected === false) return NO_MODELS_TIP
+    const fallback = tx(NO_MODELS_TIP) ?? NO_MODELS_TIP
+    if (props.connected === false) return fallback
     const tips = [...TIPS, process.platform !== "win32" ? TERMINAL_SUSPEND_TIP : INPUT_UNDO_TIP].flatMap((item) => {
       const value = typeof item === "string" ? item : item(shortcuts)
-      return value ? [value] : []
+      if (!value) return []
+      const translated = tx(value) ?? value
+      if (uiLocale() !== "en" && translated === value && value !== t("voiceTip") && value !== t("planAgentTip")) return []
+      return [translated]
     })
-    return tips[Math.floor(tipOffset * tips.length)] ?? NO_MODELS_TIP
-  }, NO_MODELS_TIP)
+    return tips[Math.floor(tipOffset * tips.length)] ?? fallback
+  }, tx(NO_MODELS_TIP) ?? NO_MODELS_TIP)
   // Solid can expose a memo's initial value while a pure computation is pending.
   const parts = createMemo(() => {
     const value = tip()
     if (typeof value === "string") return parse(value)
-    return NO_MODELS_PARTS
-  }, NO_MODELS_PARTS)
+    return parse(tx(NO_MODELS_TIP) ?? NO_MODELS_TIP)
+  }, parse(tx(NO_MODELS_TIP) ?? NO_MODELS_TIP))
 
   return (
     <box flexDirection="row" maxWidth="100%">
       <text flexShrink={0} style={{ fg: theme.warning }}>
-        ● Tip{" "}
+        ● {t("tip")}{" "}
       </text>
       <text flexShrink={1} wrapMode="word">
         <For each={parts()}>
@@ -162,9 +166,10 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
 }
 
 const TIPS: Tip[] = [
+  () => t("voiceTip"),
   "Type {highlight}@{/highlight} followed by a filename to fuzzy search and attach files",
   "Start a message with {highlight}!{/highlight} to run shell commands (e.g., {highlight}!ls -la{/highlight})",
-  (shortcuts) => press(shortcuts.agentCycle(), "to cycle between Build and Plan agents"),
+  (shortcuts) => press(shortcuts.agentCycle(), t("agentCycleTip")),
   "Use {highlight}/undo{/highlight} to revert the last message and file changes",
   "Use {highlight}/redo{/highlight} to restore previously undone messages and file changes",
   "Run {highlight}/share{/highlight} to create a public opencode.ai link",
@@ -198,7 +203,7 @@ const TIPS: Tip[] = [
   (shortcuts) => press(shortcuts.inputNewline(), "to add newlines in your prompt"),
   (shortcuts) => press(shortcuts.inputClear(), "when typing to clear the input field"),
   (shortcuts) => press(shortcuts.sessionInterrupt(), "to stop the AI mid-response"),
-  "Switch to {highlight}Plan{/highlight} agent for suggestions without making changes",
+  () => t("planAgentTip"),
   "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   (shortcuts) => {
     const items = [
@@ -235,7 +240,7 @@ const TIPS: Tip[] = [
   "Use plugins to send OS notifications when sessions complete",
   "Create a plugin to prevent OpenCode from reading sensitive files",
   "Use {highlight}opencode run{/highlight} for non-interactive scripting",
-  "Use {highlight}opencode --continue{/highlight} to resume the last session",
+  "Use {highlight}matrix --continue{/highlight} to resume the last session",
   "Use {highlight}opencode run -f file.ts{/highlight} to attach files via CLI",
   "Use {highlight}--format json{/highlight} for machine-readable output in scripts",
   "Run {highlight}opencode serve{/highlight} for headless API access to OpenCode",
