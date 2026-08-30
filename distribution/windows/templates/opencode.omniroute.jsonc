@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "omniroute/matrix-free-coding",
+  "provider": {
+    "omniroute": {
+      "name": "OmniRoute",
+      "npm": "@ai-sdk/openai-compatible",
+      "env": ["OMNIROUTE_API_KEY"],
+      "options": {
+        "baseURL": "{env:OMNIROUTE_BASE_URL}"
+      },
+      "models": {
+        "matrix-free-coding": {
+          "id": "auto/coding",
+          "name": "Matrix Free Coding — automatic fallback",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        },
+        "matrix-auto": {
+          "id": "auto",
+          "name": "Matrix Auto — balanced routing",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        },
+        "matrix-fast": {
+          "id": "auto/fast",
+          "name": "Matrix Fast — latency routing",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        }
+      }
+    }
+  }
+}

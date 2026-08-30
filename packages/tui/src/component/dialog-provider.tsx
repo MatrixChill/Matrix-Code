@@ -18,14 +18,26 @@ import { useClipboard } from "../context/clipboard"
 import { t, tx } from "../i18n"
 
 const PROVIDER_PRIORITY: Record<string, number> = {
-  opencode: 0,
-  "opencode-go": 1,
-  openai: 2,
-  "github-copilot": 3,
-  anthropic: 4,
-  google: 5,
+  omniroute: 0,
+  iflowcn: 1,
+  alibaba: 2,
+  "kimi-for-coding": 3,
+  nvidia: 4,
+  cerebras: 5,
+  groq: 6,
+  "cloudflare-workers-ai": 7,
+  openrouter: 8,
+  deepseek: 9,
+  opencode: 10,
+  "opencode-go": 11,
+  openai: 12,
+  "github-copilot": 13,
+  anthropic: 14,
+  google: 15,
 }
 
+const OMNIROUTE_PROVIDER_ID = "omniroute"
+const OMNIROUTE_DEFAULT_URL = "http://localhost:20128/v1"
 const CUSTOM_PROVIDER_OPTION_VALUE = "__opencode_custom_provider__"
 const CUSTOM_PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/
 
@@ -46,9 +58,12 @@ type ProviderOption =
     })
 
 export function providerOptions(list: { id: string; name: string }[]): ProviderOption[] {
+  const providers = list.some((provider) => provider.id === OMNIROUTE_PROVIDER_ID)
+    ? list
+    : [{ id: OMNIROUTE_PROVIDER_ID, name: "OmniRoute" }, ...list]
   return [
     ...pipe(
-      list,
+      providers,
       sortBy(
         (x) => PROVIDER_PRIORITY[x.id] ?? 99,
         (x) => x.name.toLowerCase(),
@@ -59,13 +74,30 @@ export function providerOptions(list: { id: string; name: string }[]): ProviderO
         title: provider.name,
         value: provider.id,
         providerID: provider.id,
-        description: {
-          opencode: "(Recommended)",
-          anthropic: "(API key)",
-          openai: "(ChatGPT Plus/Pro or API key)",
-          "opencode-go": "Low cost subscription for everyone",
-        }[provider.id],
-        category: provider.id in PROVIDER_PRIORITY ? "Popular" : "Providers",
+        description: (
+          {
+            omniroute: t("omniRouteRecommended"),
+            iflowcn: t("externalFreeCodingProvider"),
+            alibaba: t("externalFreeCodingProvider"),
+            "kimi-for-coding": t("externalFreeCodingProvider"),
+            nvidia: t("externalFreeTierProvider"),
+            cerebras: t("externalFreeTierProvider"),
+            groq: t("externalFreeTierProvider"),
+            "cloudflare-workers-ai": t("externalFreeTierProvider"),
+            openrouter: t("externalFreeTierProvider"),
+            deepseek: t("externalProvider"),
+            opencode: "(Recommended)",
+            anthropic: "(API key)",
+            openai: "(ChatGPT Plus/Pro or API key)",
+            "opencode-go": "Low cost subscription for everyone",
+          } satisfies Record<string, string>
+        )[provider.id],
+        category:
+          provider.id === OMNIROUTE_PROVIDER_ID
+            ? t("matrixFreeCoding")
+            : provider.id in PROVIDER_PRIORITY
+              ? t("recommendedFreeSetup")
+              : t("categoryProviders"),
       })),
     ),
     {
@@ -144,6 +176,9 @@ export function createDialogProviderOptions() {
           category: provider.category,
           gutter: connected && onboarded() ? () => <text fg={theme.success}>✓</text> : undefined,
           async onSelect() {
+            if (providerID === OMNIROUTE_PROVIDER_ID) {
+              return dialog.replace(() => <OmniRouteSetup />)
+            }
             if (consoleManaged) return
 
             const methods = sync.data.provider_auth[providerID] ?? [
@@ -228,7 +263,116 @@ export function createDialogProviderOptions() {
 
 export function DialogProvider() {
   const options = createDialogProviderOptions()
-  return <DialogSelect title="Connect a provider" options={options()} />
+  const connected = useConnected()
+  return <DialogSelect title={connected() ? t("titleConnectProvider") : t("matrixAiSetup")} options={options()} />
+}
+
+function OmniRouteSetup() {
+  const dialog = useDialog()
+  const sdk = useSDK()
+  const sync = useSync()
+  const toast = useToast()
+  const { theme } = useTheme()
+  const configured = sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.options?.baseURL
+  const currentURL = typeof configured === "string" ? configured : OMNIROUTE_DEFAULT_URL
+
+  return (
+    <DialogPrompt
+      title={t("omniRouteEndpoint")}
+      value={currentURL}
+      placeholder={OMNIROUTE_DEFAULT_URL}
+      description={() => (
+        <box gap={1}>
+          <text fg={theme.textMuted}>{t("omniRouteSetupDescription")}</text>
+          <text fg={theme.textMuted}>{t("externalAuthorizationNotice")}</text>
+        </box>
+      )}
+      onConfirm={(value) => {
+        const endpoint = value.trim().replace(/\/+$/, "")
+        const parsed = URL.parse(endpoint)
+        if (!parsed || !["http:", "https:"].includes(parsed.protocol)) {
+          toast.show({ variant: "error", message: t("omniRouteInvalidEndpoint") })
+          return
+        }
+
+        dialog.replace(() => (
+          <DialogPrompt
+            title={t("omniRouteApiKey")}
+            placeholder={t("omniRouteApiKeyOptional")}
+            description={() => <text fg={theme.textMuted}>{t("omniRouteApiKeyDescription")}</text>}
+            onConfirm={async (key) => {
+              const result = await sdk.client.global.config.update({
+                config: {
+                  model: sync.data.config.model ?? `${OMNIROUTE_PROVIDER_ID}/matrix-free-coding`,
+                  provider: {
+                    [OMNIROUTE_PROVIDER_ID]: {
+                      name: "OmniRoute",
+                      npm: "@ai-sdk/openai-compatible",
+                      env: ["OMNIROUTE_API_KEY"],
+                      options: {
+                        ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.options,
+                        baseURL: endpoint,
+                      },
+                      models: {
+                        ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.models,
+                        "matrix-free-coding": {
+                          id: "auto/coding",
+                          name: "Matrix Free Coding — automatic fallback",
+                          reasoning: true,
+                          tool_call: true,
+                          limit: { context: 131072, output: 32768 },
+                        },
+                        "matrix-auto": {
+                          id: "auto",
+                          name: "Matrix Auto — balanced routing",
+                          reasoning: true,
+                          tool_call: true,
+                          limit: { context: 131072, output: 32768 },
+                        },
+                        "matrix-fast": {
+                          id: "auto/fast",
+                          name: "Matrix Fast — latency routing",
+                          reasoning: true,
+                          tool_call: true,
+                          limit: { context: 131072, output: 32768 },
+                        },
+                      },
+                    },
+                  },
+                },
+              })
+              if (result.error) {
+                toast.show({ variant: "error", message: t("omniRouteSetupFailed") })
+                return
+              }
+
+              if (key.trim()) {
+                await sdk.client.auth.set({
+                  providerID: OMNIROUTE_PROVIDER_ID,
+                  auth: { type: "api", key: key.trim() },
+                })
+              }
+
+              const reachable = await fetch(`${endpoint}/models`, {
+                headers: key.trim() ? { Authorization: `Bearer ${key.trim()}` } : undefined,
+                signal: AbortSignal.timeout(3500),
+              })
+                .then((response) => response.ok)
+                .catch(() => false)
+
+              await sdk.client.instance.dispose()
+              await sync.bootstrap()
+              toast.show({
+                variant: reachable ? "success" : "warning",
+                message: reachable ? t("omniRouteReady") : t("omniRouteUnavailable"),
+              })
+              dialog.replace(() => <DialogModel providerID={OMNIROUTE_PROVIDER_ID} />)
+            }}
+          />
+        ))
+      }}
+    />
+  )
 }
 
 interface AutoMethodProps {
@@ -387,7 +531,8 @@ function ApiMethod(props: ApiMethodProps) {
                 with generous usage limits.
               </text>
               <text fg={theme.text}>
-                {tx("Go to")} <span style={{ fg: theme.primary }}>https://opencode.ai/go</span> {tx("and enable OpenCode Go")}
+                {tx("Go to")} <span style={{ fg: theme.primary }}>https://opencode.ai/go</span>{" "}
+                {tx("and enable OpenCode Go")}
               </text>
             </box>
           ),

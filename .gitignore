@@ -26,6 +26,12 @@ target
 .scripts
 .direnv/
 
+# Matrix Code private/portable state and local credentials
+**/.matrix/
+distribution/windows/private/
+*.private.env
+credentials.local.json
+
 # Local dev files
 opencode-dev
 UPCOMING_CHANGELOG.md

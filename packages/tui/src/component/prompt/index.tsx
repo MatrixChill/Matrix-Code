@@ -335,27 +335,25 @@ export function Prompt(props: PromptProps) {
     }
   })
 
-  let voiceProcess: any
+  let voiceProcess: ReturnType<typeof Bun.spawn> | undefined
   let voiceStopFile: string | undefined
   let voiceRunning = false
 
   async function toggleVoice() {
     if (!voiceRunning) {
-      const userProfile = process.env.USERPROFILE
+      const executableDir = path.dirname(process.execPath)
+      const portableRoot = process.env.MATRIX_PORTABLE_ROOT
+      const candidates = [
+        process.env.MATRIX_VOICE_HELPER,
+        portableRoot ? path.join(portableRoot, "matrix-voice", "matrix-voice-helper.exe") : undefined,
+        path.join(executableDir, "matrix-voice", "matrix-voice-helper.exe"),
+        path.join(process.cwd(), "matrix-voice-helper.py"),
+      ].filter((item): item is string => Boolean(item))
+      const helper = (
+        await Promise.all(candidates.map(async (item) => ((await Bun.file(item).exists()) ? item : undefined)))
+      ).find((item): item is string => Boolean(item))
 
-      if (!userProfile) {
-        toast.show({
-          variant: "error",
-          message: t("voiceUserProfileMissing"),
-        })
-        return
-      }
-
-      const helper =
-        process.env.MATRIX_VOICE_HELPER ??
-        path.join(userProfile, "Matrix-Code", "matrix-voice-helper.py")
-
-      if (!(await Bun.file(helper).exists())) {
+      if (!helper) {
         toast.show({
           variant: "error",
           message: t("voiceHelperMissing"),
@@ -363,26 +361,24 @@ export function Prompt(props: PromptProps) {
         return
       }
 
-      const temp = process.env.TEMP ?? process.env.TMP ?? userProfile
+      const temp = process.env.TEMP ?? process.env.TMP ?? process.cwd()
 
-      voiceStopFile = path.join(
-        temp,
-        `matrix-voice-${Date.now()}-${Math.random().toString(36).slice(2)}.stop`,
-      )
+      voiceStopFile = path.join(temp, `matrix-voice-${Date.now()}-${Math.random().toString(36).slice(2)}.stop`)
 
       try {
-        voiceProcess = Bun.spawn(
-          ["python", helper, "--stop-file", voiceStopFile],
-          {
-            stdout: "pipe",
-            stderr: "pipe",
-            env: {
-              ...process.env,
-              PYTHONUTF8: "1",
-              PYTHONIOENCODING: "utf-8",
-            },
+        const modelDir = process.env.MATRIX_VOICE_MODEL_DIR ?? path.join(path.dirname(helper), "model")
+        const command = helper.toLowerCase().endsWith(".py")
+          ? [process.env.MATRIX_VOICE_PYTHON ?? "python", helper, "--stop-file", voiceStopFile]
+          : [helper, "--stop-file", voiceStopFile, "--model-dir", modelDir]
+        voiceProcess = Bun.spawn(command, {
+          stdout: "pipe",
+          stderr: "pipe",
+          env: {
+            ...process.env,
+            PYTHONUTF8: "1",
+            PYTHONIOENCODING: "utf-8",
           },
-        )
+        })
 
         voiceRunning = true
 
@@ -421,13 +417,9 @@ export function Prompt(props: PromptProps) {
     try {
       await Bun.write(stopFile, "stop")
 
-      const stdoutPromise = new Response(
-        processRef.stdout as ReadableStream<Uint8Array>,
-      ).text()
+      const stdoutPromise = new Response(processRef.stdout as ReadableStream<Uint8Array>).text()
 
-      const stderrPromise = new Response(
-        processRef.stderr as ReadableStream<Uint8Array>,
-      ).text()
+      const stderrPromise = new Response(processRef.stderr as ReadableStream<Uint8Array>).text()
 
       const exitCode = await processRef.exited
       const transcription = (await stdoutPromise).trim()
@@ -999,7 +991,9 @@ export function Prompt(props: PromptProps) {
         cursorVersion()
         return inputTarget() !== undefined && store.mode === "shell" && input?.visualCursor.offset === 0
       })(),
-      bindings: [{ key: "backspace", desc: t("exitShellMode"), group: "Prompt", cmd: () => setStore("mode", "normal") }],
+      bindings: [
+        { key: "backspace", desc: t("exitShellMode"), group: "Prompt", cmd: () => setStore("mode", "normal") },
+      ],
     }
   })
 
@@ -1758,7 +1752,10 @@ export function Prompt(props: PromptProps) {
                           return `${t("workspaceCreating", { type: item.workspaceType })}${".".repeat(workspace.creatingDots())}`
                         return (
                           <>
-                            {t("workspaceLabel")} <span style={{ fg: theme.textMuted }}>({t("workspaceNew", { type: item.workspaceType })})</span>
+                            {t("workspaceLabel")}{" "}
+                            <span style={{ fg: theme.textMuted }}>
+                              ({t("workspaceNew", { type: item.workspaceType })})
+                            </span>
                           </>
                         )
                       }
