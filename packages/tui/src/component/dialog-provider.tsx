@@ -516,7 +516,7 @@ function ApiMethod(props: ApiMethodProps) {
           opencode: (
             <box gap={1}>
               <text fg={theme.textMuted}>
-                OpenCode Zen gives you access to all the best coding models at the cheapest prices with a single API
+                Matrix Code gives you access to all the best coding models at the cheapest prices with a single API
                 key.
               </text>
               <text fg={theme.text}>
@@ -527,12 +527,12 @@ function ApiMethod(props: ApiMethodProps) {
           "opencode-go": (
             <box gap={1}>
               <text fg={theme.textMuted}>
-                OpenCode Go is a $10 per month subscription that provides reliable access to popular open coding models
+                Matrix Code is a $10 per month subscription that provides reliable access to popular open coding models
                 with generous usage limits.
               </text>
               <text fg={theme.text}>
                 {tx("Go to")} <span style={{ fg: theme.primary }}>https://opencode.ai/go</span>{" "}
-                {tx("and enable OpenCode Go")}
+                {tx("and enable Matrix Code")}
               </text>
             </box>
           ),

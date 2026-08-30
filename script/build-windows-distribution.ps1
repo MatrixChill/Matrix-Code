@@ -70,10 +70,11 @@ foreach ($stage in @($standard, $portable)) {
   Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\README.txt") -Destination $stage
 }
 
+# Standard (installed) distribution
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\install.ps1") -Destination $standard
-Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\opencode.cmd") -Destination $standard
+
+# Portable distribution
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.cmd") -Destination $portable
-Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.cmd") -Destination (Join-Path $portable "opencode.cmd")
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-personal.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\templates") -Destination $portable -Recurse
 
@@ -82,11 +83,13 @@ $portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable.zip"
 Compress-Archive -Path (Join-Path $standard "*") -DestinationPath $standardZip -CompressionLevel Optimal
 Compress-Archive -Path (Join-Path $portable "*") -DestinationPath $portableZip -CompressionLevel Optimal
 
+# Smoke tests
 & (Join-Path $standard "matrix.exe") --version
 if ($LASTEXITCODE -ne 0) { throw "Installed distribution smoke test failed" }
 & cmd.exe /d /c (Join-Path $portable "matrix.cmd") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution smoke test failed" }
 
+# Path-with-spaces smoke test
 $spaceTest = Join-Path $release "space test portable"
 Copy-Item -LiteralPath $portable -Destination $spaceTest -Recurse
 & cmd.exe /d /c (Join-Path $spaceTest "matrix.cmd") --version
