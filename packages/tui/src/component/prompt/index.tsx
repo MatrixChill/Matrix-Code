@@ -343,12 +343,23 @@ export function Prompt(props: PromptProps) {
     if (!voiceRunning) {
       const executableDir = path.dirname(process.execPath)
       const portableRoot = process.env.MATRIX_PORTABLE_ROOT
-      const candidates = [
-        process.env.MATRIX_VOICE_HELPER,
-        portableRoot ? path.join(portableRoot, "matrix-voice", "matrix-voice-helper.exe") : undefined,
-        path.join(executableDir, "matrix-voice", "matrix-voice-helper.exe"),
-        path.join(process.cwd(), "matrix-voice-helper.py"),
-      ].filter((item): item is string => Boolean(item))
+        // Walk up from the executable to find the dist root (handles bin/ subfolder in dev builds)
+        const parentDir = path.dirname(executableDir)
+        const distRoot = path.dirname(parentDir)
+        const repoRoot = path.join(distRoot, "..", "..")
+        const candidates = [
+          process.env.MATRIX_VOICE_HELPER,
+          portableRoot ? path.join(portableRoot, "matrix-voice", "matrix-voice-helper.exe") : undefined,
+          // Release layout: matrix.exe + matrix-voice/ side by side
+          path.join(executableDir, "matrix-voice", "matrix-voice-helper.exe"),
+          // Dev build layout: bin/opencode.exe -> ../matrix-voice/
+          path.join(parentDir, "matrix-voice", "matrix-voice-helper.exe"),
+          // Dev voice build output: dist/matrix-voice-build/dist/matrix-voice-helper/
+          path.join(distRoot, "matrix-voice-build", "dist", "matrix-voice-helper", "matrix-voice-helper.exe"),
+          // Python fallback for development (repo root)
+          path.join(repoRoot, "matrix-voice-helper.py"),
+          path.join(process.cwd(), "matrix-voice-helper.py"),
+        ].filter((item): item is string => Boolean(item))
       const helper = (
         await Promise.all(candidates.map(async (item) => ((await Bun.file(item).exists()) ? item : undefined)))
       ).find((item): item is string => Boolean(item))

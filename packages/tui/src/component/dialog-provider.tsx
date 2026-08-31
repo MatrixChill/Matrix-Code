@@ -274,105 +274,129 @@ function OmniRouteSetup() {
   const toast = useToast()
   const { theme } = useTheme()
   const configured = sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.options?.baseURL
-  const currentURL = typeof configured === "string" ? configured : OMNIROUTE_DEFAULT_URL
+  const [endpoint, setEndpoint] = createSignal(
+    typeof configured === "string" ? configured : OMNIROUTE_DEFAULT_URL,
+  )
+  const [key, setKey] = createSignal("")
 
-  return (
-    <DialogPrompt
-      title={t("omniRouteEndpoint")}
-      value={currentURL}
-      placeholder={OMNIROUTE_DEFAULT_URL}
-      description={() => (
+  async function run() {
+    const endpointValue = await DialogPrompt.show(dialog, t("omniRouteEndpoint"), {
+      value: endpoint(),
+      placeholder: OMNIROUTE_DEFAULT_URL,
+      description: () => (
         <box gap={1}>
           <text fg={theme.textMuted}>{t("omniRouteSetupDescription")}</text>
           <text fg={theme.textMuted}>{t("externalAuthorizationNotice")}</text>
         </box>
-      )}
-      onConfirm={(value) => {
-        const endpoint = value.trim().replace(/\/+$/, "")
-        const parsed = URL.parse(endpoint)
-        if (!parsed || !["http:", "https:"].includes(parsed.protocol)) {
-          toast.show({ variant: "error", message: t("omniRouteInvalidEndpoint") })
-          return
-        }
+      ),
+    })
+    if (endpointValue === null) return
 
-        dialog.replace(() => (
-          <DialogPrompt
-            title={t("omniRouteApiKey")}
-            placeholder={t("omniRouteApiKeyOptional")}
-            description={() => <text fg={theme.textMuted}>{t("omniRouteApiKeyDescription")}</text>}
-            onConfirm={async (key) => {
-              const result = await sdk.client.global.config.update({
-                config: {
-                  model: sync.data.config.model ?? `${OMNIROUTE_PROVIDER_ID}/matrix-free-coding`,
-                  provider: {
-                    [OMNIROUTE_PROVIDER_ID]: {
-                      name: "OmniRoute",
-                      npm: "@ai-sdk/openai-compatible",
-                      env: ["OMNIROUTE_API_KEY"],
-                      options: {
-                        ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.options,
-                        baseURL: endpoint,
-                      },
-                      models: {
-                        ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.models,
-                        "matrix-free-coding": {
-                          id: "auto/coding",
-                          name: "Matrix Free Coding — automatic fallback",
-                          reasoning: true,
-                          tool_call: true,
-                          limit: { context: 131072, output: 32768 },
-                        },
-                        "matrix-auto": {
-                          id: "auto",
-                          name: "Matrix Auto — balanced routing",
-                          reasoning: true,
-                          tool_call: true,
-                          limit: { context: 131072, output: 32768 },
-                        },
-                        "matrix-fast": {
-                          id: "auto/fast",
-                          name: "Matrix Fast — latency routing",
-                          reasoning: true,
-                          tool_call: true,
-                          limit: { context: 131072, output: 32768 },
-                        },
-                      },
-                    },
-                  },
-                },
-              })
-              if (result.error) {
-                toast.show({ variant: "error", message: t("omniRouteSetupFailed") })
-                return
-              }
+    const trimmed = endpointValue.trim().replace(/\/+$/, "")
+    const parsed = URL.parse(trimmed)
+    if (!parsed || !["http:", "https:"].includes(parsed.protocol)) {
+      toast.show({ variant: "error", message: t("omniRouteInvalidEndpoint") })
+      return run()
+    }
+    setEndpoint(trimmed)
 
-              if (key.trim()) {
-                await sdk.client.auth.set({
-                  providerID: OMNIROUTE_PROVIDER_ID,
-                  auth: { type: "api", key: key.trim() },
-                })
-              }
+    const keyValue = await DialogPrompt.show(dialog, t("omniRouteApiKey"), {
+      value: key(),
+      placeholder: t("omniRouteApiKeyOptional"),
+      description: () => <text fg={theme.textMuted}>{t("omniRouteApiKeyDescription")}</text>,
+    })
+    if (keyValue === null) return
+    setKey(keyValue)
 
-              const reachable = await fetch(`${endpoint}/models`, {
-                headers: key.trim() ? { Authorization: `Bearer ${key.trim()}` } : undefined,
-                signal: AbortSignal.timeout(3500),
-              })
-                .then((response) => response.ok)
-                .catch(() => false)
+    const reachable = await fetch(`${trimmed}/models`, {
+      headers: keyValue.trim() ? { Authorization: `Bearer ${keyValue.trim()}` } : undefined,
+      signal: AbortSignal.timeout(3500),
+    })
+      .then((response) => response.ok)
+      .catch(() => false)
 
-              await sdk.client.instance.dispose()
-              await sync.bootstrap()
-              toast.show({
-                variant: reachable ? "success" : "warning",
-                message: reachable ? t("omniRouteReady") : t("omniRouteUnavailable"),
-              })
-              dialog.replace(() => <DialogModel providerID={OMNIROUTE_PROVIDER_ID} />)
-            }}
-          />
-        ))
-      }}
-    />
-  )
+    if (!reachable) {
+      const choice = await new Promise<"retry" | "back" | undefined>((resolve) => {
+        dialog.replace(
+          () => (
+            <DialogSelect<"retry" | "back">
+              title={t("omniRouteUnreachableTitle")}
+              footer={<text fg={theme.textMuted}>{t("omniRouteUnreachableDescription")}</text>}
+              options={[
+                { title: t("omniRouteRetry"), value: "retry" },
+                { title: t("chooseAnotherProvider"), value: "back" },
+              ]}
+              onSelect={({ value }) => resolve(value)}
+            />
+          ),
+          () => resolve(undefined),
+        )
+      })
+      if (choice === "retry") return run()
+      if (choice === "back") return dialog.replace(() => <DialogProvider />)
+      return
+    }
+
+    const result = await sdk.client.global.config.update({
+      config: {
+        model: `${OMNIROUTE_PROVIDER_ID}/matrix-free-coding`,
+        provider: {
+          [OMNIROUTE_PROVIDER_ID]: {
+            name: "OmniRoute",
+            npm: "@ai-sdk/openai-compatible",
+            env: ["OMNIROUTE_API_KEY"],
+            options: {
+              ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.options,
+              baseURL: trimmed,
+            },
+            models: {
+              ...sync.data.config.provider?.[OMNIROUTE_PROVIDER_ID]?.models,
+              "matrix-free-coding": {
+                id: "auto/coding",
+                name: "Matrix Free Coding — automatic fallback",
+                reasoning: true,
+                tool_call: true,
+                limit: { context: 131072, output: 32768 },
+              },
+              "matrix-auto": {
+                id: "auto",
+                name: "Matrix Auto — balanced routing",
+                reasoning: true,
+                tool_call: true,
+                limit: { context: 131072, output: 32768 },
+              },
+              "matrix-fast": {
+                id: "auto/fast",
+                name: "Matrix Fast — latency routing",
+                reasoning: true,
+                tool_call: true,
+                limit: { context: 131072, output: 32768 },
+              },
+            },
+          },
+        },
+      },
+    })
+    if (result.error) {
+      toast.show({ variant: "error", message: t("omniRouteSetupFailed") })
+      return
+    }
+
+    if (keyValue.trim()) {
+      await sdk.client.auth.set({
+        providerID: OMNIROUTE_PROVIDER_ID,
+        auth: { type: "api", key: keyValue.trim() },
+      })
+    }
+
+    await sdk.client.instance.dispose()
+    await sync.bootstrap()
+    toast.show({ variant: "success", message: t("omniRouteReady") })
+    dialog.replace(() => <DialogModel providerID={OMNIROUTE_PROVIDER_ID} />)
+  }
+
+  onMount(run)
+  return <></>
 }
 
 interface AutoMethodProps {

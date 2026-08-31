@@ -58,6 +58,15 @@ export async function read() {
       Buffer.alloc(0),
     )
     if (image.length) return { data: image.toString().trim(), mime: "image/png" }
+
+    // Windows fallback for text (clipboardy might fail in compiled builds)
+    const textScript = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; if ([System.Windows.Forms.Clipboard]::ContainsText()) { [System.Windows.Forms.Clipboard]::GetText() }"
+    const textBuffer = await command("powershell.exe", ["-NonInteractive", "-NoProfile", "-command", textScript]).catch(() => Buffer.alloc(0))
+    if (textBuffer.length) {
+        // Strip trailing \r\n from powershell output
+        const text = textBuffer.toString('utf8').replace(/\r\n$/, '')
+        if (text) return { data: text, mime: "text/plain" }
+    }
   }
 
   if (platform() === "linux") {
