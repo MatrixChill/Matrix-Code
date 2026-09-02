@@ -3,7 +3,8 @@ node_modules
 .worktrees
 .sst
 .env
-.env.local
+.env.*
+!.env.example
 .idea
 .vscode
 .codex
@@ -31,6 +32,18 @@ target
 distribution/windows/private/
 *.private.env
 credentials.local.json
+
+# Matrix personal-only content (never ships in the public archive)
+private/
+personal/
+!distribution/windows/private/README.md
+
+# log and scan artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+gitleaks-report.*
 
 # Local dev files
 opencode-dev

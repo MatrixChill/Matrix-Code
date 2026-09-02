@@ -42,6 +42,8 @@ import { PermissionProvider } from "./context/permission"
 import { DialogModel } from "./component/dialog-model"
 import { useConnected } from "./component/use-connected"
 import { DialogMcp } from "./component/dialog-mcp"
+import { DialogMatrixStatus } from "./component/dialog-matrix-status"
+import { DialogMatrixModels } from "./component/dialog-matrix-models"
 import { DialogStatus } from "./component/dialog-status"
 import { DialogDebug } from "./component/dialog-debug"
 import { DialogThemeList } from "./component/dialog-theme-list"
@@ -777,6 +779,24 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         slashName: "status",
         run: () => {
           dialog.replace(() => <DialogStatus />)
+        },
+        category: "System",
+      },
+      {
+        name: "matrix.status",
+        title: "Matrix status",
+        slashName: "matrix-status",
+        run: () => {
+          dialog.replace(() => <DialogMatrixStatus />)
+        },
+        category: "System",
+      },
+      {
+        name: "matrix.models",
+        title: "Matrix models",
+        slashName: "matrix-models",
+        run: () => {
+          dialog.replace(() => <DialogMatrixModels />)
         },
         category: "System",
       },

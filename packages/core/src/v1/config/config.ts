@@ -10,6 +10,7 @@ import { ConfigCommandV1 } from "./command"
 import { ConfigFormatterV1 } from "./formatter"
 import { ConfigLayoutV1 } from "./layout"
 import { ConfigLSPV1 } from "./lsp"
+import { ConfigMatrix } from "../../config/matrix"
 import { ConfigMCPV1 } from "./mcp"
 import { ConfigPermissionV1 } from "./permission"
 import { ConfigPluginV1 } from "./plugin"
@@ -187,6 +188,9 @@ export const Info = Schema.Struct({
       }),
     }),
   ),
+  matrix: Schema.optional(ConfigMatrix.Info).annotate({
+    description: "Matrix Code configuration: active profile, router preferences and optional integrations",
+  }),
 }).annotate({ identifier: "Config" })
 
 export type Info = DeepMutable<Schema.Schema.Type<typeof Info>>

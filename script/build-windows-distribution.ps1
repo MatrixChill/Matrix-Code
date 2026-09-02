@@ -72,6 +72,7 @@ foreach ($stage in @($standard, $portable)) {
 
 # Standard (installed) distribution
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\install.ps1") -Destination $standard
+Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-installed.cmd") -Destination $standard
 
 # Portable distribution
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.cmd") -Destination $portable
