@@ -6,6 +6,8 @@ import { ConfigProvider, Context, Effect, Exit, Layer, Scope } from "effect"
 import { HttpRouter, HttpServer } from "effect/unstable/http"
 import { OpenApi } from "effect/unstable/httpapi"
 import { createServer } from "node:http"
+import { MatrixApiConfig } from "@opencode-ai/core/matrix/api/config"
+import { MatrixApiServer } from "@opencode-ai/core/matrix/api/server"
 import { MDNS } from "./mdns"
 import { HttpApiApp } from "./routes/instance/httpapi/server"
 import { disposeMiddleware } from "./routes/instance/httpapi/lifecycle"
@@ -86,6 +88,7 @@ const listenEffect: (opts: ListenOptions) => Effect.Effect<EffectListener, unkno
     const address = yield* tcpAddress(state)
     const listenerUrl = makeURL(opts.hostname, address.port)
     const unpublishMdns = yield* setupMdns(opts, address.port, state.scope)
+    yield* startMatrixApi(state.scope)
     url = listenerUrl
 
     return {
@@ -135,6 +138,30 @@ function startListener(opts: ListenOptions, port: number) {
       }),
     ),
   )
+}
+
+function startMatrixApi(scope: Scope.Scope) {
+  return Effect.gen(function* () {
+    const settings = MatrixApiConfig.fromEnv()
+    if (!MatrixApiConfig.isConfigured(settings)) {
+      yield* Effect.logWarning(
+        "Matrix API is disabled or missing MATRIX_API_KEY; not starting the local API (fail closed).",
+      )
+      return undefined
+    }
+    return yield* MatrixApiServer.start(settings, scope).pipe(
+      Effect.tap((listener) => Effect.logInfo(`Matrix API listening on ${listener.url}`)),
+      Effect.catch(() =>
+        Effect.gen(function* () {
+          yield* Effect.logWarning("Matrix API failed to start; continuing without the local API.", {
+            host: settings.host,
+            port: settings.port,
+          })
+          return undefined
+        }),
+      ),
+    )
+  })
 }
 
 function tcpAddress(state: ListenerState) {
