@@ -76,6 +76,7 @@ Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-installed.c
 
 # Portable distribution
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.cmd") -Destination $portable
+Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-personal.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\templates") -Destination $portable -Recurse
 
@@ -90,11 +91,17 @@ if ($LASTEXITCODE -ne 0) { throw "Installed distribution smoke test failed" }
 & cmd.exe /d /c (Join-Path $portable "matrix.cmd") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution smoke test failed" }
 
+# PowerShell launcher smoke test
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $portable "matrix.ps1") --version
+if ($LASTEXITCODE -ne 0) { throw "Portable distribution PowerShell launcher smoke test failed" }
+
 # Path-with-spaces smoke test
 $spaceTest = Join-Path $release "space test portable"
 Copy-Item -LiteralPath $portable -Destination $spaceTest -Recurse
 & cmd.exe /d /c (Join-Path $spaceTest "matrix.cmd") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces smoke test failed" }
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $spaceTest "matrix.ps1") --version
+if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces PowerShell smoke test failed" }
 Remove-Item -LiteralPath $spaceTest -Recurse -Force
 
 $checksums = @($standardZip, $portableZip) | ForEach-Object {

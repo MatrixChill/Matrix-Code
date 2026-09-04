@@ -23,26 +23,40 @@ rem --- OmniRoute auto-start -----------------------------------------------
 rem Only start a gateway if none is already listening, so we never spawn a
 rem second instance and never kill an OmniRoute the user opened beforehand.
 set "OMNIROUTE_STARTED="
-curl -sf -o nul -m 1 http://localhost:20128/v1/models >nul 2>&1
+curl -sf -o nul -m 1 http://127.0.0.1:20128/v1/models >nul 2>&1
 if %ERRORLEVEL% equ 0 goto :run_matrix
 
-set "OMNIROUTE_EXE="
-if exist "%~dp0omniroute\omniroute.exe" set "OMNIROUTE_EXE=%~dp0omniroute\omniroute.exe"
-if not defined OMNIROUTE_EXE if exist "%~dp0..\omniroute\omniroute.exe" set "OMNIROUTE_EXE=%~dp0..\omniroute\omniroute.exe"
-if not defined OMNIROUTE_EXE (
+rem Try standalone exe, then bundled Node runtime
+set "OMNIROUTE_CMD="
+set "OMNIROUTE_ARGS="
+if exist "%~dp0omniroute\omniroute.exe" set "OMNIROUTE_CMD=%~dp0omniroute\omniroute.exe"
+if not defined OMNIROUTE_CMD if exist "%~dp0..\omniroute\omniroute.exe" set "OMNIROUTE_CMD=%~dp0..\omniroute\omniroute.exe"
+if not defined OMNIROUTE_CMD if exist "%~dp0omniroute\node.exe" if exist "%~dp0omniroute\app\bin\omniroute.mjs" (
+    set "OMNIROUTE_CMD=%~dp0omniroute\node.exe"
+    set "OMNIROUTE_ARGS=%~dp0omniroute\app\bin\omniroute.mjs"
+)
+if not defined OMNIROUTE_CMD if exist "%~dp0..\omniroute\node.exe" if exist "%~dp0..\omniroute\app\bin\omniroute.mjs" (
+    set "OMNIROUTE_CMD=%~dp0..\omniroute\node.exe"
+    set "OMNIROUTE_ARGS=%~dp0..\omniroute\app\bin\omniroute.mjs"
+)
+if not defined OMNIROUTE_CMD (
   echo OmniRoute is offline on localhost:20128 and no co-located gateway was found.
   echo Starting Matrix Code anyway; OmniRoute routes may report "Cannot connect to API".
   goto :run_matrix
 )
 
 echo Starting OmniRoute gateway...
-start "" /B "%OMNIROUTE_EXE%" >nul 2>&1
+if defined OMNIROUTE_ARGS (
+    start "" /B "%OMNIROUTE_CMD%" "%OMNIROUTE_ARGS%" >nul 2>&1
+) else (
+    start "" /B "%OMNIROUTE_CMD%" >nul 2>&1
+)
 set "OMNIROUTE_STARTED=1"
 
 rem Wait up to ~15 seconds for API readiness.
 for /L %%i in (1,1,30) do (
     timeout /t 1 /nobreak >nul 2>&1
-    curl -sf -o nul -m 1 http://localhost:20128/v1/models >nul 2>&1
+    curl -sf -o nul -m 1 http://127.0.0.1:20128/v1/models >nul 2>&1
     if !ERRORLEVEL! equ 0 goto :run_matrix
 )
 echo Warning: OmniRoute did not become ready in time. Starting Matrix Code anyway.
