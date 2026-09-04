@@ -1,5 +1,5 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
-import { type ProviderStatus, type ProviderInfo, type RoutingStatusData, buildRoutingStatus } from "./routing-adapter"
+import { type ProviderStatus, type GatewayStatus, type ProviderInfo, type RoutingStatusData, buildRoutingStatus } from "./routing-adapter"
 import { MatrixRouter } from "@opencode-ai/core/matrix/router"
 
 const STATUS_STYLES: Record<ProviderStatus, { dot: string; label: string }> = {
@@ -19,9 +19,9 @@ function StatusDot(props: { status: ProviderStatus; size?: "small" | "medium" })
   )
 }
 
-function GatewayCard(props: { status: ProviderStatus; lastCheck: Date }) {
+function GatewayCard(props: { status: GatewayStatus; lastChecked: Date }) {
   const timeStr = createMemo(() => {
-    return props.lastCheck.toLocaleTimeString()
+    return props.lastChecked.toLocaleTimeString()
   })
 
   return (
@@ -119,7 +119,7 @@ export function RoutingStatusView() {
       </div>
 
       <div class="flex flex-col gap-4 max-w-[720px]">
-        <GatewayCard status={data().omniroute.status} lastCheck={data().omniroute.lastCheck} />
+        <GatewayCard status={data().gateway.status} lastChecked={data().gateway.lastChecked} />
 
         <SummaryBar data={data()} />
 

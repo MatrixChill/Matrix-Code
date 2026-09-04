@@ -3,6 +3,18 @@ export * as MatrixRouter from "./router"
 import { MatrixCatalog } from "./catalog"
 import { MatrixProfile, WEIGHTS } from "./profile"
 
+// Last recorded error for a candidate, used to surface provider failures in the
+// routing status without duplicating the message into a separate tracking store.
+export interface CandidateError {
+  readonly message: string
+  // Provider/business error code, e.g. "429" or "insufficient_quota".
+  readonly code?: string
+  // HTTP status code when the gateway answered the request.
+  readonly status?: number
+  // ms epoch when the failure was recorded.
+  readonly at: number
+}
+
 // Runtime health for a candidate, tracked by the router instance.
 export interface CandidateState {
   // 1.0 = healthy, decreasing with recent failures
@@ -10,6 +22,8 @@ export interface CandidateState {
   // ms epoch when the candidate may be tried again; 0 = no cooldown
   cooldownUntil: number
   recentFailures: number
+  // Most recent recorded failure, when the request error was surfaced.
+  lastError?: CandidateError
 }
 
 export interface Selection {
@@ -91,12 +105,13 @@ export class Router {
     return { candidate: top, rank: score(top, profile), profile }
   }
 
-  recordFailure(candidate: MatrixCatalog.Candidate, cooldownMs: number): void {
+  recordFailure(candidate: MatrixCatalog.Candidate, cooldownMs: number, error?: Omit<CandidateError, "at">): void {
     const current = this.states.get(candidate.id) ?? freshState
     this.states.set(candidate.id, {
       health: Math.max(0, current.health - 0.25),
       cooldownUntil: this.now() + cooldownMs,
       recentFailures: current.recentFailures + 1,
+      ...(error === undefined ? {} : { lastError: { ...error, at: this.now() } }),
     })
   }
 
@@ -111,6 +126,10 @@ export class Router {
 
   state(candidate: MatrixCatalog.Candidate): CandidateState | undefined {
     return this.states.get(candidate.id)
+  }
+
+  lastError(candidate: MatrixCatalog.Candidate): CandidateError | undefined {
+    return this.states.get(candidate.id)?.lastError
   }
 
   // Read-only snapshot for diagnostics (/matrix-models).

@@ -1,54 +1,73 @@
 import { describe, expect, test } from "bun:test"
-import { buildRoutingStatus, type ProviderStatus } from "./routing-adapter"
+import {
+  buildRoutingStatus,
+  type GatewayProbe,
+  type ProviderStatus,
+} from "./routing-adapter"
 import { MatrixRouter } from "@opencode-ai/core/matrix/router"
 import { MatrixCatalog } from "@opencode-ai/core/matrix/catalog"
 
+const gatewayOnline = (checkedAt = new Date()): GatewayProbe => ({
+  reachable: true,
+  statusCode: 200,
+  checkedAt,
+})
+
+const gatewayOffline = (checkedAt = new Date()): GatewayProbe => ({
+  reachable: false,
+  error: "TimeoutError",
+  checkedAt,
+})
+
+function failAllProviders(router: MatrixRouter.Router, status: number) {
+  for (const candidate of MatrixCatalog.CATALOG) {
+    for (let i = 0; i < 3; i++) {
+      router.recordFailure(candidate, 1_000_000, { message: "provider error", status })
+    }
+  }
+}
+
 describe("buildRoutingStatus", () => {
-  test("returns unknown status when no router is provided", () => {
+  test("keeps everything unknown when no live information is available", () => {
     const result = buildRoutingStatus(undefined)
-    expect(result.omniroute.status).toBe("unknown")
+    expect(result.gateway.status).toBe("unknown")
+    expect(result.routingStatus).toBe("unknown")
     expect(result.activeProvider).toBeNull()
     expect(result.fallbackProvider).toBeNull()
+    expect(result.lastError).toBeUndefined()
     result.providers.forEach((p) => {
       expect(p.status).toBe("unknown")
     })
   })
 
-  test("returns online status for healthy candidates", () => {
+  test("gateway online while provider is offline with HTTP 500", () => {
     const router = MatrixRouter.make()
-    const result = buildRoutingStatus(router, "smart")
-    expect(result.omniroute.status).toBe("online")
-    expect(result.providers.length).toBeGreaterThan(0)
+    failAllProviders(router, 500)
+    const result = buildRoutingStatus(router, "smart", gatewayOnline())
+    expect(result.gateway.status).toBe("online")
+    const omniroute = result.providers.find((p) => p.id === "omniroute")!
+    expect(omniroute.status).toBe("offline")
+    expect(omniroute.lastError?.status).toBe(500)
+    expect(result.routingStatus).toBe("offline")
+  })
+
+  test("gateway offline leaves provider status unknown", () => {
+    const router = MatrixRouter.make()
+    const result = buildRoutingStatus(router, "smart", gatewayOffline())
+    expect(result.gateway.status).toBe("offline")
+    expect(result.gateway.error).toBe("TimeoutError")
     result.providers.forEach((p) => {
-      expect(p.status).toBe("online")
+      expect(p.status).toBe("unknown")
     })
   })
 
-  test("returns degraded status when health is low", () => {
-    let now = 1_000_000
-    const router = MatrixRouter.make(() => now)
-    for (const candidate of MatrixCatalog.CATALOG) {
-      router.recordFailure(candidate, 1_000_000)
-      router.recordFailure(candidate, 1_000_000)
-    }
-    const result = buildRoutingStatus(router, "smart")
-    expect(result.omniroute.status).toBe("degraded")
-  })
-
-  test("identifies active provider from router selection", () => {
+  test("surfaces provider HTTP 504 in the last error", () => {
     const router = MatrixRouter.make()
-    const result = buildRoutingStatus(router, "smart")
-    expect(result.activeProvider).not.toBeNull()
-    expect(typeof result.activeProvider).toBe("string")
-  })
-
-  test("sets lastCheck to current time", () => {
-    const before = new Date()
-    const router = MatrixRouter.make()
-    const result = buildRoutingStatus(router, "smart")
-    const after = new Date()
-    expect(result.omniroute.lastCheck.getTime()).toBeGreaterThanOrEqual(before.getTime())
-    expect(result.omniroute.lastCheck.getTime()).toBeLessThanOrEqual(after.getTime())
+    failAllProviders(router, 504)
+    const result = buildRoutingStatus(router, "smart", gatewayOnline())
+    const omniroute = result.providers.find((p) => p.id === "omniroute")!
+    expect(omniroute.lastError?.status).toBe(504)
+    expect(result.lastError?.status).toBe(504)
   })
 
   test("deduplicates providers from catalog candidates", () => {
@@ -66,6 +85,14 @@ describe("buildRoutingStatus", () => {
     expect(omniroute).toBeDefined()
     expect(omniroute!.availableModels).toBe(3)
   })
+
+  test("fallback provider differs from active when candidates are available", () => {
+    const router = MatrixRouter.make()
+    const result = buildRoutingStatus(router, "smart")
+    if (result.activeProvider && result.fallbackProvider) {
+      expect(result.activeProvider).not.toBe(result.fallbackProvider)
+    }
+  })
 })
 
 describe("ProviderStatus mapping", () => {
@@ -81,31 +108,11 @@ describe("ProviderStatus mapping", () => {
     let now = 1_000_000
     const router = MatrixRouter.make(() => now)
     const candidate = MatrixCatalog.CATALOG[0]!
-    router.recordFailure(candidate, 1_000_000)
-    router.recordFailure(candidate, 1_000_000)
-    router.recordFailure(candidate, 1_000_000)
-    router.recordFailure(candidate, 1_000_000)
-    router.recordFailure(candidate, 1_000_000)
+    for (let i = 0; i < 5; i++) {
+      router.recordFailure(candidate, 1_000_000)
+    }
     const health = router.health(candidate)
     expect(health).toBeLessThan(0.3)
-  })
-})
-
-describe("Fallback behavior", () => {
-  test("fallback provider differs from active when candidates are available", () => {
-    const router = MatrixRouter.make()
-    const result = buildRoutingStatus(router, "smart")
-    if (result.activeProvider && result.fallbackProvider) {
-      expect(result.activeProvider).not.toBe(result.fallbackProvider)
-    }
-  })
-
-  test("no active provider when all candidates are unavailable", () => {
-    const router = MatrixRouter.make()
-    const result = buildRoutingStatus(router, "fast")
-    if (result.activeProvider === null) {
-      expect(result.activeProvider).toBeNull()
-    }
   })
 })
 
@@ -121,7 +128,9 @@ describe("ProviderInfo shape", () => {
       expect(typeof provider.availableModels).toBe("number")
       expect(typeof provider.vision).toBe("boolean")
       expect(typeof provider.cost).toBe("number")
-      expect(["online", "offline", "degraded", "unknown"]).toContain(provider.status)
+      expect(typeof provider.recentFailures).toBe("number")
+      expect(["online", "offline", "degraded", "unknown"] as ProviderStatus[]).toContain(provider.status)
+      expect(provider.health === null || typeof provider.health === "number").toBe(true)
     }
   })
 })
