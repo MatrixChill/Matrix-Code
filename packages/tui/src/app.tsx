@@ -44,6 +44,7 @@ import { useConnected } from "./component/use-connected"
 import { DialogMcp } from "./component/dialog-mcp"
 import { DialogMatrixStatus } from "./component/dialog-matrix-status"
 import { DialogMatrixModels } from "./component/dialog-matrix-models"
+import { DialogMatrixRouting } from "./component/dialog-matrix-routing"
 import { DialogStatus } from "./component/dialog-status"
 import { DialogDebug } from "./component/dialog-debug"
 import { DialogThemeList } from "./component/dialog-theme-list"
@@ -797,6 +798,15 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         slashName: "matrix-models",
         run: () => {
           dialog.replace(() => <DialogMatrixModels />)
+        },
+        category: "System",
+      },
+      {
+        name: "matrix.routing",
+        title: "Matrix routing",
+        slashName: "matrix-routing",
+        run: () => {
+          dialog.replace(() => <DialogMatrixRouting />)
         },
         category: "System",
       },
