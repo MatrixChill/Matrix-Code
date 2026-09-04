@@ -93,6 +93,8 @@ import type {
   LocationRef,
   LspStatusErrors,
   LspStatusResponses,
+  MatrixRoutingErrors,
+  MatrixRoutingResponses,
   McpAddErrors,
   McpAddResponses,
   McpAuthAuthenticateErrors,
@@ -2524,6 +2526,20 @@ export class Mcp extends HeyApiClient {
   private _auth?: Auth2
   get auth(): Auth2 {
     return (this._auth ??= new Auth2({ client: this.client }))
+  }
+}
+
+export class Matrix extends HeyApiClient {
+  /**
+   * Get Matrix router state
+   *
+   * Snapshot of Matrix router candidate health, cooldowns, and the most recent real request failures.
+   */
+  public routing<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
+    return (options?.client ?? this.client).get<MatrixRoutingResponses, MatrixRoutingErrors, ThrowOnError>({
+      url: "/matrix/routing",
+      ...options,
+    })
   }
 }
 
@@ -7165,6 +7181,11 @@ export class OpencodeClient extends HeyApiClient {
   private _mcp?: Mcp
   get mcp(): Mcp {
     return (this._mcp ??= new Mcp({ client: this.client }))
+  }
+
+  private _matrix?: Matrix
+  get matrix(): Matrix {
+    return (this._matrix ??= new Matrix({ client: this.client }))
   }
 
   private _project?: Project

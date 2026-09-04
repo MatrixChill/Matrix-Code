@@ -6,14 +6,17 @@ import {
   Message,
   SystemPart,
   isContextOverflowFailure,
+  type LLMErrorReason,
+  type Model,
   type ProviderErrorEvent,
 } from "@opencode-ai/llm"
-import { Cause, DateTime, Effect, FiberSet, Layer, Option, Semaphore, Stream } from "effect"
+import { Cause, DateTime, Effect, Exit, FiberSet, Layer, Option, Semaphore, Stream } from "effect"
 import { AgentV2 } from "../../agent"
 import { Config } from "../../config"
 import { Database } from "../../database/database"
 import { EventV2 } from "../../event"
 import { Location } from "../../location"
+import { MatrixRouterService } from "../../matrix/router-service"
 import { ModelV2 } from "../../model"
 import { PermissionV2 } from "../../permission"
 import { ProviderV2 } from "../../provider"
@@ -98,6 +101,7 @@ const layer = Layer.effect(
     const agents = yield* AgentV2.Service
     const tools = yield* ToolRegistry.Service
     const models = yield* SessionRunnerModel.Service
+    const matrix = yield* MatrixRouterService.Service
     const store = yield* SessionStore.Service
     const location = yield* Location.Service
     const systemContext = yield* SystemContextRegistry.Service
@@ -164,6 +168,72 @@ const layer = Layer.effect(
     const continueAfterCompaction = (step: number) => new TurnTransitionError({ _tag: "ContinueAfterCompaction", step })
     const continueAfterOverflowCompaction = (step: number) =>
       new TurnTransitionError({ _tag: "ContinueAfterOverflowCompaction", step })
+
+    // One settled provider-turn outcome. `stream` is the exited provider stream
+    // and `publisherHasProviderError` mirrors the LLM event publisher's flag.
+    interface ProviderTurnOutcome {
+      readonly stream: Exit.Exit<unknown, unknown>
+      readonly llmFailure?: LLMError
+      readonly providerError?: ProviderErrorEvent
+      readonly overflowFailure?: ProviderErrorEvent
+      readonly publisherHasProviderError: boolean
+    }
+
+    // Shape a provider-turn failure for the Matrix router, or undefined when the
+    // turn did not fail on the provider side. Interrupted turns, permanent
+    // user-facing errors (auth, permission, invalid request), and tool-side
+    // failures are not routing signals and stay unrecorded.
+    const providerTurnFailure = (
+      target: { readonly providerID: string; readonly modelID: string },
+      outcome: ProviderTurnOutcome,
+    ): MatrixRouterService.RecordFailureInput | undefined => {
+      if (outcome.stream._tag === "Failure" && Cause.hasInterrupts(outcome.stream.cause)) return undefined
+      if (outcome.stream._tag === "Failure") {
+        if (!outcome.llmFailure) return undefined
+        const reason: LLMErrorReason = outcome.llmFailure.reason
+        switch (reason._tag) {
+          case "ProviderInternal":
+          case "UnknownProvider":
+            return {
+              ...target,
+              message: reason.message,
+              ...(reason.status === undefined ? {} : { status: reason.status, code: String(reason.status) }),
+            }
+          case "Transport":
+            return {
+              ...target,
+              message: reason.message,
+              ...(reason.kind === undefined ? {} : { code: reason.kind }),
+            }
+          case "RateLimit":
+            return { ...target, message: reason.message }
+          default:
+            return undefined
+        }
+      }
+      const providerError = outcome.overflowFailure ?? outcome.providerError
+      if (providerError !== undefined) {
+        return {
+          ...target,
+          message: providerError.message,
+          ...(providerError.classification === undefined ? {} : { code: providerError.classification }),
+        }
+      }
+      return undefined
+    }
+
+    // Record the settled provider-turn outcome into the Matrix router so the
+    // routing TUI reflects real request failures. Recording is read-only for
+    // the session flow and never drives it.
+    const recordProviderTurn = (model: Model, outcome: ProviderTurnOutcome): void => {
+      const target = { providerID: model.provider, modelID: model.id }
+      const failure = providerTurnFailure(target, outcome)
+      if (failure !== undefined) {
+        matrix.recordFailure(failure)
+        return
+      }
+      if (outcome.stream._tag === "Success" && !outcome.publisherHasProviderError) matrix.recordSuccess(target)
+    }
 
     const loadSystemContext = (agent: AgentV2.Selection) =>
       Effect.all([systemContext.load(), skillGuidance.load(agent), referenceGuidance.load()], {
@@ -320,6 +390,13 @@ const layer = Layer.effect(
             const message = failure instanceof Error ? failure.message : String(failure)
             yield* withPublication(publisher.failUnsettledTools(`Tool execution failed: ${message}`))
           }
+          recordProviderTurn(model, {
+            stream,
+            llmFailure,
+            providerError: publisher.lastProviderError(),
+            overflowFailure,
+            publisherHasProviderError: publisher.hasProviderError(),
+          })
           const stepSettlement = publisher.stepSettlement()
           if (stepSettlement && !publisher.hasProviderError()) {
             const endSnapshot = yield* snapshots.capture()
@@ -434,6 +511,7 @@ export const node = makeLocationNode({
     ReferenceGuidance.node,
     Config.node,
     Snapshot.node,
+    MatrixRouterService.node,
     Database.node,
   ],
 })

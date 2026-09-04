@@ -2027,6 +2027,7 @@ export type Config = {
     mcp_timeout?: number
     policies?: Array<ConfigV2ExperimentalPolicy>
   }
+  matrix?: ConfigV2Matrix
 }
 
 export type Model = {
@@ -2419,6 +2420,28 @@ export type McpServerNotFoundError = {
   _tag: "McpServerNotFoundError"
   name: string
   message: string
+}
+
+export type MatrixRouterCandidateFailure = {
+  message: string
+  code?: string
+  status?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  at: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+}
+
+export type MatrixRouterCandidateState = {
+  id: string
+  provider: string
+  model: string
+  health: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  cooldownUntil: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  recentFailures: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  lastError?: MatrixRouterCandidateFailure
+}
+
+export type MatrixRoutingSnapshot = {
+  candidates: Array<MatrixRouterCandidateState>
+  updatedAt: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
 }
 
 export type Project = {
@@ -3842,6 +3865,25 @@ export type ConfigV2ExperimentalPolicy = {
   action: "provider.use"
   effect: PolicyEffect
   resource: string
+}
+
+export type ConfigV2MatrixDiscordPresence = {
+  enabled?: boolean
+  showProjectName?: boolean
+  showModelProfile?: boolean
+  showElapsedTime?: boolean
+  showRepositoryButton?: boolean
+}
+
+export type ConfigV2Matrix = {
+  profile?: "smart" | "coding-max" | "reliable" | "fast" | "vision" | "free" | "local"
+  visionModel?: string
+  localProvider?: string
+  discordPresence?: ConfigV2MatrixDiscordPresence
+  /**
+   * Cooldown in ms before a failed model may be retried
+   */
+  cooldownMs?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
 }
 
 export type ProjectDirectories = Array<{
@@ -8701,6 +8743,31 @@ export type McpDisconnectResponses = {
 }
 
 export type McpDisconnectResponse = McpDisconnectResponses[keyof McpDisconnectResponses]
+
+export type MatrixRoutingData = {
+  body?: never
+  path?: never
+  query?: never
+  url: "/matrix/routing"
+}
+
+export type MatrixRoutingErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type MatrixRoutingError = MatrixRoutingErrors[keyof MatrixRoutingErrors]
+
+export type MatrixRoutingResponses = {
+  /**
+   * Matrix router state
+   */
+  200: MatrixRoutingSnapshot
+}
+
+export type MatrixRoutingResponse = MatrixRoutingResponses[keyof MatrixRoutingResponses]
 
 export type ProjectListData = {
   body?: never

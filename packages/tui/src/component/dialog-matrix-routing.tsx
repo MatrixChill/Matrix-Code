@@ -2,7 +2,8 @@ import { TextAttributes } from "@opentui/core"
 import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 import { useSync } from "../context/sync"
-import { For, Show, createMemo, createResource } from "solid-js"
+import { useSDK } from "../context/sdk"
+import { For, Show, createMemo, createResource, onCleanup, onMount } from "solid-js"
 import { MatrixProfile } from "@opencode-ai/core/matrix/profile"
 import { MatrixRouter } from "@opencode-ai/core/matrix/router"
 import { MatrixOmniRouteHealth } from "@opencode-ai/core/matrix/omniroute-health"
@@ -44,6 +45,7 @@ const GATEWAY_STATUS_STYLE: Record<GatewayStatus, string> = {
 
 export function DialogMatrixRouting() {
   const sync = useSync()
+  const sdk = useSDK()
   const { theme } = useTheme()
   const dialog = useDialog()
 
@@ -70,6 +72,45 @@ export function DialogMatrixRouting() {
   )
 
   const data = createMemo(() => buildRoutingStatus(liveRouter, profile(), gatewayProbe()))
+
+  // Mirror the server-side router state (recorded from real request failures)
+  // into the live router so this dialog surfaces what the process actually saw.
+  const refreshRouting = async () => {
+    try {
+      const result = await sdk.client.matrix.routing()
+      const snapshot = result.data
+      if (!snapshot) return
+      const states = new Map<string, MatrixRouter.CandidateState>()
+      for (const candidate of snapshot.candidates) {
+        const lastError = candidate.lastError
+        states.set(candidate.id, {
+          health: Number(candidate.health),
+          cooldownUntil: Number(candidate.cooldownUntil),
+          recentFailures: Number(candidate.recentFailures),
+          ...(lastError === undefined || lastError === null
+            ? {}
+            : {
+                lastError: {
+                  message: lastError.message,
+                  at: Number(lastError.at),
+                  ...(lastError.code === undefined ? {} : { code: lastError.code }),
+                  ...(lastError.status === undefined ? {} : { status: Number(lastError.status) }),
+                },
+              }),
+        })
+      }
+      liveRouter.restore(states)
+    } catch {
+      // Older or remote server without the /matrix/routing route: keep the
+      // local router state collected so far.
+    }
+  }
+
+  onMount(() => {
+    void refreshRouting()
+    const timer = setInterval(refreshRouting, 5000)
+    onCleanup(() => clearInterval(timer))
+  })
 
   const onlineCount = createMemo(() => data().providers.filter((p) => p.status === "online").length)
 

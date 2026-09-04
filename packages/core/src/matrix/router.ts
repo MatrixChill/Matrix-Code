@@ -137,6 +137,13 @@ export class Router {
     return new Map(this.states)
   }
 
+  // Replace all observed state, e.g. when a TUI mirrors the server-recorded
+  // routing state from a routing snapshot. Unknown candidate IDs are dropped.
+  restore(states: ReadonlyMap<string, CandidateState>): void {
+    this.states.clear()
+    for (const [id, state] of states) this.states.set(id, { ...state })
+  }
+
   health(candidate: MatrixCatalog.Candidate): number {
     return this.state(candidate)?.health ?? 1
   }
