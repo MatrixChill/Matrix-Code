@@ -1,63 +1,24 @@
 @echo off
-setlocal enabledelayedexpansion
-set "MATRIX_PORTABLE_ROOT=%~dp0"
-set "XDG_CONFIG_HOME=%~dp0.matrix\config"
-set "XDG_DATA_HOME=%~dp0.matrix\data"
-set "XDG_CACHE_HOME=%~dp0.matrix\cache"
-set "XDG_STATE_HOME=%~dp0.matrix\state"
-set "OPENCODE_CONFIG_DIR=%~dp0.matrix\config\opencode"
-set "MATRIX_VOICE_HELPER=%~dp0matrix-voice\matrix-voice-helper.exe"
-set "MATRIX_VOICE_MODEL_DIR=%~dp0matrix-voice\model"
+rem ============================================================================
+rem  Matrix Code portable launcher (CMD entry point).
+rem
+rem  Launches the PowerShell orchestrator (matrix.ps1) invisibly so the desktop
+rem  user sees exactly one window: the Matrix Code TUI. OmniRoute (20128) and
+rem  the Matrix API (20260) are orchestrated by matrix.ps1 in the background:
+rem  started or reused, recuperated from stale PID files, readied, and on close
+rem  stopped only when this launcher started them. The API key survives in
+rem  .matrix\state\matrix-api.cred, so 20260 comes back online on reopen.
+rem
+rem  No execution-policy flags are used and the machine policy is never
+rem  changed; local scripts run under the policy the administrator configured
+rem  (RemoteSigned or friendlier). No admin rights are required.
+rem ============================================================================
 
-if not exist "%OPENCODE_CONFIG_DIR%" mkdir "%OPENCODE_CONFIG_DIR%"
-if not exist "%XDG_DATA_HOME%" mkdir "%XDG_DATA_HOME%"
-if not exist "%XDG_CACHE_HOME%" mkdir "%XDG_CACHE_HOME%"
-if not exist "%XDG_STATE_HOME%" mkdir "%XDG_STATE_HOME%"
-
-rem --- OmniRoute auto-start ---
-rem Check if OmniRoute is already listening
-set "OMNIROUTE_STARTED="
-curl -sf -o nul -m 1 http://127.0.0.1:20128/v1/models >nul 2>&1
-if %ERRORLEVEL% equ 0 goto :run_matrix
-
-rem Try to start a local OmniRoute if present (standalone exe or bundled Node)
-set "OMNIROUTE_EXE=%~dp0omniroute\omniroute.exe"
-set "OMNIROUTE_NODE=%~dp0omniroute\node.exe"
-set "OMNIROUTE_ENTRY=%~dp0omniroute\app\bin\omniroute.mjs"
-set "OMNIROUTE_CMD="
-
-if exist "%OMNIROUTE_EXE%" (
-    set "OMNIROUTE_CMD=%OMNIROUTE_EXE%"
-) else if exist "%OMNIROUTE_NODE%" if exist "%OMNIROUTE_ENTRY%" (
-    set "OMNIROUTE_CMD=%OMNIROUTE_NODE%"
-    set "OMNIROUTE_ARGS=%OMNIROUTE_ENTRY%"
+set "MATRIX_PS1=%~dp0matrix.ps1"
+if not exist "%MATRIX_PS1%" (
+  echo Matrix Code PowerShell launcher not found next to this launcher.
+  exit /b 1
 )
 
-if not defined OMNIROUTE_CMD goto :run_matrix
-
-echo Starting OmniRoute gateway...
-if defined OMNIROUTE_ARGS (
-    start "" /B "%OMNIROUTE_CMD%" "%OMNIROUTE_ARGS%" >nul 2>&1
-) else (
-    start "" /B "%OMNIROUTE_CMD%" >nul 2>&1
-)
-set "OMNIROUTE_STARTED=1"
-
-rem Wait up to 15 seconds for API readiness
-for /L %%i in (1,1,30) do (
-    timeout /t 1 /nobreak >nul 2>&1
-    curl -sf -o nul -m 1 http://127.0.0.1:20128/v1/models >nul 2>&1
-    if !ERRORLEVEL! equ 0 goto :run_matrix
-)
-echo Warning: OmniRoute did not become ready in time. Starting Matrix Code anyway.
-
-:run_matrix
-"%~dp0matrix.exe" %*
-set "MATRIX_EXIT=%ERRORLEVEL%"
-
-rem Clean up OmniRoute if we started it
-if defined OMNIROUTE_STARTED (
-    taskkill /F /IM omniroute.exe >nul 2>&1
-)
-
-exit /b %MATRIX_EXIT%
+powershell.exe -NoProfile -WindowStyle Hidden -File "%MATRIX_PS1%" %*
+exit /b %ERRORLEVEL%

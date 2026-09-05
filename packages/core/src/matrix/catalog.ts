@@ -67,6 +67,32 @@ export const CATALOG: readonly Candidate[] = [
     cost: 0,
     context: 128000,
   },
+  {
+    id: "omniroute/matrix-coding",
+    name: "Matrix Coding",
+    provider: "omniroute",
+    model: "matrix-coding",
+    coding: 0.85,
+    reasoning: 0.8,
+    speed: 0.6,
+    toolCalls: 0.85,
+    vision: false,
+    cost: 0,
+    context: 128000,
+  },
+  {
+    id: "omniroute/matrix-coding-reliable",
+    name: "Matrix Coding Reliable",
+    provider: "omniroute",
+    model: "matrix-coding-reliable",
+    coding: 0.8,
+    reasoning: 0.9,
+    speed: 0.5,
+    toolCalls: 0.9,
+    vision: false,
+    cost: 0,
+    context: 128000,
+  },
 ]
 
 // Default candidates for the vision profile. These are intentionally separate:

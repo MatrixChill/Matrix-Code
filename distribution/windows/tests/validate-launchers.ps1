@@ -39,25 +39,25 @@ $r = $script:repoRoot
 
 Assert-Test 'matrix.ps1 has valid PowerShell syntax' {
   $errors = $null
-  [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix.ps1'), [ref]$null, [ref]$errors)
+  $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix.ps1'), [ref]$null, [ref]$errors)
   if ($errors.Count -gt 0) { throw ($errors | ForEach-Object { $_.Message } | Out-String) }
 }
 
 Assert-Test 'matrix-personal.ps1 has valid PowerShell syntax' {
   $errors = $null
-  [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix-personal.ps1'), [ref]$null, [ref]$errors)
+  $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix-personal.ps1'), [ref]$null, [ref]$errors)
   if ($errors.Count -gt 0) { throw ($errors | ForEach-Object { $_.Message } | Out-String) }
 }
 
 Assert-Test 'matrix-omniroute-health.ps1 has valid PowerShell syntax' {
   $errors = $null
-  [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix-omniroute-health.ps1'), [ref]$null, [ref]$errors)
+  $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'matrix-omniroute-health.ps1'), [ref]$null, [ref]$errors)
   if ($errors.Count -gt 0) { throw ($errors | ForEach-Object { $_.Message } | Out-String) }
 }
 
 Assert-Test 'install.ps1 has valid PowerShell syntax' {
   $errors = $null
-  [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'install.ps1'), [ref]$null, [ref]$errors)
+  $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $d 'install.ps1'), [ref]$null, [ref]$errors)
   if ($errors.Count -gt 0) { throw ($errors | ForEach-Object { $_.Message } | Out-String) }
 }
 
@@ -103,16 +103,19 @@ Assert-Test 'no plaintext API keys in launcher scripts' {
 
 # --- No execution policy bypass ---
 
-Assert-Test 'matrix.ps1 does not weaken execution policy' {
-  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
-  if ($content -match 'Set-ExecutionPolicy|Bypass.*-Force|Unrestricted') {
-    throw "Attempts to weaken execution policy"
+Assert-Test 'no launcher weakens execution policy or uses policy flags' {
+  foreach ($f in @('matrix.ps1', 'matrix.cmd', 'matrix-personal.ps1', 'matrix-installed.cmd', 'install.ps1')) {
+    $content = Get-Content -LiteralPath (Join-Path $d $f) -Raw -ErrorAction SilentlyContinue
+    if (-not $content) { continue }
+    if ($content -match 'Set-ExecutionPolicy|-ExecutionPolicy|\bBypass\b|Unrestricted') {
+      throw "$f attempts to weaken execution policy"
+    }
   }
 }
 
 # --- OmniRoute support paths ---
 
-foreach ($f in @('matrix.ps1', 'matrix.cmd')) {
+foreach ($f in @('matrix.ps1')) {
   Assert-Test "$f references bundled Node OmniRoute paths" {
     $content = Get-Content -LiteralPath (Join-Path $d $f) -Raw
     foreach ($r in @('omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs', 'omniroute\omniroute.exe')) {
@@ -121,12 +124,36 @@ foreach ($f in @('matrix.ps1', 'matrix.cmd')) {
   }
 }
 
+# --- matrix.cmd delegation ---
+
+Assert-Test 'matrix.cmd launches matrix.ps1 invisibly, without execution-policy flags' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.cmd') -Raw
+  if ($content -notmatch 'matrix\.ps1') { throw "matrix.cmd does not reference matrix.ps1" }
+  if ($content -notmatch 'powershell\.exe.*-File') { throw "matrix.cmd does not invoke PowerShell" }
+  if ($content -notmatch '-WindowStyle Hidden') { throw "matrix.cmd does not hide the PowerShell window" }
+  if ($content -match 'ExecutionPolicy') { throw "matrix.cmd uses execution-policy flags" }
+}
+
+# --- Launcher window behaviour (single visible window: the Matrix Code TUI) ---
+
+Assert-Test 'matrix.ps1 starts the TUI with Start-Process so the launcher itself stays hidden' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'Start-Process -FilePath \$matrixExe') { throw "TUI is not started via Start-Process" }
+  if ($content -notmatch '\$tuiWindow') { throw "No TUI window-style selection" }
+  if ($content -notmatch 'MATRIX_TUI_WINDOW') { throw "No MATRIX_TUI_WINDOW override" }
+  if ($content -notmatch 'IsOutputRedirected') { throw "No redirected-output detection for the TUI window" }
+  if ($content -notmatch "'Normal'") { throw "TUI does not default to a Normal visible window" }
+}
+
 # --- Health check uses 127.0.0.1 ---
 
 Assert-Test 'launchers use 127.0.0.1 not localhost for health checks' {
   foreach ($f in @('matrix.ps1', 'matrix.cmd', 'matrix-installed.cmd')) {
     $content = Get-Content -LiteralPath (Join-Path $d $f) -Raw -ErrorAction SilentlyContinue
     if ($content -and $content -match 'http://localhost:20128') {
+      throw "$f uses localhost instead of 127.0.0.1"
+    }
+    if ($content -and $content -match 'http://localhost:20260') {
       throw "$f uses localhost instead of 127.0.0.1"
     }
   }
@@ -138,6 +165,58 @@ Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -notmatch 'omniroute\.pid') { throw "No PID file tracking" }
   if ($content -notmatch '\.Kill\(\)') { throw "No process-level Kill" }
+}
+
+# --- Matrix API orchestration ---
+
+Assert-Test 'matrix.ps1 references Matrix API env surface and port 20260' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  foreach ($r in @('20260', 'MATRIX_API_KEY', 'MATRIX_API_ENABLED', 'MATRIX_API_PORT', 'matrix-api.pid')) {
+    if ($content -notmatch [regex]::Escape($r)) { throw "Missing: $r" }
+  }
+}
+
+Assert-Test 'matrix.ps1 starts the Matrix API via the headless matrix-api subcommand' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch '\$startInfo\.Arguments = ''matrix-api''') {
+    throw "No headless matrix-api spawn"
+  }
+}
+
+Assert-Test 'matrix.ps1 fails closed only when the API is explicitly disabled' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'MATRIX_API_ENABLED=false') { throw "No explicit-disable handling" }
+  if ($content -notmatch 'fail closed') { throw "No fail-closed message" }
+}
+
+Assert-Test 'matrix.ps1 persists and restores the Matrix API key once, never printing it' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  foreach ($r in @('matrix-api.cred', 'ConvertFrom-SecureString', 'ConvertTo-SecureString', 'New-MatrixApiKey')) {
+    if ($content -notmatch [regex]::Escape($r)) { throw "Missing: $r" }
+  }
+  if ($content -match 'Write-Host[^\r\n]*\$matrixApiKey') { throw "Key printed via Write-Host" }
+  if ($content -match 'Set-Content[^\r\n]*\$matrixApiKey') { throw "Key persisted to disk in plaintext" }
+}
+
+Assert-Test 'matrix.ps1 never prints or persists the Matrix API key value' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -match 'Write-Host[^\r\n]*\$matrixApiKey') { throw "Key printed via Write-Host" }
+  if ($content -match 'Set-Content[^\r\n]*\$matrixApiKey') { throw "Key persisted to disk" }
+}
+
+Assert-Test 'matrix.ps1 passes the API key only via environment, never the command line' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -match '\$startInfo\.Arguments =.*MATRIX_API_KEY') {
+    throw "Key interpolated into the child command line"
+  }
+}
+
+Assert-Test 'matrix.ps1 tracks the Matrix API PID for targeted cleanup' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'matrix-api\.pid') { throw "No Matrix API PID file tracking" }
+  if ($content -notmatch '\$matrixApiStarted -and \$matrixApiPid') {
+    throw "Cleanup is not guarded by started-by-this-launcher"
+  }
 }
 
 # --- Env vars ---

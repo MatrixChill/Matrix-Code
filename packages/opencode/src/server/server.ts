@@ -7,6 +7,7 @@ import { HttpRouter, HttpServer } from "effect/unstable/http"
 import { OpenApi } from "effect/unstable/httpapi"
 import { createServer } from "node:http"
 import { MatrixApiConfig } from "@opencode-ai/core/matrix/api/config"
+import type { Settings as MatrixApiSettings } from "@opencode-ai/core/matrix/api/config"
 import { MatrixApiServer } from "@opencode-ai/core/matrix/api/server"
 import { MDNS } from "./mdns"
 import { HttpApiApp } from "./routes/instance/httpapi/server"
@@ -149,6 +150,12 @@ function startMatrixApi(scope: Scope.Scope) {
       )
       return undefined
     }
+    if (yield* matrixApiAlreadyListening(settings)) {
+      // An external process (e.g. the Windows launcher's `matrix matrix-api`
+      // child) owns port 20260. Reuse it instead of trying to bind again.
+      yield* Effect.logInfo(`Matrix API already listening on ${settings.host}:${settings.port}; reusing it.`)
+      return undefined
+    }
     return yield* MatrixApiServer.start(settings, scope).pipe(
       Effect.tap((listener) => Effect.logInfo(`Matrix API listening on ${listener.url}`)),
       Effect.catch(() =>
@@ -163,6 +170,36 @@ function startMatrixApi(scope: Scope.Scope) {
     )
   })
 }
+
+// Loopback probe against the Matrix API auth surface. A 200 (correct key) or
+// 401 (gateway present, other/missing key) proves a Matrix-API-like listener is
+// already up, so the in-process owner steps aside. Any other outcome means the
+// port is free or foreign, and the caller should try to bind it themselves.
+const matrixApiAlreadyListening = (settings: MatrixApiSettings): Effect.Effect<boolean> =>
+  Effect.tryPromise({
+    try: async (signal) => {
+      const controller = new AbortController()
+      const onAbort = () => controller.abort()
+      const timer = setTimeout(() => controller.abort(), 1500)
+      signal.addEventListener("abort", onAbort, { once: true })
+      try {
+        const response = await fetch(`http://${settings.host}:${settings.port}/v1/models`, {
+          signal: controller.signal,
+        })
+        return response.status === 200 || response.status === 401
+      } catch {
+        return false
+      } finally {
+        clearTimeout(timer)
+        signal.removeEventListener("abort", onAbort)
+      }
+    },
+    // A refused/aborted probe resolves to `false`; `Effect.catch` below turns
+    // the Boolean error channel into `never` for the loopback signature.
+    catch: () => false,
+  }).pipe(
+    Effect.catch(() => Effect.succeed(false)),
+  )
 
 function tcpAddress(state: ListenerState) {
   return Effect.gen(function* () {

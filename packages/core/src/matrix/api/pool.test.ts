@@ -13,8 +13,11 @@ const testSettings = (overrides: Partial<Settings> = {}): Settings => ({
   ...overrides,
 })
 
+// Hermetic env builder: never inherit the host process.env, which may carry
+// real provider credentials (e.g. OPENROUTER_API_KEY) and would turn the
+// "credential missing" expectations below into DIRECT_FREE classifications.
 function env(overrides: Record<string, string | undefined> = {}) {
-  return { ...process.env, ...overrides }
+  return { ...overrides }
 }
 
 describe("Matrix API pool classification", () => {

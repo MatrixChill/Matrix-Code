@@ -78,19 +78,21 @@ Describe 'OmniRoute Support' {
   It 'matrix.ps1 should reference standalone exe, Node runtime, and Node entry' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     @('omniroute\omniroute.exe', 'omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs') |
-      ForEach-Object { $content | Should -Match [regex]::Escape($_) }
+      ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
   }
 
-  It 'matrix.cmd should reference standalone exe, Node runtime, and Node entry' {
+  It 'matrix.cmd should launch matrix.ps1 invisibly and without execution-policy flags' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.cmd') -Raw
-    @('omniroute\omniroute.exe', 'omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs') |
-      ForEach-Object { $content | Should -Match [regex]::Escape($_) }
+    $content | Should -Match 'matrix\.ps1'
+    $content | Should -Match 'powershell\.exe.*-File'
+    $content | Should -Match '-WindowStyle Hidden'
+    $content | Should -Not -Match 'ExecutionPolicy'
   }
 
   It 'matrix.installed.cmd should reference standalone exe, Node runtime, and Node entry' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix-installed.cmd') -Raw
     @('omniroute\omniroute.exe', 'omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs') |
-      ForEach-Object { $content | Should -Match [regex]::Escape($_) }
+      ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
   }
 
   It 'matrix.ps1 should use PID tracking for process cleanup' {
@@ -105,8 +107,53 @@ Describe 'OmniRoute Support' {
       $content = Get-Content -LiteralPath (Join-Path $DistDir $f) -Raw -ErrorAction SilentlyContinue
       if ($content) {
         $content | Should -Not -Match 'http://localhost:20128'
+        $content | Should -Not -Match 'http://localhost:20260'
       }
     }
+  }
+}
+
+Describe 'Matrix API Support' {
+  It 'matrix.ps1 should reference the Matrix API env surface and port 20260' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    @('20260', 'MATRIX_API_KEY', 'MATRIX_API_ENABLED', 'MATRIX_API_PORT', 'matrix-api.pid') |
+      ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
+  }
+
+  It 'matrix.ps1 should start the Matrix API via the headless matrix-api subcommand' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match '\$startInfo\.Arguments = ''matrix-api'''
+  }
+
+  It 'matrix.ps1 should fail closed only when the API is explicitly disabled' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'MATRIX_API_ENABLED=false'
+    $content | Should -Match 'fail closed'
+  }
+
+  It 'matrix.ps1 should persist and restore the Matrix API key once, never print it' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    @('matrix-api.cred', 'ConvertFrom-SecureString', 'ConvertTo-SecureString', 'New-MatrixApiKey') |
+      ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
+    $content | Should -Not -Match 'Write-Host[^\r\n]*\$matrixApiKey'
+    $content | Should -Not -Match 'Set-Content[^\r\n]*\$matrixApiKey'
+  }
+
+  It 'matrix.ps1 should never print the Matrix API key value' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Not -Match 'Write-Host[^\r\n]*\$matrixApiKey'
+    $content | Should -Not -Match 'Set-Content[^\r\n]*\$matrixApiKey'
+  }
+
+  It 'matrix.ps1 should pass the API key only via environment, never the command line' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Not -Match '\$startInfo\.Arguments =.*MATRIX_API_KEY'
+  }
+
+  It 'matrix.ps1 should track the Matrix API PID for targeted cleanup' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'matrix-api\.pid'
+    $content | Should -Match '\$matrixApiStarted -and \$matrixApiPid'
   }
 }
 
@@ -127,6 +174,33 @@ Describe 'Security Invariants' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     $content | Should -Not -Match 'Set-ExecutionPolicy'
     $content | Should -Not -Match 'Bypass.*-Force'
+    $content | Should -Not -Match 'ExecutionPolicy Bypass'
+  }
+
+  It 'no launcher should use execution-policy flags' {
+    $files = @('matrix.ps1', 'matrix.cmd', 'matrix-personal.ps1', 'matrix-installed.cmd', 'install.ps1')
+    foreach ($f in $files) {
+      $content = Get-Content -LiteralPath (Join-Path $DistDir $f) -Raw -ErrorAction SilentlyContinue
+      if ($content) {
+        $content | Should -Not -Match 'ExecutionPolicy[ =][^"]*Bypass'
+        $content | Should -Not -Match 'PowerShell.*-ExecutionPolicy'
+      }
+    }
+  }
+}
+
+Describe 'Launcher Window Behaviour' {
+  It 'matrix.ps1 should start the TUI with Start-Process so the launcher window stays hidden' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'Start-Process -FilePath \$matrixExe'
+    $content | Should -Match '\$tuiWindow'
+    $content | Should -Match 'MATRIX_TUI_WINDOW'
+  }
+
+  It 'matrix.ps1 should hide the TUI when output is redirected and show it for the desktop user' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'IsOutputRedirected'
+    $content | Should -Match '''Normal'''
   }
 }
 

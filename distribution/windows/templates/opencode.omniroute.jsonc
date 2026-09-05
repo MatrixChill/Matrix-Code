@@ -30,6 +30,20 @@
           "reasoning": true,
           "tool_call": true,
           "limit": { "context": 131072, "output": 32768 }
+        },
+        "matrix-coding": {
+          "id": "matrix/matrix-coding",
+          "name": "Matrix Coding",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        },
+        "matrix-coding-reliable": {
+          "id": "matrix/matrix-coding-reliable",
+          "name": "Matrix Coding Reliable",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
         }
       }
     }

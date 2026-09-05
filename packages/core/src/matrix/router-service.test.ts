@@ -148,7 +148,7 @@ describe("MatrixRouter fallback", () => {
     const svc = await Effect.runPromise(service())
     svc.recordFailure({
       providerID: "omniroute",
-      modelID: "matrix-free-coding",
+      modelID: "matrix-coding-reliable",
       message: "gateway timeout",
       status: 504,
     })
@@ -180,8 +180,8 @@ describe("MatrixRouter fallback", () => {
     const profile = "reliable"
     const available = () => true
     const selected = router.select(profile, MatrixCatalog.CATALOG, available)
-    expect(selected?.candidate.model).not.toBe("matrix-free-coding")
+    expect(selected?.candidate.model).not.toBe("matrix-coding-reliable")
     const fallback = router.fallback(profile, MatrixCatalog.CATALOG, available)
-    expect(fallback?.candidate.model).toBe("matrix-free-coding")
+    expect(fallback?.candidate.model).toBe("matrix-coding-reliable")
   })
 })

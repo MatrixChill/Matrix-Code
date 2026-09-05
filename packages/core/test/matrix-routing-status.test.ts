@@ -133,7 +133,7 @@ describe("MatrixRoutingStatus", () => {
     const result = buildRoutingStatus(router, "smart")
     const omniroute = result.providers.find((p) => p.id === "omniroute")
     expect(omniroute).toBeDefined()
-    expect(omniroute!.availableModels).toBe(3)
+    expect(omniroute!.availableModels).toBe(5)
   })
 
   test("each provider has required fields", () => {
