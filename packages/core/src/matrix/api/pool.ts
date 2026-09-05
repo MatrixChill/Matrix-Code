@@ -50,16 +50,16 @@ export interface ResolvedPool {
 }
 
 // Matrix's own free/direct pool. Real providers with verified cost-0 models:
-//   - OpenRouter "Free Models Router" (model `free`) â€” free, multimodal, tool use.
-//   - Cerebras GLM-5-Turbo â€” free GLM model with tool use + reasoning.
+//   - OpenRouter "Free Models Router" (model `free`) Ã¢â‚¬â€ free, multimodal, tool use.
+//   - Cerebras GLM-5-Turbo Ã¢â‚¬â€ free GLM model with tool use + reasoning.
 // Both speak the OpenAI-compatible wire format the executor already uses.
 export const POOL: readonly DirectCandidate[] = [
   {
     candidate: {
-      id: "openrouter/free",
-      name: "OpenRouter Free Router",
+      id: "openrouter/nemotron-3-ultra-free",
+      name: "OpenRouter Nemotron 3 Ultra Free",
       provider: "openrouter",
-      model: "free",
+      model: "nvidia/nemotron-3-ultra-550b-a55b:free",
       coding: 0.7,
       reasoning: 0.7,
       speed: 0.6,

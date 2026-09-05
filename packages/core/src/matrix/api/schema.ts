@@ -19,7 +19,7 @@ export class ChatCompletionRequest extends Schema.Class<ChatCompletionRequest>("
   messages: Schema.Array(ChatMessage),
   temperature: Schema.optional(Schema.Number),
   max_tokens: Schema.optional(Schema.Int),
-  stream: Schema.optional(Schema.Literal(false)),
+  stream: Schema.optional(Schema.Boolean),
 }) {}
 
 // ---------------------------------------------------------------------------

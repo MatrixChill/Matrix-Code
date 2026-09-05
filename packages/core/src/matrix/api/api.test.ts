@@ -443,7 +443,7 @@ describe("Matrix API HTTP", () => {
         '{"model":',
         JSON.stringify({ model: 123, messages: [] }),
         JSON.stringify({ model: "matrix-coding", messages: "nope" }),
-        JSON.stringify({ model: "matrix-coding", messages: [], stream: true }),
+        JSON.stringify({ model: "matrix-coding", messages: [42] }),
       ]
       for (const raw of bodies) {
         const response = await fetch(`${listener.url}/v1/chat/completions`, {
