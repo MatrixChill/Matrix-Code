@@ -15,15 +15,26 @@ export interface Settings {
   readonly host: string
   readonly port: number
   readonly maxHops: number
+  // Retry budget per provider route for reliable fallback (`matrix-coding-reliable`).
+  readonly maxAttempts: number
   // Bearer token clients must present. Never log or expose it.
   readonly apiKey?: string
-  // Safe non-OmniRoute upstream the API may route chat requests to.
+  // Safe non-OmniRoute upstream the API may route chat requests to. Optional
+  // override: used only when the free/direct provider pool is empty.
   readonly directBaseURL?: string
   // Optional bearer token for the direct upstream.
   readonly directApiKey?: string
   // Known OmniRoute gateway endpoint (when set) used to refuse routing back
   // through the same path that could call Matrix.
   readonly omnirouteBaseURL?: string
+  // Environment snapshot used to resolve pool credentials and availability.
+  // Concrete keys never leave this module (they are read from the pool entry's
+  // keyEnv env var); the snapshot itself is never serialized into status.
+  readonly poolEnv?: Readonly<Record<string, string | undefined>>
+  // Optional per-candidate base URL override keyed by pool candidate id, e.g.
+  // for a self-hosted mirror of the same provider. Applied before recursion
+  // checks so a mirror pointed at OmniRoute is still rejected.
+  readonly poolBaseURLOverrides?: Readonly<Record<string, string>>
 }
 
 const parseBool = (value: string | undefined) => {
@@ -40,22 +51,45 @@ const parseIntSafe = (value: string | undefined, fallback: number) => {
 export function fromEnv(env: Readonly<Record<string, string | undefined>> = process.env): Settings {
   const enabled = parseBool(env.MATRIX_API_ENABLED)
   const port = parseIntSafe(env.MATRIX_API_PORT, DEFAULT_PORT)
-  const maxHops = parseIntSafe(env.MATRIX_API_MAX_HOPS, 2) || 2
+  const maxHops = Math.max(1, parseIntSafe(env.MATRIX_API_MAX_HOPS, 2))
+  const maxAttempts = Math.max(1, parseIntSafe(env.MATRIX_API_MAX_ATTEMPTS, 3))
   const apiKey = env[API_KEY_ENV]?.trim() || undefined
   const directBaseURL = env.MATRIX_API_DIRECT_BASE_URL?.trim() || undefined
   const directApiKey = env.MATRIX_API_DIRECT_API_KEY?.trim() || undefined
   const omnirouteBaseURL = env.OMNIROUTE_BASE_URL?.trim() || undefined
+  const poolBaseURLOverrides = parsePoolBaseURLOverrides(env.MATRIX_API_POOL_BASE_URLS)
 
   const safePort = port >= 0 && port <= 65_535 ? port : DEFAULT_PORT
   return {
     enabled,
     host: HOST,
     port: safePort,
-    maxHops: maxHops >= 1 ? maxHops : 2,
+    maxHops,
+    maxAttempts,
     ...(apiKey === undefined ? {} : { apiKey }),
     ...(directBaseURL === undefined ? {} : { directBaseURL }),
     ...(directApiKey === undefined ? {} : { directApiKey }),
     ...(omnirouteBaseURL === undefined ? {} : { omnirouteBaseURL }),
+    ...(poolBaseURLOverrides === undefined ? {} : { poolBaseURLOverrides }),
+    poolEnv: env,
+  }
+}
+
+// Accepts a JSON object like `{"cerebras/glm-5-turbo":"https://mirror/v1"}` that
+// re-homes a pool candidate to another base URL. Malformed input is ignored.
+// Keys with empty strings are treated as "remove this override" and dropped.
+function parsePoolBaseURLOverrides(raw: string | undefined): Record<string, string> | undefined {
+  if (raw === undefined || raw.trim() === "") return undefined
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined
+    const overrides: Record<string, string> = {}
+    for (const [id, value] of Object.entries(parsed)) {
+      if (typeof value === "string" && value.trim() !== "") overrides[id] = value.trim()
+    }
+    return Object.keys(overrides).length === 0 ? undefined : overrides
+  } catch {
+    return undefined
   }
 }
 
@@ -73,6 +107,7 @@ export interface Status {
   readonly bindAddress: string
   readonly port: number
   readonly maxHops: number
+  readonly maxAttempts: number
   readonly authentication: "configured" | "not_configured"
   readonly directRoute: {
     readonly configured: boolean
@@ -89,6 +124,7 @@ export function status(settings: Settings): Status {
     bindAddress: `${settings.host}:${settings.port}`,
     port: settings.port,
     maxHops: settings.maxHops,
+    maxAttempts: settings.maxAttempts,
     authentication: settings.apiKey === undefined ? "not_configured" : "configured",
     directRoute: {
       configured: direct !== undefined,

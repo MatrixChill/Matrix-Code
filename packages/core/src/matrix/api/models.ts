@@ -4,6 +4,8 @@
 // API only ever claims ownership of these ids; execution is resolved by the
 // executor against a configured direct upstream.
 
+import { MatrixProfile, type ProfileID } from "../profile"
+
 export const MODEL_CODING = "matrix-coding" as const
 export const MODEL_CODING_RELIABLE = "matrix-coding-reliable" as const
 
@@ -11,7 +13,7 @@ export interface MatrixModel {
   readonly id: string
   readonly name: string
   readonly description: string
-  readonly profile: string
+  readonly profile: ProfileID
   // Model id sent to the direct upstream. Defaults to the logical id.
   readonly upstreamModel: string
 }

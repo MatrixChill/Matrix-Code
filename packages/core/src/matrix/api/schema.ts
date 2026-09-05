@@ -177,6 +177,10 @@ export function noSafeRoute(message: string): MatrixApiError {
   return new MatrixApiError(503, "server_config_error", message, "no_safe_route")
 }
 
+export function noFreeRoute(message: string): MatrixApiError {
+  return new MatrixApiError(503, "server_config_error", message, "no_free_route")
+}
+
 export function upstreamFailure(message: string, status = 502): MatrixApiError {
   return new MatrixApiError(status, "upstream_error", message, "upstream_request_failed")
 }

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
 import { createServer, type Server, type IncomingMessage } from "node:http"
 import { MatrixApiConfig, type Settings } from "./config"
+import { MatrixApiPool } from "./pool"
 import { mapFinishReason, chatCompletionResponse } from "./schema"
 import { MatrixRouterService } from "../router-service"
 import { MatrixApiServer } from "./server"
@@ -34,31 +35,13 @@ function stubServer(mode: StubMode): Promise<{ server: Server; url: string; reco
           object: "chat.completion.chunk",
           created: 1778031210,
           model: "stub",
-          choices: [{ index: 0, delta: { role: "assistant", content: "Hello " }, finish_reason: null }],
-          usage: null,
-        },
-        {
-          id: "chatcmpl-stub",
-          object: "chat.completion.chunk",
-          created: 1778031210,
-          model: "stub",
-          choices: [{ index: 0, delta: { content: "from Matrix API" }, finish_reason: null }],
-          usage: null,
-        },
-        {
-          id: "chatcmpl-stub",
-          object: "chat.completion.chunk",
-          created: 1778031210,
-          model: "stub",
-          choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-          usage: null,
-        },
-        {
-          id: "chatcmpl-stub",
-          object: "chat.completion.chunk",
-          created: 1778031210,
-          model: "stub",
-          choices: [],
+          choices: [
+            {
+              index: 0,
+              delta: { content: "Hello from Matrix API" },
+              finish_reason: "stop",
+            },
+          ],
           usage: { prompt_tokens: 7, completion_tokens: 3, total_tokens: 10 },
         },
       ]
@@ -81,6 +64,7 @@ const baseSettings = (overrides: Partial<Settings> = {}): Settings => ({
   host: "127.0.0.1",
   port: 0,
   maxHops: 2,
+  maxAttempts: 3,
   apiKey: "matrix-test-secret-key-e5d8",
   ...overrides,
 })
@@ -332,12 +316,14 @@ describe("Matrix API HTTP", () => {
     })
   })
 
-  test("plain chat completion returns an OpenAI-compatible response and exercises the direct upstream", async () => {
+  test("plain chat completion uses direct override when pool is empty", async () => {
     const stub = await stubServer("ok")
     try {
       const settings = baseSettings({
         directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
         omnirouteBaseURL: "https://omniroute.example/v1",
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
       })
       await withApi(settings, async (listener) => {
         const response = await fetch(`${listener.url}/v1/chat/completions`, {
@@ -379,7 +365,12 @@ describe("Matrix API HTTP", () => {
   test("recursion is blocked structurally when the direct route is the OmniRoute gateway", async () => {
     const stub = await stubServer("ok")
     try {
-      const settings = baseSettings({ directBaseURL: stub.url, omnirouteBaseURL: stub.url })
+      const settings = baseSettings({
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: stub.url,
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
+      })
       await withApi(settings, async (listener) => {
         const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!)
         const payload = await readJson<ErrorResponse>(response)
@@ -394,10 +385,15 @@ describe("Matrix API HTTP", () => {
     }
   })
 
-  test("recursion is blocked by the hop guard for forged deep headers", async () => {
+  test("hop guard blocks forged deep headers", async () => {
     const stub = await stubServer("ok")
     try {
-      const settings = baseSettings({ directBaseURL: stub.url, omnirouteBaseURL: "https://omniroute.example/v1" })
+      const settings = baseSettings({
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: "https://omniroute.example/v1",
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
+      })
       await withApi(settings, async (listener) => {
         const response = await postChat(
           `${listener.url}/v1/chat/completions`,
@@ -419,7 +415,12 @@ describe("Matrix API HTTP", () => {
   test("garbage hop headers are ignored, not treated as failures", async () => {
     const stub = await stubServer("ok")
     try {
-      const settings = baseSettings({ directBaseURL: stub.url, omnirouteBaseURL: "https://omniroute.example/v1" })
+      const settings = baseSettings({
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: "https://omniroute.example/v1",
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
+      })
       await withApi(settings, async (listener) => {
         const response = await postChat(
           `${listener.url}/v1/chat/completions`,
@@ -461,7 +462,12 @@ describe("Matrix API HTTP", () => {
   test("upstream failures are sanitized and never leak provider secrets", async () => {
     const stub = await stubServer("error500")
     try {
-      const settings = baseSettings({ directBaseURL: stub.url, omnirouteBaseURL: "https://omniroute.example/v1" })
+      const settings = baseSettings({
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: "https://omniroute.example/v1",
+        poolEnv: { OPENROUTER_API_KEY: "sk-test-openrouter", CEREBRAS_API_KEY: "csk-test-cerebras" },
+      })
       await withApi(settings, async (listener) => {
         const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!)
         const payload = await readJson<ErrorResponse>(response)
@@ -475,7 +481,10 @@ describe("Matrix API HTTP", () => {
   })
 
   test("status endpoint reports configuration without exposing the key", async () => {
-    const settings = baseSettings({ directBaseURL: "http://127.0.0.1:1" })
+    const settings = baseSettings({
+      directBaseURL: "http://127.0.0.1:1",
+      poolEnv: { OPENROUTER_API_KEY: "sk-test-openrouter", CEREBRAS_API_KEY: "csk-test-cerebras" },
+    })
     await withApi(settings, async (listener) => {
       const response = await getJson(`${listener.url}/v1/status`, bearer(settings.apiKey!))
       expect(response.status).toBe(200)
@@ -495,6 +504,58 @@ describe("Matrix API HTTP", () => {
       const payload = await readJson<ErrorResponse>(response)
       expect(payload.error.type).toBe("invalid_request_error")
       expect(JSON.stringify(payload)).not.toContain(settings.apiKey!)
+    })
+  })
+
+  test("no free pool candidate returns structured no_free_route error when no direct override", async () => {
+    const settings = baseSettings({ poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined } })
+    await withApi(settings, async (listener) => {
+      const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!)
+      const payload = await readJson<ErrorResponse>(response)
+      expect(response.status).toBe(503)
+      expect(payload.error.type).toBe("server_config_error")
+      expect(payload.error.code).toBe("no_free_route")
+      expect(payload.error.message).toContain("eligible")
+    })
+  })
+
+  test("direct override is used when no free pool candidate is available", async () => {
+    const stub = await stubServer("ok")
+    try {
+      const settings = baseSettings({
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: "https://omniroute.example/v1",
+      })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!)
+        expect(response.status).toBe(200)
+        const payload = await readJson<ChatCompletionResponse>(response)
+        expect(payload.choices[0].message.content).toBe("Hello from Matrix API")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("status endpoint includes pool and routing information without secrets", async () => {
+    const settings = baseSettings({
+      poolEnv: { OPENROUTER_API_KEY: "sk-secret-pool", CEREBRAS_API_KEY: "csk-test-cerebras" },
+    })
+    await withApi(settings, async (listener) => {
+      const response = await getJson(`${listener.url}/v1/status`, bearer(settings.apiKey!))
+      expect(response.status).toBe(200)
+      const payload = await readJson<any>(response)
+      expect(payload.pool).toBeDefined()
+      expect(payload.pool.candidates).toBeDefined()
+      expect(payload.pool.eligibleFree).toBeDefined()
+      expect(payload.pool.rejectedOmniRouteBacked).toBeDefined()
+      expect(payload.routing).toBeDefined()
+      expect(payload.routing.lastSelected).toBeDefined()
+      expect(payload.routing.fallbackCandidates).toBeDefined()
+      const json = JSON.stringify(payload)
+      expect(json).not.toContain("sk-secret-pool")
     })
   })
 

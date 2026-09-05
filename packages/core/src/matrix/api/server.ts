@@ -14,8 +14,9 @@ import { Context, Effect, Exit, Layer, MutableRef, Option, Scope } from "effect"
 import { createHash, timingSafeEqual } from "node:crypto"
 import { createServer } from "node:http"
 import { Headers, HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
+import { MatrixApiPool } from "./pool"
 import { status, type Settings } from "./config"
-import { layer as executorLayer, Service as ExecutorService } from "./executor"
+import { layer as executorLayer, Service as ExecutorService, type RouteStatus } from "./executor"
 import { listPayload } from "./models"
 import { HOP_HEADER, parseHop } from "./recursion"
 import * as ApiSchema from "./schema"
@@ -103,12 +104,26 @@ function modelsHandler(settings: Settings) {
 }
 
 function statusHandler(settings: Settings, effective: MutableRef.MutableRef<Effective>) {
-  return (request: HttpServerRequest.HttpServerRequest) =>
-    authorizedOr(request, settings, () => {
+  return Effect.fn("MatrixApi.statusHandler")((request: HttpServerRequest.HttpServerRequest) =>
+    Effect.gen(function* () {
+      const authError = yield* guardAuth(request, settings)
+      if (authError !== undefined) return yield* apiErrorResponse(authError)
+
       const base = status(settings)
       const bound = MutableRef.get(effective)
-      return HttpServerResponse.jsonUnsafe({ ...base, effectiveURL: bound.url, effectivePort: bound.port })
-    })
+      const executor = yield* ExecutorService
+      const poolStatus = MatrixApiPool.poolStatus(settings, settings.poolEnv)
+      const routeStatus: RouteStatus = executor.routeStatus()
+
+      return HttpServerResponse.jsonUnsafe({
+        ...base,
+        effectiveURL: bound.url,
+        effectivePort: bound.port,
+        pool: poolStatus,
+        routing: routeStatus,
+      })
+    }),
+  )
 }
 
 function chatHandler(settings: Settings) {
