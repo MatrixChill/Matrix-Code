@@ -219,6 +219,40 @@ Assert-Test 'matrix.ps1 tracks the Matrix API PID for targeted cleanup' {
   }
 }
 
+# --- OpenRouter upstream credential ---
+
+Assert-Test 'matrix.ps1 resolves the OpenRouter key (env or DPAPI store)' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'function Resolve-OpenRouterKey') { throw "No Resolve-OpenRouterKey function" }
+  if ($content -notmatch '\$env:OPENROUTER_API_KEY = \$openrouter\.Key') { throw "OpenRouter key is not armed via environment" }
+  if ($content -notmatch 'openrouter-api\.cred') { throw "No OpenRouter DPAPI store" }
+}
+
+Assert-Test 'matrix.ps1 never passes the OpenRouter key on a command line or to the console' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -match '\$startInfo\.Arguments =.*OPENROUTER_API_KEY') {
+    throw "OpenRouter key interpolated into the child command line"
+  }
+  if ($content -match 'Write-Host[^\r\n]*\$openrouter') { throw "OpenRouter key printed via Write-Host" }
+  if ($content -match 'Set-Content[^\r\n]*\$openrouter') { throw "OpenRouter key persisted to disk in plaintext" }
+}
+
+Assert-Test 'matrix.ps1 only prompts for onboarding on a visible interactive console' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'IsInputRedirected') { throw "No redirected-input check" }
+  if ($content -notmatch 'IsWindowVisible') { throw "No visible-console check" }
+  if ($content -notmatch 'Test-InteractiveConsole') { throw "No interactive-console gate" }
+}
+
+Assert-Test 'the .matrix/state credential store stays out of Git and the release build' {
+  $rootIgnore = Get-Content -LiteralPath (Join-Path $r '.gitignore') -Raw
+  if ($rootIgnore -notmatch '\.matrix') { throw "Repo .gitignore does not exclude .matrix/" }
+  $tracked = & git -C $r ls-files
+  if ($tracked -match '\.matrix') { throw ".matrix paths are tracked in Git" }
+  $build = Get-Content -LiteralPath (Join-Path $r 'script\build-windows-distribution.ps1') -Raw
+  if ($build -match '\.matrix') { throw "Build script references .matrix (could package creds)" }
+}
+
 # --- Env vars ---
 
 Assert-Test 'matrix.ps1 sets all required environment variables' {

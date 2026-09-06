@@ -111,6 +111,27 @@ Describe 'OmniRoute Support' {
       }
     }
   }
+
+  It 'an already-active OmniRoute listener on 20128 is reused, not restarted or killed' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match '\$omniRouteHealth.*20128'
+    $content | Should -Match 'Start-ManagedService'
+    $content | Should -Match 'Running = \[bool\]\$running'
+    $content | Should -Match '\$omniRoute\.Started'
+    $content | Should -Match 'if \(\$omniRouteStarted -and \$null -ne \$omniRouteProcess\)'
+  }
+
+  It 'a normal/global omniroute installation is discovered via Get-Command' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'Get-Command omniroute -ErrorAction SilentlyContinue'
+    $content | Should -Match '\$globalOmni\.Source'
+  }
+
+  It 'with no vendored files, no global install and no listener, Matrix falls back' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'OmniRoute is not available locally'
+    $content | Should -Match '\$canStartNode -or \$canStartExe -or \$globalOmni'
+  }
 }
 
 Describe 'Matrix API Support' {
@@ -202,6 +223,13 @@ Describe 'Launcher Window Behaviour' {
     $content | Should -Match 'IsOutputRedirected'
     $content | Should -Match '''Normal'''
   }
+
+  It 'matrix.ps1 should call Start-Process without -ArgumentList when there are zero CLI arguments' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'if \(\$tuiArgString\)'
+    $content | Should -Match '\-ArgumentList \$tuiArgString'
+    $content | Should -Match 'Start-Process -FilePath \$matrixExe -WindowStyle'
+  }
 }
 
 Describe 'Build Script Integration' {
@@ -215,5 +243,162 @@ Describe 'Build Script Integration' {
     $buildScript = Join-Path $RepoRoot 'script\build-windows-distribution.ps1'
     $content = Get-Content -LiteralPath $buildScript -Raw
     $content | Should -Match 'matrix\.ps1.*--version'
+  }
+}
+
+Describe 'OpenRouter Upstream Credential' {
+  BeforeAll {
+    $script:LauncherPath = (Resolve-Path -LiteralPath (Join-Path $DistDir 'matrix.ps1')).Path
+    $script:FuncNames = @('Restrict-FileAccess', 'Write-MatrixApiKeyToStore', 'Read-MatrixApiKeyFromStore', 'Test-InteractiveConsole', 'Resolve-OpenRouterKey')
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($LauncherPath, [ref]$tokens, [ref]$parseErrors)
+    $found = @{}
+    foreach ($name in $FuncNames) {
+      $node = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $name }, $true)
+      if (-not $node) { throw "Required function '$name' not found in matrix.ps1" }
+      $found[$name] = $node.Extent.Text
+    }
+    foreach ($name in $FuncNames) { . ([scriptblock]::Create($found[$name])) }
+  }
+
+  It 'matrix.ps1 should prefer a live OPENROUTER_API_KEY over the DPAPI store' {
+    $cred = Join-Path $TestDrive 'openrouter-api.cred'
+    $r = Resolve-OpenRouterKey -CredFile $cred -EnvKey 'fake-openrouter-key-env' -AllowOnboarding:$false
+    $r.Source | Should -Be 'env'
+    $r.Key | Should -Be 'fake-openrouter-key-env'
+  }
+
+  It 'matrix.ps1 should restore the OpenRouter key from the DPAPI store when the env is absent' {
+    $cred = Join-Path $TestDrive 'openrouter-api.cred'
+    Write-MatrixApiKeyToStore -Path $cred -Key 'fake-openrouter-key-store'
+    $r = Resolve-OpenRouterKey -CredFile $cred -EnvKey '' -AllowOnboarding:$false
+    $r.Source | Should -Be 'store'
+    $r.Key | Should -Be 'fake-openrouter-key-store'
+  }
+
+  It 'matrix.ps1 should stay fail-closed with no env, no store, and onboarding disallowed' {
+    $cred = Join-Path $TestDrive 'missing-openrouter-api.cred'
+    $r = Resolve-OpenRouterKey -CredFile $cred -EnvKey '' -AllowOnboarding:$false
+    $r | Should -BeNullOrEmpty
+  }
+
+  It 'matrix.ps1 should arm OPENROUTER_API_KEY only via environment, never a command line or log' {
+    $content = Get-Content -LiteralPath $LauncherPath -Raw
+    $content | Should -Match 'Resolve-OpenRouterKey'
+    $content | Should -Match '\$env:OPENROUTER_API_KEY = \$openrouter\.Key'
+    $content | Should -Match 'openrouter-api\.cred'
+    $content | Should -Not -Match '\$startInfo\.Arguments =.*OPENROUTER_API_KEY'
+    $content | Should -Not -Match 'Write-Host[^\r\n]*\$openrouter'
+    $content | Should -Not -Match 'Set-Content[^\r\n]*\$openrouter'
+  }
+
+  It 'the .matrix/state credential store should stay out of Git and the release build' {
+    $rootIgnore = Get-Content -LiteralPath (Join-Path $RepoRoot '.gitignore') -Raw
+    $rootIgnore | Should -Match '\.matrix'
+    $tracked = & git -C $RepoRoot ls-files
+    $tracked | Should -Not -Match '\.matrix'
+    $build = Get-Content -LiteralPath (Join-Path $RepoRoot 'script\build-windows-distribution.ps1') -Raw
+    $build | Should -Not -Match '\.matrix'
+  }
+}
+
+Describe 'Test-LocalService HTTP Status Handling' {
+  BeforeAll {
+    $launcherPath = (Resolve-Path -LiteralPath (Join-Path $DistDir 'matrix.ps1')).Path
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($launcherPath, [ref]$tokens, [ref]$parseErrors)
+    $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Test-LocalService' }, $true)
+    if (-not $fn) { throw 'Test-LocalService not found in matrix.ps1' }
+    . ([scriptblock]::Create($fn.Extent.Text))
+
+    # Serves one HTTP response with the given status code on a loopback port in
+    # a child job, printing READY once the listener is bound. Proves
+    # Test-LocalService's status handling over a real HTTP round trip.
+    function Start-StubHttp {
+      param([int]$Port, [int]$StatusCode)
+      $job = Start-Job -Name "StubHttp-$Port" -ArgumentList $Port, $StatusCode -ScriptBlock {
+        param($Port, $StatusCode)
+        $tcp = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
+        $tcp.Start()
+        'READY'
+        $client = $tcp.AcceptTcpClient()
+        $stream = $client.GetStream()
+        $buffer = New-Object byte[] 4096
+        $null = $stream.Read($buffer, 0, $buffer.Length)
+        $statusText = switch ($StatusCode) {
+          200 { 'OK' }
+          401 { 'Unauthorized' }
+          404 { 'Not Found' }
+          500 { 'Internal Server Error' }
+          default { 'Status' }
+        }
+        $body = [System.Text.Encoding]::UTF8.GetBytes('{}')
+        $head = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 $StatusCode $statusText`r`nContent-Length: $($body.Length)`r`nConnection: close`r`n`r`n")
+        $stream.Write($head, 0, $head.Length)
+        $stream.Write($body, 0, $body.Length)
+        $stream.Flush()
+        $client.Close()
+        $tcp.Stop()
+      }
+      return $job
+    }
+
+    function Wait-StubReady {
+      param($Job, [int]$TimeoutMs = 8000)
+      $deadline = (Get-Date).AddMilliseconds($TimeoutMs)
+      do {
+        $out = Receive-Job -Job $Job -Keep -ErrorAction SilentlyContinue
+        if ($out -contains 'READY') { return $true }
+        if ($Job.State -eq 'Failed') { return $false }
+        Start-Sleep -Milliseconds 100
+      } while ((Get-Date) -lt $deadline)
+      return $false
+    }
+  }
+
+  It 'returns $true for HTTP 200' {
+    $job = Start-StubHttp -Port 49301 -StatusCode 200
+    try {
+      Wait-StubReady -Job $job | Should -BeTrue
+      Test-LocalService -Uri 'http://127.0.0.1:49301/models' | Should -BeTrue
+    } finally {
+      Stop-Job -Job $job -ErrorAction SilentlyContinue
+      Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  It 'returns $true for HTTP 401' {
+    $job = Start-StubHttp -Port 49302 -StatusCode 401
+    try {
+      Wait-StubReady -Job $job | Should -BeTrue
+      Test-LocalService -Uri 'http://127.0.0.1:49302/models' | Should -BeTrue
+    } finally {
+      Stop-Job -Job $job -ErrorAction SilentlyContinue
+      Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  It 'returns $false for HTTP 404' {
+    $job = Start-StubHttp -Port 49303 -StatusCode 404
+    try {
+      Wait-StubReady -Job $job | Should -BeTrue
+      Test-LocalService -Uri 'http://127.0.0.1:49303/models' | Should -BeFalse
+    } finally {
+      Stop-Job -Job $job -ErrorAction SilentlyContinue
+      Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  It 'returns $false for HTTP 500' {
+    $job = Start-StubHttp -Port 49304 -StatusCode 500
+    try {
+      Wait-StubReady -Job $job | Should -BeTrue
+      Test-LocalService -Uri 'http://127.0.0.1:49304/models' | Should -BeFalse
+    } finally {
+      Stop-Job -Job $job -ErrorAction SilentlyContinue
+      Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
   }
 }

@@ -103,10 +103,10 @@ function Test-LocalService {
     [hashtable]$Headers = @{}
   )
   try {
-    $ignore = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -Headers $Headers -ErrorAction Stop
-    return $true
+    $response = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -Headers $Headers -ErrorAction Stop
+    return ($response.StatusCode -eq 200)
   } catch {
-    if ($_.Exception.Response) { return $true }
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode -eq 401) { return $true }
     return $false
   }
 }
@@ -292,6 +292,79 @@ function Read-MatrixApiKeyFromStore {
   }
 }
 
+# --- OpenRouter credential (free direct upstream) -----------------------------
+
+function Test-InteractiveConsole {
+  # A prompt is only ever shown on a real, visible, interactive console;
+  # hidden-window (matrix.cmd) and automated launches skip it and stay
+  # fail-closed. The type check keeps Add-Type idempotent across re-dot-sources.
+  if ($Host.Name -ne 'ConsoleHost') { return $false }
+  if ([Console]::IsInputRedirected -or [Console]::IsOutputRedirected) { return $false }
+  try {
+    if (-not ('MatrixConsoleNative' -as [type])) {
+      Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class MatrixConsoleNative {
+  [DllImport("kernel32.dll")]
+  public static extern IntPtr GetConsoleWindow();
+  [DllImport("user32.dll")]
+  public static extern bool IsWindowVisible(IntPtr hwnd);
+}
+'@ -ErrorAction Stop
+    }
+    $consoleHandle = [MatrixConsoleNative]::GetConsoleWindow()
+    if ([IntPtr]::Zero -eq $consoleHandle) { return $false }
+    return [MatrixConsoleNative]::IsWindowVisible($consoleHandle)
+  } catch {
+    return $false
+  }
+}
+
+# Resolution order for the Matrix API's free upstream credential: a live
+# OPENROUTER_API_KEY wins for this run; otherwise the DPAPI store at
+# .matrix\state\openrouter-api.cred is restored; otherwise a one-time
+# interactive onboarding persists it the same way. Returns $null (fail-closed)
+# when no usable key exists, so the pool stays empty exactly as before and the
+# launcher never prompts invisibly. The key never reaches a command line.
+function Resolve-OpenRouterKey {
+  param(
+    [string]$CredFile,
+    [string]$EnvKey = $env:OPENROUTER_API_KEY,
+    [switch]$AllowOnboarding
+  )
+
+  if (-not [string]::IsNullOrWhiteSpace($EnvKey)) {
+    return [pscustomobject]@{ Key = $EnvKey.Trim(); Source = 'env' }
+  }
+
+  if (Test-Path -LiteralPath $CredFile) {
+    $storedKey = Read-MatrixApiKeyFromStore -Path $CredFile
+    if ($storedKey) {
+      return [pscustomobject]@{ Key = $storedKey; Source = 'store' }
+    }
+  }
+
+  if (-not $AllowOnboarding) { return $null }
+  if (-not (Test-InteractiveConsole)) { return $null }
+
+  try {
+    $onboardedKey = Read-Host -Prompt 'No OpenRouter key is configured. Paste your OpenRouter API key (stored once via DPAPI):'
+  } catch {
+    return $null
+  }
+  $onboardedKey = $onboardedKey.Trim()
+  if (-not $onboardedKey) { return $null }
+
+  try {
+    Write-MatrixApiKeyToStore -Path $CredFile -Key $onboardedKey
+  } catch {
+    return $null
+  }
+  Write-Host 'OpenRouter key stored in .matrix\state\openrouter-api.cred; it will be restored on future launches.'
+  return [pscustomobject]@{ Key = $onboardedKey; Source = 'onboard' }
+}
+
 # --- Matrix API environment --------------------------------------------------
 
 $matrixApiPort = 20260
@@ -344,6 +417,23 @@ if ($explicitApiDisable) {
   $env:MATRIX_API_KEY = $matrixApiKey
 }
 
+# --- OpenRouter credential for the Matrix API free upstream -------------------
+# The matrix-api child activates its cost-0 provider pool from the
+# OPENROUTER_API_KEY environment. Env wins; otherwise the DPAPI store at
+# .matrix\state\openrouter-api.cred is restored; otherwise a plain desktop
+# launch may onboard interactively once. Onboarding is refused from the
+# hidden-window/automated paths, and a missing key leaves the pool fail-closed
+# (UNAVAILABLE) exactly as before. The key is armed only via environment and
+# never reaches a command line.
+$openrouterCredFile = Join-Path $root '.matrix\state\openrouter-api.cred'
+$openrouterOnboard  = ($args.Count -eq 0)
+$openrouter = Resolve-OpenRouterKey -CredFile $openrouterCredFile -AllowOnboarding:$openrouterOnboard
+if ($openrouter) {
+  $env:OPENROUTER_API_KEY = $openrouter.Key
+} elseif ($openrouterOnboard) {
+  Write-Host 'OpenRouter key not configured; the Matrix API free direct upstream stays disabled. Set OPENROUTER_API_KEY in the environment (or run matrix.ps1 from a terminal to onboard once) and relaunch.'
+}
+
 $matrixApiHealth = "http://127.0.0.1:$matrixApiPort/v1/models"
 $matrixApiHeaders = @{}
 if ($matrixApiKey) { $matrixApiHeaders['Authorization'] = "Bearer $matrixApiKey" }
@@ -366,16 +456,21 @@ $matrixExit = 0
 
 try {
   # --- OmniRoute (port 20128) ------------------------------------------------
+  # A live listener on 20128 is always reused (never started, never killed).
+  # Otherwise a launch axis is resolved: vendored standalone exe, vendored Node
+  # runtime, or a normal/global omniroute installation. With none of those and
+  # no active listener, Matrix runs on fallback without OmniRoute.
   $nodeExe   = Join-Path $root 'omniroute\node.exe'
   $entryMjs  = Join-Path $root 'omniroute\app\bin\omniroute.mjs'
   $omniExe   = Join-Path $root 'omniroute\omniroute.exe'
   $canStartNode = (Test-Path -LiteralPath $nodeExe) -and (Test-Path -LiteralPath $entryMjs)
   $canStartExe  = Test-Path -LiteralPath $omniExe
-
+  $globalOmni = $null
   if ((-not $canStartNode) -and (-not $canStartExe)) {
-    Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
-    Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
-  } else {
+    $globalOmni = Get-Command omniroute -ErrorAction SilentlyContinue
+  }
+
+  if ($canStartNode -or $canStartExe -or $globalOmni) {
     $omniRoute = Start-ManagedService `
       -Name 'OmniRoute' `
       -HealthUri $omniRouteHealth `
@@ -386,19 +481,26 @@ try {
       $startInfo = New-Object System.Diagnostics.ProcessStartInfo
       if ($canStartExe) {
         $startInfo.FileName = $omniExe
+        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
+      } elseif ($globalOmni) {
+        $startInfo.FileName = $globalOmni.Source
+        $startInfo.WorkingDirectory = Split-Path -Parent $globalOmni.Source
       } else {
         $startInfo.FileName = $nodeExe
         $startInfo.Arguments = $entryMjs
+        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
       }
       $startInfo.UseShellExecute       = $false
       $startInfo.CreateNoWindow         = $true
       $startInfo.RedirectStandardOutput = $true
       $startInfo.RedirectStandardError  = $true
-      $startInfo.WorkingDirectory       = Join-Path $root 'omniroute'
       [System.Diagnostics.Process]::Start($startInfo)
     }
     $omniRouteStarted = $omniRoute.Started
     $omniRouteProcess = $omniRoute.Process
+  } else {
+    Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
+    Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
   }
 
   # --- Matrix API (port 20260) ----------------------------------------------
@@ -441,7 +543,11 @@ try {
   $tuiArgString = (@($args) | ForEach-Object {
     if ($_ -match '\s') { "`"$($_.Replace('"', '""'))`"" } else { $_ }
   }) -join ' '
-  $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
+  if ($tuiArgString) {
+    $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
+  } else {
+    $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+  }
   $tuiProcess.WaitForExit()
   $matrixExit = $tuiProcess.ExitCode
   if ($null -eq $matrixExit) { $matrixExit = 0 }
