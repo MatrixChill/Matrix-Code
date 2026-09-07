@@ -465,42 +465,55 @@ try {
   $omniExe   = Join-Path $root 'omniroute\omniroute.exe'
   $canStartNode = (Test-Path -LiteralPath $nodeExe) -and (Test-Path -LiteralPath $entryMjs)
   $canStartExe  = Test-Path -LiteralPath $omniExe
-  $globalOmni = $null
-  if ((-not $canStartNode) -and (-not $canStartExe)) {
-    $globalOmni = Get-Command omniroute -ErrorAction SilentlyContinue
-  }
 
-  if ($canStartNode -or $canStartExe -or $globalOmni) {
-    $omniRoute = Start-ManagedService `
-      -Name 'OmniRoute' `
-      -HealthUri $omniRouteHealth `
-      -PidFile $omniRoutePidFile `
-      -CmdLineMarker 'omniroute' `
-      -ReadinessTimeout $readinessTimeout `
-      -Starter {
-      $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-      if ($canStartExe) {
-        $startInfo.FileName = $omniExe
-        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
-      } elseif ($globalOmni) {
-        $startInfo.FileName = $globalOmni.Source
-        $startInfo.WorkingDirectory = Split-Path -Parent $globalOmni.Source
-      } else {
-        $startInfo.FileName = $nodeExe
-        $startInfo.Arguments = $entryMjs
-        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
-      }
-      $startInfo.UseShellExecute       = $false
-      $startInfo.CreateNoWindow         = $true
-      $startInfo.RedirectStandardOutput = $true
-      $startInfo.RedirectStandardError  = $true
-      [System.Diagnostics.Process]::Start($startInfo)
-    }
-    $omniRouteStarted = $omniRoute.Started
-    $omniRouteProcess = $omniRoute.Process
+  # --- PROBE FIRST: if OmniRoute already healthy, reuse and skip all startup logic ---
+  $omniRouteHealthy = Test-LocalService -Uri $omniRouteHealth
+  if ($omniRouteHealthy) {
+    Write-Host "OmniRoute already active at $omniRouteHealth. Reusing it."
+    $omniRouteStarted = $true
+    $omniRouteProcess = $null
   } else {
-    Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
-    Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
+    # No healthy OmniRoute — resolve a launch axis (vendored exe, vendored node, or global .exe)
+    $globalOmni = $null
+    if ((-not $canStartNode) -and (-not $canStartExe)) {
+      $cmd = Get-Command omniroute -ErrorAction SilentlyContinue
+      if ($cmd -and $cmd.CommandType -eq 'Application' -and $cmd.Source -match '\.exe$') {
+        $globalOmni = $cmd
+      }
+    }
+
+    if ($canStartNode -or $canStartExe -or $globalOmni) {
+      $omniRoute = Start-ManagedService `
+        -Name 'OmniRoute' `
+        -HealthUri $omniRouteHealth `
+        -PidFile $omniRoutePidFile `
+        -CmdLineMarker 'omniroute' `
+        -ReadinessTimeout $readinessTimeout `
+        -Starter {
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        if ($canStartExe) {
+          $startInfo.FileName = $omniExe
+          $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
+        } elseif ($globalOmni) {
+          $startInfo.FileName = $globalOmni.Source
+          $startInfo.WorkingDirectory = Split-Path -Parent $globalOmni.Source
+        } else {
+          $startInfo.FileName = $nodeExe
+          $startInfo.Arguments = $entryMjs
+          $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
+        }
+        $startInfo.UseShellExecute       = $false
+        $startInfo.CreateNoWindow         = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError  = $true
+        [System.Diagnostics.Process]::Start($startInfo)
+      }
+      $omniRouteStarted = $omniRoute.Started
+      $omniRouteProcess = $omniRoute.Process
+    } else {
+      Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
+      Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
+    }
   }
 
   # --- Matrix API (port 20260) ----------------------------------------------

@@ -303,6 +303,7 @@ function OmniRouteSetup() {
     const keyValue = await DialogPrompt.show(dialog, t("omniRouteApiKey"), {
       value: key(),
       placeholder: t("omniRouteApiKeyOptional"),
+      secret: true,
       description: () => <text fg={theme.textMuted}>{t("omniRouteApiKeyDescription")}</text>,
     })
     if (keyValue === null) return

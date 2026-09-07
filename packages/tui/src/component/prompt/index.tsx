@@ -19,6 +19,7 @@ import { tint, useTheme } from "../../context/theme"
 import { EmptyBorder, SplitBorder } from "../../ui/border"
 import { useTuiPaths, useTuiTerminalEnvironment } from "../../context/runtime"
 import { useClipboard } from "../../context/clipboard"
+import { PasteFlow } from "../../paste-flow"
 import { Spinner } from "../spinner"
 import { useSDK } from "../../context/sdk"
 import { useRoute } from "../../context/route"
@@ -153,6 +154,7 @@ export function Prompt(props: PromptProps) {
   const location = useLocation()
   const terminalEnvironment = useTuiTerminalEnvironment()
   const clipboard = useClipboard()
+  const pasteFlow = new PasteFlow()
   const sdk = useSDK()
   const editor = useEditorContext()
   const route = useRoute()
@@ -521,17 +523,24 @@ export function Prompt(props: PromptProps) {
         run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
           ctx.event.preventDefault()
           ctx.event.stopPropagation()
-          const content = await clipboard.read?.()
-          if (content?.mime.startsWith("image/")) {
-            await pasteAttachment({
-              filename: "clipboard",
-              mime: content.mime,
-              content: content.data,
-            })
-            return
-          }
-          if (content?.mime === "text/plain") {
-            await pasteInputText(content.data)
+          if (pasteFlow.shouldSkipCommand()) return
+          pasteFlow.begin()
+          try {
+            const content = await clipboard.read?.()
+            if (content?.mime.startsWith("image/")) {
+              await pasteAttachment({
+                filename: "clipboard",
+                mime: content.mime,
+                content: content.data,
+              })
+              return
+            }
+            if (content?.mime === "text/plain") {
+              await pasteInputText(content.data)
+            }
+          } finally {
+            pasteFlow.markInserted()
+            pasteFlow.end()
           }
         },
       },
@@ -948,7 +957,13 @@ export function Prompt(props: PromptProps) {
     return {
       target: inputTarget,
       enabled: inputTarget() !== undefined && !props.disabled,
-      bindings: tuiConfig.keybinds.get("prompt.paste"),
+      bindings: [
+        ...tuiConfig.keybinds.get("prompt.paste"),
+        {
+          key: "shift+insert",
+          cmd: () => keymap.dispatchCommand("prompt.paste"),
+        },
+      ],
     }
   })
 
@@ -1565,7 +1580,14 @@ export function Prompt(props: PromptProps) {
                 // default paste unless we suppress it first and handle insertion ourselves.
                 event.preventDefault()
 
-                await pasteInputText(normalizedText)
+                if (pasteFlow.shouldSkipBytes()) return
+                pasteFlow.begin()
+                try {
+                  await pasteInputText(normalizedText)
+                } finally {
+                  pasteFlow.markInserted()
+                  pasteFlow.end()
+                }
               }}
               ref={(r: TextareaRenderable) => {
                 input = r
