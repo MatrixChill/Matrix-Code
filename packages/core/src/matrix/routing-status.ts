@@ -60,6 +60,11 @@ export interface RoutingStatusData {
   // Most recent provider error recorded across all providers, when available.
   readonly lastError?: ProviderError
   readonly lastUpdated: Date
+  // Where the provider list came from: live (gateway /v1/models) when the
+  // gateway answered, static (built-in catalog) otherwise.
+  readonly source: "live" | "static"
+  // Total candidate models surfaced (live-discovered count when source is live).
+  readonly totalModels: number
 }
 
 export function mapHealthToStatus(health: number): ProviderStatus {
@@ -87,11 +92,12 @@ function deduplicateProviders(candidates: readonly MatrixCatalog.Candidate[]): P
 
   return Array.from(byProvider.entries()).map(([provider, models]) => {
     const first = models[0]!
+    const joined = models.slice(0, 16).map((m) => m.model).join(", ")
     return {
       id: provider,
       name: first.name.replace(/ .*/, ""),
       provider,
-      model: models.map((m) => m.model).join(", "),
+      model: models.length > 16 ? `${joined}, ...` : joined,
       status: "unknown" as ProviderStatus,
       health: null,
       recentFailures: 0,
@@ -104,13 +110,17 @@ function deduplicateProviders(candidates: readonly MatrixCatalog.Candidate[]): P
 
 // Merge the router's recorded observations (health, failures, last error) into
 // a provider. Providers with no recorded observations stay "unknown".
-function enrichProvider(router: MatrixRouter.Router, provider: ProviderInfo): ProviderInfo {
-  const candidates = MatrixCatalog.CATALOG.filter((c) => c.provider === provider.provider)
+function enrichProvider(
+  router: MatrixRouter.Router,
+  candidates: readonly MatrixCatalog.Candidate[],
+  provider: ProviderInfo,
+): ProviderInfo {
+  const routes = candidates.filter((c) => c.provider === provider.provider)
   let observed = 0
   let healthTotal = 0
   let recentFailures = 0
   let lastError: MatrixRouter.CandidateError | undefined
-  for (const candidate of candidates) {
+  for (const candidate of routes) {
     const state = router.state(candidate)
     if (state === undefined) continue
     observed += 1
@@ -153,24 +163,36 @@ function pickLastError(providers: ReadonlyArray<ProviderInfo>): ProviderError | 
 // (see omniRouteHealth.probe) and is fully independent of provider health: a
 // gateway can be online while its provider routes return 500/504. When no probe
 // or router observations are available the relevant fields stay "unknown".
+// Passing the live model list from omniRouteHealth.listModels switches the
+// provider list to what the gateway actually advertises: providers then report
+// online (the route demonstrably served /v1/models) unless recorded failures
+// downgrade them.
 export function buildRoutingStatus(
   router: MatrixRouter.Router | undefined,
   profile: MatrixProfile.ProfileID = "smart",
   gateway?: GatewayProbe,
+  liveModels?: readonly MatrixCatalog.GatewayModel[],
 ): RoutingStatusData {
   const lastUpdated = new Date()
-  const providers = deduplicateProviders(MatrixCatalog.CATALOG).map((provider) =>
-    router === undefined ? provider : enrichProvider(router, provider),
-  )
+  const live = liveModels && liveModels.length > 0 ? liveModels : undefined
+  const source = live === undefined ? "static" : "live"
+  const candidates = live === undefined ? MatrixCatalog.CATALOG : MatrixCatalog.fromGatewayModels(live)
+  const providers = deduplicateProviders(candidates).map((provider) => {
+    const enriched = router === undefined ? provider : enrichProvider(router, candidates, provider)
+    // A route that just answered /v1/models is demonstrably reachable; keep
+    // "unknown" only for the static catalog, where we have no live signal.
+    if (enriched.health === null && source === "live") return { ...enriched, status: "online" as ProviderStatus }
+    return enriched
+  })
 
   let activeProvider: string | null = null
   let fallbackProvider: string | null = null
   if (router) {
-    const selection = router.select(profile, MatrixCatalog.CATALOG, () => true)
+    const selection = router.select(profile, candidates, () => true)
     if (selection) {
       activeProvider = selection.candidate.provider
     }
-    const fallbackSelection = router.fallback(profile, MatrixCatalog.CATALOG, () => true)
+    const fallbackSelection = router.fallback(profile, candidates, () => true)
     if (fallbackSelection && fallbackSelection.candidate.provider !== activeProvider) {
       fallbackProvider = fallbackSelection.candidate.provider
     }
@@ -189,5 +211,7 @@ export function buildRoutingStatus(
     fallbackProvider,
     lastError: pickLastError(providers),
     lastUpdated,
+    source,
+    totalModels: candidates.length,
   }
 }

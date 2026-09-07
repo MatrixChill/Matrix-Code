@@ -186,3 +186,38 @@ describe("mapHealthToStatus", () => {
     expect(mapHealthToStatus(0.29)).toBe("offline")
   })
 })
+
+describe("MatrixRoutingStatus live catalog", () => {
+  test("live models surface the gateway catalog count and report online", () => {
+    const router = MatrixRouter.make()
+    const result = buildRoutingStatus(router, "smart", gatewayOnline(), [
+      { id: "auto" },
+      { id: "auto/fast" },
+      { id: "auto/coding" },
+      { id: "brand-new/route" },
+    ])
+    expect(result.source).toBe("live")
+    expect(result.totalModels).toBe(4)
+    const omniroute = result.providers.find((p) => p.id === "omniroute")!
+    expect(omniroute.status).toBe("online")
+    expect(omniroute.availableModels).toBe(4)
+    expect(result.routingStatus).toBe("online")
+  })
+
+  test("observed failures still downgrade a live provider", () => {
+    const router = MatrixRouter.make()
+    for (let i = 0; i < 3; i++) {
+      router.recordFailure(MatrixCatalog.CATALOG[0]!, 1_000_000, { message: "provider error", status: 500 })
+    }
+    const result = buildRoutingStatus(router, "smart", gatewayOnline(), [{ id: "auto" }])
+    const omniroute = result.providers.find((p) => p.id === "omniroute")!
+    expect(omniroute.status).toBe("offline")
+    expect(omniroute.health).toBe(0.25)
+  })
+
+  test("an empty live list keeps the built-in catalog", () => {
+    const result = buildRoutingStatus(MatrixRouter.make(), "smart", gatewayOnline(), [])
+    expect(result.source).toBe("static")
+    expect(result.totalModels).toBe(MatrixCatalog.CATALOG.length)
+  })
+})

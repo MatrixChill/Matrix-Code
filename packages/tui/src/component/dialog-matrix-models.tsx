@@ -2,10 +2,11 @@ import { TextAttributes } from "@opentui/core"
 import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 import { useSync } from "../context/sync"
-import { For, Show, createMemo } from "solid-js"
+import { For, Show, createMemo, createResource, onCleanup, onMount } from "solid-js"
 import { MatrixProfile } from "@opencode-ai/core/matrix/profile"
 import { MatrixCatalog } from "@opencode-ai/core/matrix/catalog"
 import { MatrixRouter } from "@opencode-ai/core/matrix/router"
+import { MatrixOmniRouteHealth } from "@opencode-ai/core/matrix/omniroute-health"
 
 export type DialogMatrixModelsProps = {}
 
@@ -23,13 +24,32 @@ export function DialogMatrixModels() {
     return raw && MatrixProfile.isProfile(raw) ? raw : "reliable"
   })
 
+  const gatewayURL = createMemo(() => {
+    const baseURL = (
+      sync.data.config as { provider?: { omniroute?: { options?: { baseURL?: string } } } } | undefined
+    )?.provider?.omniroute?.options?.baseURL
+    return typeof baseURL === "string" && baseURL.trim() ? baseURL : undefined
+  })
+
+  const [gatewayModels, { refetch: refetchGatewayModels }] = createResource(gatewayURL, (url) =>
+    url ? MatrixOmniRouteHealth.listModels(url) : Promise.resolve(undefined),
+  )
+
   const connectedProviderIDs = createMemo(
     () => new Set(sync.data.provider.map((p) => p.id)),
   )
 
+  // Selection resolves over the live gateway catalog when the gateway answers,
+  // so /matrix-models reflects what OmniRoute actually advertises; otherwise it
+  // falls back to the built-in preset catalog.
+  const liveCandidates = createMemo(() => {
+    const models = gatewayModels()?.models
+    return models && models.length > 0 ? MatrixCatalog.fromGatewayModels(models) : MatrixCatalog.CATALOG
+  })
+
   const selection = createMemo(() => {
     const router = MatrixRouter.make()
-    return router.select(profile(), MatrixCatalog.CATALOG, (candidate) =>
+    return router.select(profile(), liveCandidates(), (candidate) =>
       connectedProviderIDs().has(candidate.provider),
     )
   })
@@ -39,6 +59,12 @@ export function DialogMatrixModels() {
     return MatrixCatalog.CATALOG.filter(
       (c) => (chosen === undefined || c.id !== chosen.id) && connectedProviderIDs().has(c.provider),
     ).slice(0, 4)
+  })
+
+  onMount(() => {
+    void refetchGatewayModels()
+    const timer = setInterval(() => void refetchGatewayModels(), 5000)
+    onCleanup(() => clearInterval(timer))
   })
 
   return (
@@ -53,6 +79,10 @@ export function DialogMatrixModels() {
       </box>
       <text fg={theme.text}>
         Profile: <b>{MatrixProfile.LABELS[profile()]}</b>
+      </text>
+      <text fg={theme.textMuted}>
+        Catalog: {liveCandidates() === MatrixCatalog.CATALOG ? "built-in" : "live (discovered)"} ·{" "}
+        {liveCandidates().length} models
       </text>
       <Show when={selection()} fallback={<text fg={theme.warning}>No candidate available for this profile.</text>}>
         {(sel) => (

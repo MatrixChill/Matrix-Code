@@ -67,11 +67,19 @@ export function DialogMatrixRouting() {
 
   const [gatewayProbe] = createResource(gatewayURL, (url) => MatrixOmniRouteHealth.probe(url))
 
+  // Live model list advertised by the gateway; drives the routing catalog when
+  // present so new OmniRoute models show up without hardcoding them.
+  const [gatewayModels, { refetch: refetchGatewayModels }] = createResource(gatewayURL, (url) =>
+    url ? MatrixOmniRouteHealth.listModels(url) : Promise.resolve(undefined),
+  )
+
   const connectedProviderIDs = createMemo(
     () => new Set(sync.data.provider.map((p) => p.id)),
   )
 
-  const data = createMemo(() => buildRoutingStatus(liveRouter, profile(), gatewayProbe()))
+  const data = createMemo(() =>
+    buildRoutingStatus(liveRouter, profile(), gatewayProbe(), gatewayModels()?.models),
+  )
 
   // Mirror the server-side router state (recorded from real request failures)
   // into the live router so this dialog surfaces what the process actually saw.
@@ -108,7 +116,11 @@ export function DialogMatrixRouting() {
 
   onMount(() => {
     void refreshRouting()
-    const timer = setInterval(refreshRouting, 5000)
+    void refetchGatewayModels()
+    const timer = setInterval(() => {
+      void refreshRouting()
+      void refetchGatewayModels()
+    }, 5000)
     onCleanup(() => clearInterval(timer))
   })
 
@@ -199,6 +211,10 @@ export function DialogMatrixRouting() {
 
       <text fg={theme.textMuted}>
         {onlineCount()}/{data().providers.length} providers online
+      </text>
+
+      <text fg={theme.textMuted}>
+        Catalog: <b>{data().source === "live" ? "live (discovered)" : "built-in"}</b> · {data().totalModels} models
       </text>
 
       <For each={data().providers}>
