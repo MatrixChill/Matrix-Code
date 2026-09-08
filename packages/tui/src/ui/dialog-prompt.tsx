@@ -125,7 +125,7 @@ export function DialogPrompt(props: DialogPromptProps) {
             return
           }
           if (!event.ctrl && !event.meta && !event.option && (event.name.length === 1 || event.name === "space")) {
-            setSecret(secretValue() + (event.name === "space" ? " " : event.name))
+            setSecret(secretValue() + event.sequence)
             return
           }
           // Any other modified/control key is swallowed for full input isolation.

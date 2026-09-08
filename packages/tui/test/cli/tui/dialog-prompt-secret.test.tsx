@@ -100,6 +100,7 @@ async function mountSecretPrompt(input: {
 test("typing a secret stays masked and confirms the real value", async () => {
   await using tmp = await tmpdir()
   const confirmed: (string | null)[] = []
+  const secret = "Matrix-Key_ABC-123!"
   const prompt = await mountSecretPrompt({
     root: tmp.path,
     keybinds: {},
@@ -111,14 +112,14 @@ test("typing a secret stays masked and confirms the real value", async () => {
     const textarea = prompt.app.renderer.currentFocusedEditor
     if (!(textarea instanceof TextareaRenderable)) throw new Error("expected focused dialog textarea")
 
-    prompt.app.mockInput.typeText("matrix-key-123")
+    prompt.app.mockInput.typeText(secret)
 
-    expect(textarea.plainText).toBe(MASK.repeat(14))
-    expect(textarea.plainText).not.toContain("matrix-key-123")
+    expect(textarea.plainText).toBe(MASK.repeat(secret.length))
+    expect(textarea.plainText).not.toContain(secret)
     expect(confirmed).toEqual([])
 
     prompt.app.mockInput.pressEnter()
-    expect(confirmed).toEqual(["matrix-key-123"])
+    expect(confirmed).toEqual([secret])
   } finally {
     await prompt.cleanup()
   }

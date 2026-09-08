@@ -16,6 +16,18 @@ describe("PasteFlow", () => {
     expect(flow.shouldSkipBytes()).toBe(false)
   })
 
+  test("keeps suppressing bytes when a clipboard read outlasts the debounce window", () => {
+    const flow = new PasteFlow()
+    flow.begin(1)
+    expect(flow.shouldSkipBytes()).toBe(true)
+  })
+
+  test("suppresses overlapping command-driven pastes", () => {
+    const flow = new PasteFlow()
+    flow.begin()
+    expect(flow.shouldSkipCommand()).toBe(true)
+  })
+
   test("suppresses a command paste shortly after bytes were inserted", () => {
     const flow = new PasteFlow()
     flow.begin()

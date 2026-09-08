@@ -533,13 +533,14 @@ export function Prompt(props: PromptProps) {
                 mime: content.mime,
                 content: content.data,
               })
+              pasteFlow.markInserted()
               return
             }
             if (content?.mime === "text/plain") {
               await pasteInputText(content.data)
+              pasteFlow.markInserted()
             }
           } finally {
-            pasteFlow.markInserted()
             pasteFlow.end()
           }
         },

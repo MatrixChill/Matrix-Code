@@ -6,8 +6,8 @@ export class PasteFlow {
   private startedAt = 0
   private insertedAt = 0
 
-  begin() {
-    this.startedAt = Date.now()
+  begin(now: number = Date.now()) {
+    this.startedAt = now
   }
 
   end() {
@@ -19,11 +19,11 @@ export class PasteFlow {
   }
 
   shouldSkipCommand(now: number = Date.now()): boolean {
-    return now - this.insertedAt < PASTE_SUPPRESSION_WINDOW_MS
+    return this.startedAt !== 0 || now - this.insertedAt < PASTE_SUPPRESSION_WINDOW_MS
   }
 
-  shouldSkipBytes(now: number = Date.now()): boolean {
-    return this.startedAt !== 0 && now - this.startedAt < PASTE_SUPPRESSION_WINDOW_MS
+  shouldSkipBytes(): boolean {
+    return this.startedAt !== 0
   }
 }
 
