@@ -473,12 +473,18 @@ try {
     $omniRouteStarted = $true
     $omniRouteProcess = $null
   } else {
-    # No healthy OmniRoute — resolve a launch axis (vendored exe, vendored node, or global .exe)
+    # No healthy OmniRoute — resolve a launch axis (vendored exe, vendored node,
+    # or a global omniroute installation: .exe, .ps1 / ExternalScript, .cmd/.bat).
     $globalOmni = $null
     if ((-not $canStartNode) -and (-not $canStartExe)) {
       $cmd = Get-Command omniroute -ErrorAction SilentlyContinue
-      if ($cmd -and $cmd.CommandType -eq 'Application' -and $cmd.Source -match '\.exe$') {
-        $globalOmni = $cmd
+      if ($cmd) {
+        $srcLower = $cmd.Source.ToLowerInvariant()
+        if ($cmd.CommandType -eq 'Application' -and $srcLower -match '\.(exe|cmd|bat)$') {
+          $globalOmni = $cmd
+        } elseif ($cmd.CommandType -eq 'ExternalScript' -and $srcLower -match '\.ps1$') {
+          $globalOmni = $cmd
+        }
       }
     }
 
@@ -495,8 +501,23 @@ try {
           $startInfo.FileName = $omniExe
           $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
         } elseif ($globalOmni) {
-          $startInfo.FileName = $globalOmni.Source
-          $startInfo.WorkingDirectory = Split-Path -Parent $globalOmni.Source
+          $src = $globalOmni.Source
+          $srcLower = $src.ToLowerInvariant()
+          if ($srcLower -match '\.exe$') {
+            $startInfo.FileName = $src
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } elseif ($srcLower -match '\.ps1$') {
+            $startInfo.FileName = 'powershell.exe'
+            $startInfo.Arguments = "-NoProfile -File `"$src`""
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } elseif ($srcLower -match '\.(cmd|bat)$') {
+            $startInfo.FileName = 'cmd.exe'
+            $startInfo.Arguments = "/d /c `"$src`""
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } else {
+            $startInfo.FileName = $src
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          }
         } else {
           $startInfo.FileName = $nodeExe
           $startInfo.Arguments = $entryMjs

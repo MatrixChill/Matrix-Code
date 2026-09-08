@@ -963,6 +963,10 @@ export function Prompt(props: PromptProps) {
           key: "shift+insert",
           cmd: () => keymap.dispatchCommand("prompt.paste"),
         },
+        {
+          key: "ctrl+shift+v",
+          cmd: () => keymap.dispatchCommand("prompt.paste"),
+        },
       ],
     }
   })
@@ -973,6 +977,28 @@ export function Prompt(props: PromptProps) {
       enabled: inputTarget() !== undefined && !props.disabled && store.prompt.input !== "",
       bindings: tuiConfig.keybinds.get("prompt.clear"),
     }
+  })
+
+  // On Windows, Ctrl+C on an empty, focused prompt must interrupt the running
+  // session - never fall through to the global `app.exit` binding (which needs
+  // an empty input and would destroy the renderer, resetting terminal font and
+  // format). An intercept always runs before layer dispatch; the copy-on-select
+  // intercept at priority 1 has already claimed Ctrl+C when there is a selection.
+  createEffect(() => {
+    if (!inputTarget()) return
+    const offIntercept = keymap.intercept(
+      "key",
+      (ctx) => {
+        const evt = ctx.event
+        if (!evt.ctrl || evt.name !== "c") return
+        if (!input?.focused) return
+        if (store.prompt.input !== "") return
+        ctx.consume({ preventDefault: true, stopPropagation: true })
+        if (status().type !== "idle") keymap.dispatchCommand("session.interrupt")
+      },
+      { priority: 0 },
+    )
+    onCleanup(offIntercept)
   })
 
   useBindings(() => {

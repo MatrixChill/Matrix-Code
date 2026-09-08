@@ -92,7 +92,7 @@ if ($LASTEXITCODE -ne 0) { throw "Installed distribution smoke test failed" }
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution smoke test failed" }
 
 # PowerShell launcher smoke test
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $portable "matrix.ps1") --version
+& powershell -NoProfile -File (Join-Path $portable "matrix.ps1") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution PowerShell launcher smoke test failed" }
 
 # Path-with-spaces smoke test
@@ -100,7 +100,7 @@ $spaceTest = Join-Path $release "space test portable"
 Copy-Item -LiteralPath $portable -Destination $spaceTest -Recurse
 & cmd.exe /d /c (Join-Path $spaceTest "matrix.cmd") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces smoke test failed" }
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $spaceTest "matrix.ps1") --version
+& powershell -NoProfile -File (Join-Path $spaceTest "matrix.ps1") --version
 if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces PowerShell smoke test failed" }
 Remove-Item -LiteralPath $spaceTest -Recurse -Force
 
