@@ -19,6 +19,7 @@ import { tint, useTheme } from "../../context/theme"
 import { EmptyBorder, SplitBorder } from "../../ui/border"
 import { useTuiPaths, useTuiTerminalEnvironment } from "../../context/runtime"
 import { useClipboard } from "../../context/clipboard"
+import { PasteFlow } from "../../paste-flow"
 import { Spinner } from "../spinner"
 import { useSDK } from "../../context/sdk"
 import { useRoute } from "../../context/route"
@@ -153,6 +154,7 @@ export function Prompt(props: PromptProps) {
   const location = useLocation()
   const terminalEnvironment = useTuiTerminalEnvironment()
   const clipboard = useClipboard()
+  const pasteFlow = new PasteFlow()
   const sdk = useSDK()
   const editor = useEditorContext()
   const route = useRoute()
@@ -521,17 +523,25 @@ export function Prompt(props: PromptProps) {
         run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
           ctx.event.preventDefault()
           ctx.event.stopPropagation()
-          const content = await clipboard.read?.()
-          if (content?.mime.startsWith("image/")) {
-            await pasteAttachment({
-              filename: "clipboard",
-              mime: content.mime,
-              content: content.data,
-            })
-            return
-          }
-          if (content?.mime === "text/plain") {
-            await pasteInputText(content.data)
+          if (pasteFlow.shouldSkipCommand()) return
+          pasteFlow.begin()
+          try {
+            const content = await clipboard.read?.()
+            if (content?.mime.startsWith("image/")) {
+              await pasteAttachment({
+                filename: "clipboard",
+                mime: content.mime,
+                content: content.data,
+              })
+              pasteFlow.markInserted()
+              return
+            }
+            if (content?.mime === "text/plain") {
+              await pasteInputText(content.data)
+              pasteFlow.markInserted()
+            }
+          } finally {
+            pasteFlow.end()
           }
         },
       },
@@ -948,7 +958,17 @@ export function Prompt(props: PromptProps) {
     return {
       target: inputTarget,
       enabled: inputTarget() !== undefined && !props.disabled,
-      bindings: tuiConfig.keybinds.get("prompt.paste"),
+      bindings: [
+        ...tuiConfig.keybinds.get("prompt.paste"),
+        {
+          key: "shift+insert",
+          cmd: () => keymap.dispatchCommand("prompt.paste"),
+        },
+        {
+          key: "ctrl+shift+v",
+          cmd: () => keymap.dispatchCommand("prompt.paste"),
+        },
+      ],
     }
   })
 
@@ -958,6 +978,28 @@ export function Prompt(props: PromptProps) {
       enabled: inputTarget() !== undefined && !props.disabled && store.prompt.input !== "",
       bindings: tuiConfig.keybinds.get("prompt.clear"),
     }
+  })
+
+  // On Windows, Ctrl+C on an empty, focused prompt must interrupt the running
+  // session - never fall through to the global `app.exit` binding (which needs
+  // an empty input and would destroy the renderer, resetting terminal font and
+  // format). An intercept always runs before layer dispatch; the copy-on-select
+  // intercept at priority 1 has already claimed Ctrl+C when there is a selection.
+  createEffect(() => {
+    if (!inputTarget()) return
+    const offIntercept = keymap.intercept(
+      "key",
+      (ctx) => {
+        const evt = ctx.event
+        if (!evt.ctrl || evt.name !== "c") return
+        if (!input?.focused) return
+        if (store.prompt.input !== "") return
+        ctx.consume({ preventDefault: true, stopPropagation: true })
+        if (status().type !== "idle") keymap.dispatchCommand("session.interrupt")
+      },
+      { priority: 0 },
+    )
+    onCleanup(offIntercept)
   })
 
   useBindings(() => {
@@ -1565,7 +1607,14 @@ export function Prompt(props: PromptProps) {
                 // default paste unless we suppress it first and handle insertion ourselves.
                 event.preventDefault()
 
-                await pasteInputText(normalizedText)
+                if (pasteFlow.shouldSkipBytes()) return
+                pasteFlow.begin()
+                try {
+                  await pasteInputText(normalizedText)
+                } finally {
+                  pasteFlow.markInserted()
+                  pasteFlow.end()
+                }
               }}
               ref={(r: TextareaRenderable) => {
                 input = r

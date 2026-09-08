@@ -26,13 +26,22 @@ if (-not $SkipVoiceBuild) {
   if (Test-Path -LiteralPath $voiceBuild) { Remove-Item -LiteralPath $voiceBuild -Recurse -Force }
   New-Item -ItemType Directory -Force -Path $voiceBuild | Out-Null
   New-Item -ItemType Directory -Force -Path (Join-Path $voiceBuild "spec") | Out-Null
+  $voiceVenv = Join-Path $voiceBuild "venv"
+  & python -m venv $voiceVenv
+  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build environment creation failed" }
+  $voicePython = Join-Path $voiceVenv "Scripts\python.exe"
+  & $voicePython -m ensurepip --upgrade
+  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build pip bootstrap failed" }
+  & $voicePython -m pip install --disable-pip-version-check --no-input -r (Join-Path $repo "script\voice\requirements-build.txt")
+  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build dependencies installation failed" }
+
   $model = Join-Path $voiceBuild "model"
-  & python (Join-Path $repo "script\voice\download-model.py") --output $model
+  & $voicePython (Join-Path $repo "script\voice\download-model.py") --output $model
   if ($LASTEXITCODE -ne 0) { throw "Matrix Voice model download failed" }
   $modelCache = Join-Path $model ".cache"
   if (Test-Path -LiteralPath $modelCache) { Remove-Item -LiteralPath $modelCache -Recurse -Force }
 
-  & python -m PyInstaller --noconfirm --clean --onedir --name matrix-voice-helper `
+  & $voicePython -m PyInstaller --noconfirm --clean --onedir --name matrix-voice-helper `
     --distpath (Join-Path $voiceBuild "dist") `
     --workpath (Join-Path $voiceBuild "work") `
     --specpath (Join-Path $voiceBuild "spec") `
@@ -88,21 +97,19 @@ Compress-Archive -Path (Join-Path $portable "*") -DestinationPath $portableZip -
 # Smoke tests
 & (Join-Path $standard "matrix.exe") --version
 if ($LASTEXITCODE -ne 0) { throw "Installed distribution smoke test failed" }
-& cmd.exe /d /c (Join-Path $portable "matrix.cmd") --version
-if ($LASTEXITCODE -ne 0) { throw "Portable distribution smoke test failed" }
 
-# PowerShell launcher smoke test
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $portable "matrix.ps1") --version
-if ($LASTEXITCODE -ne 0) { throw "Portable distribution PowerShell launcher smoke test failed" }
-
-# Path-with-spaces smoke test
-$spaceTest = Join-Path $release "space test portable"
-Copy-Item -LiteralPath $portable -Destination $spaceTest -Recurse
-& cmd.exe /d /c (Join-Path $spaceTest "matrix.cmd") --version
-if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces smoke test failed" }
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $spaceTest "matrix.ps1") --version
-if ($LASTEXITCODE -ne 0) { throw "Portable distribution path-with-spaces PowerShell smoke test failed" }
-Remove-Item -LiteralPath $spaceTest -Recurse -Force
+# Launcher smoke tests run from a disposable path-with-spaces copy so validation
+# can never seed runtime state or credentials into the release candidate.
+$smokeTest = Join-Path $release "smoke test portable"
+Copy-Item -LiteralPath $portable -Destination $smokeTest -Recurse
+try {
+  & cmd.exe /d /c (Join-Path $smokeTest "matrix.cmd") --version
+  if ($LASTEXITCODE -ne 0) { throw "Portable distribution CMD launcher smoke test failed" }
+  & powershell -NoProfile -File (Join-Path $smokeTest "matrix.ps1") --version
+  if ($LASTEXITCODE -ne 0) { throw "Portable distribution PowerShell launcher smoke test failed" }
+} finally {
+  Remove-Item -LiteralPath $smokeTest -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 $checksums = @($standardZip, $portableZip) | ForEach-Object {
   $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_).Hash.ToLowerInvariant()

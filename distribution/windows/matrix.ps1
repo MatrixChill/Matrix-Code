@@ -56,6 +56,20 @@ if (-not $root) {
 }
 $root = (Resolve-Path -LiteralPath $root).Path
 
+$matrixExe = Join-Path $root 'matrix.exe'
+if (-not (Test-Path -LiteralPath $matrixExe)) {
+  Write-Host "Error: matrix.exe not found at $matrixExe"
+  exit 1
+}
+
+# Metadata queries must not initialize portable state, credentials, or local
+# services. Besides keeping probes side-effect free, this lets build validation
+# run before PowerShell security modules are needed by a real launch.
+if (@($args).Count -eq 1 -and $args[0] -eq '--version') {
+  & $matrixExe @args
+  exit $LASTEXITCODE
+}
+
 $env:MATRIX_PORTABLE_ROOT = $root
 $env:XDG_CONFIG_HOME      = Join-Path $root '.matrix\config'
 $env:XDG_DATA_HOME        = Join-Path $root '.matrix\data'
@@ -86,12 +100,6 @@ if (-not $env:OMNIROUTE_BASE_URL) {
   $env:OMNIROUTE_BASE_URL = 'http://127.0.0.1:20128/v1'
 }
 
-$matrixExe = Join-Path $root 'matrix.exe'
-if (-not (Test-Path -LiteralPath $matrixExe)) {
-  Write-Host "Error: matrix.exe not found at $matrixExe"
-  exit 1
-}
-
 # --- helpers ----------------------------------------------------------------
 
 # True when a listener answers on the given endpoint. Any HTTP response (2xx,
@@ -106,7 +114,11 @@ function Test-LocalService {
     $response = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -Headers $Headers -ErrorAction Stop
     return ($response.StatusCode -eq 200)
   } catch {
-    if ($_.Exception.Response -and $_.Exception.Response.StatusCode -eq 401) { return $true }
+    $responseProperty = $_.Exception.PSObject.Properties['Response']
+    $statusProperty = if ($responseProperty -and $responseProperty.Value) {
+      $responseProperty.Value.PSObject.Properties['StatusCode']
+    }
+    if ($statusProperty -and [int]$statusProperty.Value -eq 401) { return $true }
     return $false
   }
 }
@@ -133,6 +145,37 @@ function Get-ProcessCommandLine {
   param([int]$ProcessId)
   try {
     return (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $ProcessId" -ErrorAction Stop).CommandLine
+  } catch {
+    return $null
+  }
+}
+
+# A .ps1/.cmd shim may exit after spawning the real service. Adopt only the
+# process that owns the expected listener and whose command line identifies the
+# service, so cleanup remains targeted even when the starter was a wrapper.
+function Get-MatchingListenerProcess {
+  param(
+    [string]$HealthUri,
+    [string]$CmdLineMarker
+  )
+  try {
+    $port = ([uri]$HealthUri).Port
+    $connection = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction Stop | Select-Object -First 1
+    if (-not $connection) { return $null }
+    $processInfo = Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($connection.OwningProcess)" -ErrorAction Stop
+    if (-not $processInfo.CommandLine -or $processInfo.CommandLine -notmatch [regex]::Escape($CmdLineMarker)) { return $null }
+    $process = Get-Process -Id $processInfo.ProcessId -ErrorAction Stop
+
+    while ($processInfo.ParentProcessId -gt 0) {
+      $parent = Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($processInfo.ParentProcessId)" -ErrorAction SilentlyContinue
+      if (-not $parent) { break }
+      if ($parent.Name -ne $processInfo.Name) { break }
+      if (-not $parent.CommandLine -or $parent.CommandLine -notmatch [regex]::Escape($CmdLineMarker)) { break }
+      $processInfo = $parent
+      $process = Get-Process -Id $parent.ProcessId -ErrorAction Stop
+    }
+
+    return $process
   } catch {
     return $null
   }
@@ -217,10 +260,25 @@ function Start-ManagedService {
     Set-Content -LiteralPath $PidFile -Value $pidValue -Force
   }
 
+  $ready = $false
   if ($started -or $running) {
     $ready = Wait-LocalService -Uri $HealthUri -Headers $Headers -TrackedProcess $process -TimeoutSeconds $ReadinessTimeout -ServiceName $Name
+    if ($started -and -not $ready) {
+      # Script/cmd shims can exit successfully before their descendant binds.
+      # Continue probing the endpoint, then adopt the verified listener below.
+      $ready = Wait-LocalService -Uri $HealthUri -Headers $Headers -TimeoutSeconds $ReadinessTimeout -ServiceName $Name
+    }
     if (-not $ready) {
       Write-Host "Warning: $Name did not become ready within timeout. Starting Matrix Code anyway."
+    }
+  }
+
+  if ($started -and $ready) {
+    $listenerProcess = Get-MatchingListenerProcess -HealthUri $HealthUri -CmdLineMarker $CmdLineMarker
+    if ($listenerProcess) {
+      $process = $listenerProcess
+      $pidValue = $listenerProcess.Id
+      Set-Content -LiteralPath $PidFile -Value $pidValue -Force
     }
   }
 
@@ -229,7 +287,7 @@ function Start-ManagedService {
     Started = $started
     Pid     = $pidValue
     Process = $process
-    Ready   = $running
+    Ready   = [bool]$ready
   }
 }
 
@@ -465,42 +523,76 @@ try {
   $omniExe   = Join-Path $root 'omniroute\omniroute.exe'
   $canStartNode = (Test-Path -LiteralPath $nodeExe) -and (Test-Path -LiteralPath $entryMjs)
   $canStartExe  = Test-Path -LiteralPath $omniExe
-  $globalOmni = $null
-  if ((-not $canStartNode) -and (-not $canStartExe)) {
-    $globalOmni = Get-Command omniroute -ErrorAction SilentlyContinue
-  }
 
-  if ($canStartNode -or $canStartExe -or $globalOmni) {
-    $omniRoute = Start-ManagedService `
-      -Name 'OmniRoute' `
-      -HealthUri $omniRouteHealth `
-      -PidFile $omniRoutePidFile `
-      -CmdLineMarker 'omniroute' `
-      -ReadinessTimeout $readinessTimeout `
-      -Starter {
-      $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-      if ($canStartExe) {
-        $startInfo.FileName = $omniExe
-        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
-      } elseif ($globalOmni) {
-        $startInfo.FileName = $globalOmni.Source
-        $startInfo.WorkingDirectory = Split-Path -Parent $globalOmni.Source
-      } else {
-        $startInfo.FileName = $nodeExe
-        $startInfo.Arguments = $entryMjs
-        $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
-      }
-      $startInfo.UseShellExecute       = $false
-      $startInfo.CreateNoWindow         = $true
-      $startInfo.RedirectStandardOutput = $true
-      $startInfo.RedirectStandardError  = $true
-      [System.Diagnostics.Process]::Start($startInfo)
-    }
-    $omniRouteStarted = $omniRoute.Started
-    $omniRouteProcess = $omniRoute.Process
+  # --- PROBE FIRST: if OmniRoute already healthy, reuse and skip all startup logic ---
+  $omniRouteHealthy = Test-LocalService -Uri $omniRouteHealth
+  if ($omniRouteHealthy) {
+    Write-Host "OmniRoute already active at $omniRouteHealth. Reusing it."
+    $omniRouteStarted = $true
+    $omniRouteProcess = $null
   } else {
-    Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
-    Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
+    # No healthy OmniRoute — resolve a launch axis (vendored exe, vendored node,
+    # or a global omniroute installation: .exe, .ps1 / ExternalScript, .cmd/.bat).
+    $globalOmni = $null
+    if ((-not $canStartNode) -and (-not $canStartExe)) {
+      $cmd = Get-Command omniroute -ErrorAction SilentlyContinue
+      if ($cmd) {
+        $srcLower = $cmd.Source.ToLowerInvariant()
+        if ($cmd.CommandType -eq 'Application' -and $srcLower -match '\.(exe|cmd|bat)$') {
+          $globalOmni = $cmd
+        } elseif ($cmd.CommandType -eq 'ExternalScript' -and $srcLower -match '\.ps1$') {
+          $globalOmni = $cmd
+        }
+      }
+    }
+
+    if ($canStartNode -or $canStartExe -or $globalOmni) {
+      $omniRoute = Start-ManagedService `
+        -Name 'OmniRoute' `
+        -HealthUri $omniRouteHealth `
+        -PidFile $omniRoutePidFile `
+        -CmdLineMarker 'omniroute' `
+        -ReadinessTimeout $readinessTimeout `
+        -Starter {
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        if ($canStartExe) {
+          $startInfo.FileName = $omniExe
+          $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
+        } elseif ($globalOmni) {
+          $src = $globalOmni.Source
+          $srcLower = $src.ToLowerInvariant()
+          if ($srcLower -match '\.exe$') {
+            $startInfo.FileName = $src
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } elseif ($srcLower -match '\.ps1$') {
+            $startInfo.FileName = 'powershell.exe'
+            $startInfo.Arguments = "-NoProfile -File `"$src`""
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } elseif ($srcLower -match '\.(cmd|bat)$') {
+            $startInfo.FileName = 'cmd.exe'
+            $startInfo.Arguments = "/d /c `"$src`""
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          } else {
+            $startInfo.FileName = $src
+            $startInfo.WorkingDirectory = Split-Path -Parent $src
+          }
+        } else {
+          $startInfo.FileName = $nodeExe
+          $startInfo.Arguments = $entryMjs
+          $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
+        }
+        $startInfo.UseShellExecute       = $false
+        $startInfo.CreateNoWindow         = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError  = $true
+        [System.Diagnostics.Process]::Start($startInfo)
+      }
+      $omniRouteStarted = $omniRoute.Started
+      $omniRouteProcess = $omniRoute.Process
+    } else {
+      Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
+      Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
+    }
   }
 
   # --- Matrix API (port 20260) ----------------------------------------------
@@ -532,24 +624,31 @@ try {
   }
 
   # --- Matrix TUI -----------------------------------------------------------
-  # This launcher runs invisibly, so the TUI is the only visible window.
-  # Normal by default; Hidden when output is redirected (tests, build smoke) or
-  # forced via MATRIX_TUI_WINDOW. Start-Process gives the console app its own
-  # window instead of inheriting the hidden launcher console.
+  # A manually invoked matrix.ps1 keeps the TUI in the current console so the
+  # user's font, window and buffer remain attached to the same host. matrix.cmd
+  # explicitly requests a Normal child window because its PowerShell process is
+  # hidden; redirected automation uses a Hidden child unless overridden.
   $tuiWindow = $env:MATRIX_TUI_WINDOW
-  if (-not $tuiWindow) {
-    $tuiWindow = if ([Console]::IsOutputRedirected) { 'Hidden' } else { 'Normal' }
-  }
+  $tuiInCurrentConsole = (-not $tuiWindow) -and (-not [Console]::IsOutputRedirected)
   $tuiArgString = (@($args) | ForEach-Object {
     if ($_ -match '\s') { "`"$($_.Replace('"', '""'))`"" } else { $_ }
   }) -join ' '
-  if ($tuiArgString) {
-    $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
-  } else {
-    $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+
+  if ($tuiInCurrentConsole) {
+    & $matrixExe @args
+    $matrixExit = $LASTEXITCODE
   }
-  $tuiProcess.WaitForExit()
-  $matrixExit = $tuiProcess.ExitCode
+
+  if (-not $tuiInCurrentConsole) {
+    if (-not $tuiWindow) { $tuiWindow = 'Hidden' }
+    if ($tuiArgString) {
+      $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
+    } else {
+      $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+    }
+    $tuiProcess.WaitForExit()
+    $matrixExit = $tuiProcess.ExitCode
+  }
   if ($null -eq $matrixExit) { $matrixExit = 0 }
 }
 finally {

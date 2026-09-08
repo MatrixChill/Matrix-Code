@@ -129,20 +129,25 @@ foreach ($f in @('matrix.ps1')) {
 Assert-Test 'matrix.cmd launches matrix.ps1 invisibly, without execution-policy flags' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.cmd') -Raw
   if ($content -notmatch 'matrix\.ps1') { throw "matrix.cmd does not reference matrix.ps1" }
-  if ($content -notmatch 'powershell\.exe.*-File') { throw "matrix.cmd does not invoke PowerShell" }
+  if ($content -notmatch 'set\s+"MATRIX_TUI_WINDOW=Normal"') { throw "matrix.cmd does not request a visible TUI child window" }
+  if ($content -notmatch 'MATRIX_POWERSHELL=powershell\.exe') { throw "matrix.cmd has no Windows PowerShell fallback" }
+  if ($content -notmatch 'where pwsh\.exe.*MATRIX_POWERSHELL=pwsh\.exe') { throw "matrix.cmd does not prefer PowerShell 7" }
+  if ($content -notmatch 'MATRIX_POWERSHELL%.*-File') { throw "matrix.cmd does not invoke the selected PowerShell" }
   if ($content -notmatch '-WindowStyle Hidden') { throw "matrix.cmd does not hide the PowerShell window" }
   if ($content -match 'ExecutionPolicy') { throw "matrix.cmd uses execution-policy flags" }
 }
 
 # --- Launcher window behaviour (single visible window: the Matrix Code TUI) ---
 
-Assert-Test 'matrix.ps1 starts the TUI with Start-Process so the launcher itself stays hidden' {
+Assert-Test 'matrix.ps1 preserves a manual console and starts a child TUI for hidden launchers' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'tuiInCurrentConsole') { throw "Manual launcher does not preserve the current console" }
+  if ($content -notmatch '&\s+\$matrixExe\s+@args') { throw "Manual launcher does not run the TUI in the current console" }
   if ($content -notmatch 'Start-Process -FilePath \$matrixExe') { throw "TUI is not started via Start-Process" }
   if ($content -notmatch '\$tuiWindow') { throw "No TUI window-style selection" }
   if ($content -notmatch 'MATRIX_TUI_WINDOW') { throw "No MATRIX_TUI_WINDOW override" }
   if ($content -notmatch 'IsOutputRedirected') { throw "No redirected-output detection for the TUI window" }
-  if ($content -notmatch "'Normal'") { throw "TUI does not default to a Normal visible window" }
+  if ($content -notmatch "'Hidden'") { throw "Redirected launch does not default to a Hidden TUI window" }
 }
 
 # --- Health check uses 127.0.0.1 ---
@@ -164,6 +169,10 @@ Assert-Test 'launchers use 127.0.0.1 not localhost for health checks' {
 Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -notmatch 'omniroute\.pid') { throw "No PID file tracking" }
+  if ($content -notmatch 'Get-MatchingListenerProcess') { throw "No listener process adoption for shim launches" }
+  if ($content -notmatch 'Get-NetTCPConnection -State Listen') { throw "No listener PID resolution" }
+  if ($content -notmatch '\$started -and -not \$ready') { throw "No readiness fallback after a shim exits" }
+  if ($content -notmatch '\$parent\.Name -ne \$processInfo\.Name') { throw "No same-service supervisor adoption" }
   if ($content -notmatch '\.Kill\(\)') { throw "No process-level Kill" }
 }
 
