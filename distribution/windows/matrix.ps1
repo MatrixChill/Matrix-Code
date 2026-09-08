@@ -56,6 +56,20 @@ if (-not $root) {
 }
 $root = (Resolve-Path -LiteralPath $root).Path
 
+$matrixExe = Join-Path $root 'matrix.exe'
+if (-not (Test-Path -LiteralPath $matrixExe)) {
+  Write-Host "Error: matrix.exe not found at $matrixExe"
+  exit 1
+}
+
+# Metadata queries must not initialize portable state, credentials, or local
+# services. Besides keeping probes side-effect free, this lets build validation
+# run before PowerShell security modules are needed by a real launch.
+if (@($args).Count -eq 1 -and $args[0] -eq '--version') {
+  & $matrixExe @args
+  exit $LASTEXITCODE
+}
+
 $env:MATRIX_PORTABLE_ROOT = $root
 $env:XDG_CONFIG_HOME      = Join-Path $root '.matrix\config'
 $env:XDG_DATA_HOME        = Join-Path $root '.matrix\data'
@@ -86,12 +100,6 @@ if (-not $env:OMNIROUTE_BASE_URL) {
   $env:OMNIROUTE_BASE_URL = 'http://127.0.0.1:20128/v1'
 }
 
-$matrixExe = Join-Path $root 'matrix.exe'
-if (-not (Test-Path -LiteralPath $matrixExe)) {
-  Write-Host "Error: matrix.exe not found at $matrixExe"
-  exit 1
-}
-
 # --- helpers ----------------------------------------------------------------
 
 # True when a listener answers on the given endpoint. Any HTTP response (2xx,
@@ -106,7 +114,11 @@ function Test-LocalService {
     $response = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -Headers $Headers -ErrorAction Stop
     return ($response.StatusCode -eq 200)
   } catch {
-    if ($_.Exception.Response -and $_.Exception.Response.StatusCode -eq 401) { return $true }
+    $responseProperty = $_.Exception.PSObject.Properties['Response']
+    $statusProperty = if ($responseProperty -and $responseProperty.Value) {
+      $responseProperty.Value.PSObject.Properties['StatusCode']
+    }
+    if ($statusProperty -and [int]$statusProperty.Value -eq 401) { return $true }
     return $false
   }
 }
@@ -566,24 +578,31 @@ try {
   }
 
   # --- Matrix TUI -----------------------------------------------------------
-  # This launcher runs invisibly, so the TUI is the only visible window.
-  # Normal by default; Hidden when output is redirected (tests, build smoke) or
-  # forced via MATRIX_TUI_WINDOW. Start-Process gives the console app its own
-  # window instead of inheriting the hidden launcher console.
+  # A manually invoked matrix.ps1 keeps the TUI in the current console so the
+  # user's font, window and buffer remain attached to the same host. matrix.cmd
+  # explicitly requests a Normal child window because its PowerShell process is
+  # hidden; redirected automation uses a Hidden child unless overridden.
   $tuiWindow = $env:MATRIX_TUI_WINDOW
-  if (-not $tuiWindow) {
-    $tuiWindow = if ([Console]::IsOutputRedirected) { 'Hidden' } else { 'Normal' }
-  }
+  $tuiInCurrentConsole = (-not $tuiWindow) -and (-not [Console]::IsOutputRedirected)
   $tuiArgString = (@($args) | ForEach-Object {
     if ($_ -match '\s') { "`"$($_.Replace('"', '""'))`"" } else { $_ }
   }) -join ' '
-  if ($tuiArgString) {
-    $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
-  } else {
-    $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+
+  if ($tuiInCurrentConsole) {
+    & $matrixExe @args
+    $matrixExit = $LASTEXITCODE
   }
-  $tuiProcess.WaitForExit()
-  $matrixExit = $tuiProcess.ExitCode
+
+  if (-not $tuiInCurrentConsole) {
+    if (-not $tuiWindow) { $tuiWindow = 'Hidden' }
+    if ($tuiArgString) {
+      $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
+    } else {
+      $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+    }
+    $tuiProcess.WaitForExit()
+    $matrixExit = $tuiProcess.ExitCode
+  }
   if ($null -eq $matrixExit) { $matrixExit = 0 }
 }
 finally {

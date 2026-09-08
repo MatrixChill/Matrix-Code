@@ -84,7 +84,9 @@ Describe 'OmniRoute Support' {
   It 'matrix.cmd should launch matrix.ps1 invisibly and without execution-policy flags' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.cmd') -Raw
     $content | Should -Match 'matrix\.ps1'
-    $content | Should -Match 'powershell\.exe.*-File'
+    $content | Should -Match 'MATRIX_POWERSHELL=powershell\.exe'
+    $content | Should -Match 'where pwsh\.exe.*MATRIX_POWERSHELL=pwsh\.exe'
+    $content | Should -Match 'MATRIX_POWERSHELL%.*-File'
     $content | Should -Match '-WindowStyle Hidden'
     $content | Should -Not -Match 'ExecutionPolicy'
   }
@@ -110,6 +112,12 @@ Describe 'OmniRoute Support' {
         $content | Should -Not -Match 'http://localhost:20260'
       }
     }
+  }
+
+  It 'connection-refused probes should remain safe under strict mode' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match "PSObject\.Properties\['Response'\]"
+    $content | Should -Not -Match '\$_\.Exception\.Response\s+-and'
   }
 
   It 'an already-active OmniRoute listener on 20128 is reused, not restarted or killed' {
@@ -211,8 +219,10 @@ Describe 'Security Invariants' {
 }
 
 Describe 'Launcher Window Behaviour' {
-  It 'matrix.ps1 should start the TUI with Start-Process so the launcher window stays hidden' {
+  It 'matrix.ps1 should preserve a manual console and start a child TUI for hidden launchers' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'tuiInCurrentConsole'
+    $content | Should -Match '&\s+\$matrixExe\s+@args'
     $content | Should -Match 'Start-Process -FilePath \$matrixExe'
     $content | Should -Match '\$tuiWindow'
     $content | Should -Match 'MATRIX_TUI_WINDOW'
@@ -221,7 +231,8 @@ Describe 'Launcher Window Behaviour' {
   It 'matrix.ps1 should hide the TUI when output is redirected and show it for the desktop user' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     $content | Should -Match 'IsOutputRedirected'
-    $content | Should -Match '''Normal'''
+    $content | Should -Match '''Hidden'''
+    (Get-Content -LiteralPath (Join-Path $DistDir 'matrix.cmd') -Raw) | Should -Match 'set\s+"MATRIX_TUI_WINDOW=Normal"'
   }
 
   It 'matrix.ps1 should call Start-Process without -ArgumentList when there are zero CLI arguments' {
