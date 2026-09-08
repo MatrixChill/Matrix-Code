@@ -150,6 +150,37 @@ function Get-ProcessCommandLine {
   }
 }
 
+# A .ps1/.cmd shim may exit after spawning the real service. Adopt only the
+# process that owns the expected listener and whose command line identifies the
+# service, so cleanup remains targeted even when the starter was a wrapper.
+function Get-MatchingListenerProcess {
+  param(
+    [string]$HealthUri,
+    [string]$CmdLineMarker
+  )
+  try {
+    $port = ([uri]$HealthUri).Port
+    $connection = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction Stop | Select-Object -First 1
+    if (-not $connection) { return $null }
+    $processInfo = Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($connection.OwningProcess)" -ErrorAction Stop
+    if (-not $processInfo.CommandLine -or $processInfo.CommandLine -notmatch [regex]::Escape($CmdLineMarker)) { return $null }
+    $process = Get-Process -Id $processInfo.ProcessId -ErrorAction Stop
+
+    while ($processInfo.ParentProcessId -gt 0) {
+      $parent = Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($processInfo.ParentProcessId)" -ErrorAction SilentlyContinue
+      if (-not $parent) { break }
+      if ($parent.Name -ne $processInfo.Name) { break }
+      if (-not $parent.CommandLine -or $parent.CommandLine -notmatch [regex]::Escape($CmdLineMarker)) { break }
+      $processInfo = $parent
+      $process = Get-Process -Id $parent.ProcessId -ErrorAction Stop
+    }
+
+    return $process
+  } catch {
+    return $null
+  }
+}
+
 # Poll a local endpoint until it answers, the tracked process exits, or the
 # deadline passes. Returns $true only on a confirmed listener.
 function Wait-LocalService {
@@ -229,10 +260,25 @@ function Start-ManagedService {
     Set-Content -LiteralPath $PidFile -Value $pidValue -Force
   }
 
+  $ready = $false
   if ($started -or $running) {
     $ready = Wait-LocalService -Uri $HealthUri -Headers $Headers -TrackedProcess $process -TimeoutSeconds $ReadinessTimeout -ServiceName $Name
+    if ($started -and -not $ready) {
+      # Script/cmd shims can exit successfully before their descendant binds.
+      # Continue probing the endpoint, then adopt the verified listener below.
+      $ready = Wait-LocalService -Uri $HealthUri -Headers $Headers -TimeoutSeconds $ReadinessTimeout -ServiceName $Name
+    }
     if (-not $ready) {
       Write-Host "Warning: $Name did not become ready within timeout. Starting Matrix Code anyway."
+    }
+  }
+
+  if ($started -and $ready) {
+    $listenerProcess = Get-MatchingListenerProcess -HealthUri $HealthUri -CmdLineMarker $CmdLineMarker
+    if ($listenerProcess) {
+      $process = $listenerProcess
+      $pidValue = $listenerProcess.Id
+      Set-Content -LiteralPath $PidFile -Value $pidValue -Force
     }
   }
 
@@ -241,7 +287,7 @@ function Start-ManagedService {
     Started = $started
     Pid     = $pidValue
     Process = $process
-    Ready   = $running
+    Ready   = [bool]$ready
   }
 }
 

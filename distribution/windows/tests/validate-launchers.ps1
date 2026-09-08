@@ -169,6 +169,10 @@ Assert-Test 'launchers use 127.0.0.1 not localhost for health checks' {
 Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -notmatch 'omniroute\.pid') { throw "No PID file tracking" }
+  if ($content -notmatch 'Get-MatchingListenerProcess') { throw "No listener process adoption for shim launches" }
+  if ($content -notmatch 'Get-NetTCPConnection -State Listen') { throw "No listener PID resolution" }
+  if ($content -notmatch '\$started -and -not \$ready') { throw "No readiness fallback after a shim exits" }
+  if ($content -notmatch '\$parent\.Name -ne \$processInfo\.Name') { throw "No same-service supervisor adoption" }
   if ($content -notmatch '\.Kill\(\)') { throw "No process-level Kill" }
 }
 

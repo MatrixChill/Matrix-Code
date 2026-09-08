@@ -101,6 +101,10 @@ Describe 'OmniRoute Support' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     $content | Should -Match 'omniroute\.pid'
     $content | Should -Match '\.Kill\(\)'
+    $content | Should -Match 'Get-MatchingListenerProcess'
+    $content | Should -Match 'Get-NetTCPConnection -State Listen'
+    $content | Should -Match '\$started -and -not \$ready'
+    $content | Should -Match '\$parent\.Name -ne \$processInfo\.Name'
   }
 
   It 'launchers should use 127.0.0.1 not localhost for health checks' {
