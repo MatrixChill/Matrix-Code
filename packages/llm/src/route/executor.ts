@@ -37,6 +37,7 @@ const MAX_RETRIES = 2
 const BASE_DELAY_MS = 500
 const MAX_DELAY_MS = 10_000
 const REDACTED = "<redacted>"
+const RETRY_DISABLED_HEADER = "x-opencode-retry-disabled"
 
 // One source of truth for what counts as a sensitive name across headers,
 // URL query keys, and field names embedded inside request/response bodies.
@@ -375,7 +376,12 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient> = Layer.e
           .pipe(Effect.mapError(toHttpError(redactedNames)), Effect.flatMap(statusError(request, redactedNames)))
       })
     return Service.of({
-      execute: (request) => retryStatusFailures(executeOnce(request)),
+      execute: (request) =>
+        Object.entries(request.headers).some(
+          ([name, value]) => name.toLowerCase() === RETRY_DISABLED_HEADER && value === "true",
+        )
+          ? executeOnce(request)
+          : retryStatusFailures(executeOnce(request)),
     })
   }),
 )

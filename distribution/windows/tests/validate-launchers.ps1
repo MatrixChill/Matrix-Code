@@ -178,6 +178,14 @@ Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
 
 # --- Matrix API orchestration ---
 
+Assert-Test 'bundled config exposes only the two Matrix API choices through port 20260' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'templates\opencode.omniroute.jsonc') -Raw
+  foreach ($r in @('matrix-api/matrix-coding-reliable', 'matrix-free-auto', 'matrix-coding-reliable', '127.0.0.1:20260/v1')) {
+    if ($content -notmatch [regex]::Escape($r)) { throw "Missing Matrix API config: $r" }
+  }
+  if ($content -match '"omniroute"\s*:') { throw "Template still exposes manual OmniRoute provider choices" }
+}
+
 Assert-Test 'matrix.ps1 references Matrix API env surface and port 20260' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   foreach ($r in @('20260', 'MATRIX_API_KEY', 'MATRIX_API_ENABLED', 'MATRIX_API_PORT', 'matrix-api.pid')) {
@@ -228,29 +236,22 @@ Assert-Test 'matrix.ps1 tracks the Matrix API PID for targeted cleanup' {
   }
 }
 
-# --- OpenRouter upstream credential ---
+# --- OmniRoute upstream credential ---
 
-Assert-Test 'matrix.ps1 resolves the OpenRouter key (env or DPAPI store)' {
+Assert-Test 'matrix.ps1 persists and restores an explicitly supplied OmniRoute key' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
-  if ($content -notmatch 'function Resolve-OpenRouterKey') { throw "No Resolve-OpenRouterKey function" }
-  if ($content -notmatch '\$env:OPENROUTER_API_KEY = \$openrouter\.Key') { throw "OpenRouter key is not armed via environment" }
-  if ($content -notmatch 'openrouter-api\.cred') { throw "No OpenRouter DPAPI store" }
+  if ($content -notmatch '\$env:OMNIROUTE_API_KEY = \$omnirouteApiKey') { throw "OmniRoute key is not armed via environment" }
+  if ($content -notmatch 'omniroute-api\.cred') { throw "No OmniRoute DPAPI store" }
 }
 
-Assert-Test 'matrix.ps1 never passes the OpenRouter key on a command line or to the console' {
+Assert-Test 'matrix.ps1 never invents or exposes an OmniRoute key' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
-  if ($content -match '\$startInfo\.Arguments =.*OPENROUTER_API_KEY') {
-    throw "OpenRouter key interpolated into the child command line"
+  if ($content -match '\$startInfo\.Arguments =.*OMNIROUTE_API_KEY') {
+    throw "OmniRoute key interpolated into the child command line"
   }
-  if ($content -match 'Write-Host[^\r\n]*\$openrouter') { throw "OpenRouter key printed via Write-Host" }
-  if ($content -match 'Set-Content[^\r\n]*\$openrouter') { throw "OpenRouter key persisted to disk in plaintext" }
-}
-
-Assert-Test 'matrix.ps1 only prompts for onboarding on a visible interactive console' {
-  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
-  if ($content -notmatch 'IsInputRedirected') { throw "No redirected-input check" }
-  if ($content -notmatch 'IsWindowVisible') { throw "No visible-console check" }
-  if ($content -notmatch 'Test-InteractiveConsole') { throw "No interactive-console gate" }
+  if ($content -match 'Write-Host[^\r\n]*\$omnirouteApiKey') { throw "OmniRoute key printed via Write-Host" }
+  if ($content -match '\$env:REQUIRE_API_KEY\s*=') { throw "Launcher forces OmniRoute API-key mode" }
+  if ($content -match 'No OmniRoute API key was configured\. Generated') { throw "Launcher invents an invalid OmniRoute key" }
 }
 
 Assert-Test 'the .matrix/state credential store stays out of Git and the release build' {

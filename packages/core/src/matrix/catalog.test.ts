@@ -6,7 +6,7 @@ describe("MatrixCatalog.CATALOG", () => {
     const models = Object.fromEntries(MatrixCatalog.CATALOG.map((c) => [c.model, c.id]))
     expect(models["auto"]).toBe("omniroute/matrix-auto")
     expect(models["auto/fast"]).toBe("omniroute/matrix-auto-fast")
-    expect(models["auto/coding"]).toBe("omniroute/matrix-free-coding")
+    expect(models["auto/coding:free"]).toBe("omniroute/matrix-free-coding")
     expect(models["matrix/matrix-coding"]).toBe("omniroute/matrix-coding")
     expect(models["matrix/matrix-coding-reliable"]).toBe("omniroute/matrix-coding-reliable")
   })

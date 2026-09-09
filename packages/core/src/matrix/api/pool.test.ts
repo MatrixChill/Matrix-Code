@@ -94,15 +94,23 @@ describe("Matrix API pool classification", () => {
     expect(entry?.classification).toBe("OMNIROUTE_BACKED")
   })
 
-  test("returns all candidate IDs in rejectedOmniRouteBacked in poolStatus", () => {
+  test("does not report catalog routes as rejected when OmniRoute is absent", () => {
     const settings = testSettings({
       poolEnv: env({}),
     })
     const status = MatrixApiPool.poolStatus(settings, settings.poolEnv)
     expect(status.candidates.length).toBeGreaterThan(0)
     expect(status.eligibleFree).toBe(0)
-    expect(status.rejectedOmniRouteBacked.length).toBeGreaterThan(0)
+    expect(status.rejectedOmniRouteBacked).toEqual([])
     expect(status.override.configured).toBe(false)
+  })
+
+  test("reports the OmniRoute free policy as eligible instead of rejected", () => {
+    const settings = testSettings({ omnirouteBaseURL: "http://127.0.0.1:20128/v1", poolEnv: env({}) })
+    const status = MatrixApiPool.poolStatus(settings, settings.poolEnv)
+    expect(status.eligibleFree).toBe(1)
+    expect(status.eligibleOmniRouteBacked).toEqual(["omniroute/matrix-free-coding"])
+    expect(status.rejectedOmniRouteBacked).toEqual([])
   })
 
   test("override status reports active when no free candidates exist and override is safe", () => {

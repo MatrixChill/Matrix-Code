@@ -58,8 +58,8 @@ export interface FallbackOutcome {
 export function decideFailure(
   code: string | undefined,
   text: string,
-  attempt: number,
-  maxAttempts: number,
+  _attempt: number,
+  _maxAttempts: number,
   router: MatrixRouter.Router,
   profile: MatrixProfile.ProfileID,
   candidates: readonly MatrixCatalog.Candidate[],
@@ -68,10 +68,9 @@ export function decideFailure(
   const kind = classifyError(code, text)
   // Permanent errors: never fall back.
   if (kind === "none") return { action: "stop" }
-  // Bounded retries on the same model first.
+  // Never repeat a failed candidate inside the same request. The caller passes
+  // only candidates that have not been attempted yet.
   if (kind === "retry") {
-    if (attempt < maxAttempts) return { action: "continue" }
-    // Retries exhausted: fall back rather than stop, if possible.
     const selection = router.fallback(profile, candidates, isAvailable)
     if (selection === undefined) return { action: "stop" }
     return { action: "fallback", selection }

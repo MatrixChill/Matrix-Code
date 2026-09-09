@@ -9,7 +9,7 @@ export interface Candidate {
   readonly provider: string
   // Gateway-facing model id: the string the OmniRoute gateway expects as
   // `model` in a chat completion. The opencode provider config aliases point
-  // here (`matrix-free-coding` -> `auto/coding`), and the session runner records
+  // here (`matrix-free-coding` -> `auto/coding:free`), and the session runner records
   // success/failure against this same id, so candidate matching only works when
   // it is the real wire id.
   readonly model: string
@@ -68,8 +68,19 @@ const GATEWAY_ROUTES: Readonly<Record<string, GatewayRoute>> = {
     context: 128000,
   },
   "auto/coding": {
+    id: "omniroute/matrix-coding-auto",
+    name: "OmniRoute Coding",
+    coding: 0.8,
+    reasoning: 0.7,
+    speed: 0.6,
+    toolCalls: 0.8,
+    vision: false,
+    cost: 2,
+    context: 128000,
+  },
+  "auto/coding:free": {
     id: "omniroute/matrix-free-coding",
-    name: "OmniRoute Free Coding",
+    name: "Matrix Free Auto",
     coding: 0.8,
     reasoning: 0.7,
     speed: 0.6,
@@ -121,7 +132,7 @@ const GATEWAY_ROUTES: Readonly<Record<string, GatewayRoute>> = {
 export const CATALOG: readonly Candidate[] = [
   "auto",
   "auto/fast",
-  "auto/coding",
+  "auto/coding:free",
   "matrix/matrix-coding",
   "matrix/matrix-coding-reliable",
 ].map((model) => ({ ...GATEWAY_ROUTES[model]!, provider: "omniroute", model }))

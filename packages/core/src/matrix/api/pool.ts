@@ -1,11 +1,9 @@
-// Direct provider pool for the local OpenAI-compatible Matrix API.
+// Fallback direct-provider pool for the local OpenAI-compatible Matrix API.
 //
-// The Matrix API must never chat through the OmniRoute path that could call
-// Matrix (recursion). Instead it chats through its OWN direct provider pool:
-// real, OpenAI-compatible, cost-0 providers that Matrix can reach directly.
-// Each candidate activates only when its standard credential env var is
-// present; availability is therefore environment-driven and no credential ever
-// lives in source or in status output.
+// The preferred executor path is OmniRoute's free-only policy. These direct
+// candidates remain as a compatibility fallback when no OmniRoute URL is
+// configured. Each activates only when its standard credential env var is
+// present; no credential ever lives in source or status output.
 //
 // Candidates come from the opencode provider registry (the same ecosystem
 // Matrix ships): model ids, base URLs and environments are real provider
@@ -14,13 +12,13 @@
 //   DIRECT_FREE          cost-0 model, credential present, direct reach
 //   DIRECT_AUTHENTICATED non-free model with a credential (e.g. an explicit
 //                        MATRIX_API_DIRECT_* override route)
-//   OMNIROUTE_BACKED     would call back through the OmniRoute gateway; never
-//                        eligible for execution
+//   OMNIROUTE_BACKED     a direct override that points at the gateway and is
+//                        rejected to avoid recursive direct configuration
 //   UNAVAILABLE          credential missing or endpoint unsafe at the moment
 
 export * as MatrixApiPool from "./pool"
 
-import { MatrixCatalog } from "../catalog"
+import type { Candidate } from "../catalog"
 import { routesToOmniRoute, type Settings } from "./config"
 
 export type Classification = "DIRECT_FREE" | "DIRECT_AUTHENTICATED" | "OMNIROUTE_BACKED" | "UNAVAILABLE"
@@ -31,7 +29,7 @@ export type Env = Readonly<Record<string, string | undefined>>
 // metadata the matrix router scores; `baseURL`/`keyEnv` resolve the outbound
 // OpenAI-compatible call. `free` marks cost-0 models (DIRECT_FREE eligible).
 export interface DirectCandidate {
-  readonly candidate: MatrixCatalog.Candidate
+  readonly candidate: Candidate
   readonly baseURL: string
   readonly keyEnv: string
   readonly free: boolean
@@ -181,6 +179,7 @@ export interface PoolCandidateStatus {
 export interface PoolStatus {
   readonly candidates: ReadonlyArray<PoolCandidateStatus>
   readonly eligibleFree: number
+  readonly eligibleOmniRouteBacked: ReadonlyArray<string>
   readonly rejectedOmniRouteBacked: ReadonlyArray<string>
   readonly override: {
     readonly configured: boolean
@@ -189,34 +188,31 @@ export interface PoolStatus {
   }
 }
 
-// Audit every candidate Matrix knows about (pool + catalog) so the status
-// endpoint can report eligible free candidates, rejected OmniRoute-backed ones
-// and the override state without ever exposing credentials.
+// Audit the direct fallback pool plus the preferred free-only OmniRoute route
+// without exposing credentials.
 export function poolStatus(settings: Settings, env: Env = process.env): PoolStatus {
   const resolved = resolvePool(settings, env)
-  const catalogAudit: readonly PoolEntry[] = [
-    ...MatrixCatalog.CATALOG,
-    ...MatrixCatalog.VISION_CANDIDATES,
-  ].map((candidate) => ({
-    candidate,
-    baseURL: "",
-    keyEnv: "",
-    free: false,
-    classification: "OMNIROUTE_BACKED" as const,
-  }))
-  const candidates: readonly PoolCandidateStatus[] = [...resolved.all, ...catalogAudit].map((entry) => ({
-    id: entry.candidate.id,
-    name: entry.candidate.name,
-    classification: entry.classification,
-  }))
+  const omnirouteActive = settings.omnirouteBaseURL !== undefined && settings.directBaseURL === undefined
+  const candidates: readonly PoolCandidateStatus[] = [
+    ...resolved.all.map((entry) => ({
+      id: entry.candidate.id,
+      name: entry.candidate.name,
+      classification: entry.classification,
+    })),
+    ...(omnirouteActive
+      ? [{
+          id: "omniroute/matrix-free-coding",
+          name: "Matrix Free Auto",
+          classification: "OMNIROUTE_BACKED" as const,
+        }]
+      : []),
+  ]
   const override = overrideEntry(settings)
   return {
     candidates,
-    eligibleFree: resolved.free.length,
-    rejectedOmniRouteBacked: [
-      ...resolved.omniroute.map((entry) => entry.candidate.id),
-      ...catalogAudit.map((entry) => entry.candidate.id),
-    ],
+    eligibleFree: resolved.free.length + (omnirouteActive ? 1 : 0),
+    eligibleOmniRouteBacked: omnirouteActive ? ["omniroute/matrix-free-coding"] : [],
+    rejectedOmniRouteBacked: resolved.omniroute.map((entry) => entry.candidate.id),
     override: {
       configured: settings.directBaseURL !== undefined,
       safe: override?.classification === "DIRECT_AUTHENTICATED",
