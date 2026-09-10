@@ -55,6 +55,7 @@ if (-not $root) {
   $root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 }
 $root = (Resolve-Path -LiteralPath $root).Path
+$originalXdgConfigHome = $env:XDG_CONFIG_HOME
 
 $matrixExe = Join-Path $root 'matrix.exe'
 if (-not (Test-Path -LiteralPath $matrixExe)) {
@@ -113,6 +114,18 @@ function Test-LocalService {
   try {
     $response = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -Headers $Headers -ErrorAction Stop
     return ($response.StatusCode -eq 200)
+  } catch {
+    return $false
+  }
+}
+
+function Test-OmniRouteService {
+  param([string]$Uri)
+  try {
+    $response = Invoke-WebRequest -Uri $Uri -Method Get -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+    if ($response.StatusCode -ne 200) { return $false }
+    $body = $response.Content | ConvertFrom-Json -ErrorAction Stop
+    return ($body.status -eq 'ok')
   } catch {
     return $false
   }
@@ -399,30 +412,127 @@ if ($explicitApiDisable) {
 
 # --- OmniRoute credential ---------------------------------------------------
 $omnirouteCredFile = Join-Path $root '.matrix\state\omniroute-api.cred'
-$omnirouteApiKey = $null
 $_omniEnvKey = $env:OMNIROUTE_API_KEY
 if ($_omniEnvKey) { $_omniEnvKey = $_omniEnvKey.Trim() }
+Remove-Item Env:OMNIROUTE_API_KEY -ErrorAction SilentlyContinue
 
-if ($_omniEnvKey) {
-  $omnirouteApiKey = $_omniEnvKey
-  if (-not (Test-Path -LiteralPath $omnirouteCredFile)) {
-    Write-MatrixApiKeyToStore -Path $omnirouteCredFile -Key $omnirouteApiKey
+function Read-OmniRouteApiKeysFromDatabase {
+  param([string]$Path)
+  if (-not (Test-Path -LiteralPath $Path)) { return @() }
+
+  if (-not ('MatrixOmniRouteSqlite' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public static class MatrixOmniRouteSqlite {
+  const int SQLITE_OK = 0;
+  const int SQLITE_ROW = 100;
+  const int SQLITE_OPEN_READONLY = 1;
+
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_open_v2", CharSet = CharSet.Ansi)]
+  static extern int Open(byte[] filename, out IntPtr db, int flags, IntPtr vfs);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_prepare_v2", CharSet = CharSet.Ansi)]
+  static extern int Prepare(IntPtr db, byte[] sql, int length, out IntPtr statement, IntPtr tail);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_step")]
+  static extern int Step(IntPtr statement);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_column_text")]
+  static extern IntPtr ColumnText(IntPtr statement, int column);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_column_bytes")]
+  static extern int ColumnBytes(IntPtr statement, int column);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_finalize")]
+  static extern int Finalize(IntPtr statement);
+  [DllImport("winsqlite3.dll", EntryPoint = "sqlite3_close")]
+  static extern int Close(IntPtr db);
+
+  static byte[] Utf8(string value) {
+    byte[] bytes = Encoding.UTF8.GetBytes(value + "\0");
+    return bytes;
   }
-} else {
-  $omnirouteApiKey = Read-MatrixApiKeyFromStore -Path $omnirouteCredFile
-  if ($omnirouteApiKey) {
-    Write-Host 'OmniRoute API key restored from .matrix\state\omniroute-api.cred.'
+
+  static string ReadText(IntPtr statement) {
+    IntPtr pointer = ColumnText(statement, 0);
+    int length = ColumnBytes(statement, 0);
+    if (pointer == IntPtr.Zero || length <= 0) return null;
+    byte[] bytes = new byte[length];
+    Marshal.Copy(pointer, bytes, 0, length);
+    return Encoding.UTF8.GetString(bytes);
+  }
+
+  static List<string> Query(IntPtr db, string sql) {
+    IntPtr statement;
+    byte[] bytes = Utf8(sql);
+    if (Prepare(db, bytes, bytes.Length - 1, out statement, IntPtr.Zero) != SQLITE_OK)
+      throw new InvalidOperationException("Unable to read OmniRoute credential metadata.");
+    try {
+      List<string> values = new List<string>();
+      while (Step(statement) == SQLITE_ROW) {
+        string value = ReadText(statement);
+        if (!String.IsNullOrWhiteSpace(value)) values.Add(value);
+      }
+      return values;
+    } finally {
+      Finalize(statement);
+    }
+  }
+
+  public static string[] ReadActiveKeys(string path) {
+    IntPtr db;
+    byte[] filename = Utf8(path);
+    if (Open(filename, out db, SQLITE_OPEN_READONLY, IntPtr.Zero) != SQLITE_OK)
+      return new string[0];
+    try {
+      HashSet<string> columns = new HashSet<string>(Query(db, "SELECT name FROM pragma_table_info('api_keys')"), StringComparer.OrdinalIgnoreCase);
+      if (!columns.Contains("key")) return new string[0];
+      List<string> conditions = new List<string>();
+      if (columns.Contains("is_active")) conditions.Add("COALESCE(is_active, 1) = 1");
+      if (columns.Contains("revoked_at")) conditions.Add("revoked_at IS NULL");
+      if (columns.Contains("is_banned")) conditions.Add("COALESCE(is_banned, 0) = 0");
+      if (columns.Contains("expires_at")) conditions.Add("(expires_at IS NULL OR datetime(expires_at) > datetime('now'))");
+      string where = conditions.Count == 0 ? "" : " WHERE " + String.Join(" AND ", conditions);
+      string order = columns.Contains("last_used_at") ? " ORDER BY last_used_at IS NULL, last_used_at DESC" : "";
+      return Query(db, "SELECT [key] FROM api_keys" + where + order).ToArray();
+    } finally {
+      Close(db);
+    }
   }
 }
-Remove-Variable _omniEnvKey -ErrorAction SilentlyContinue
+'@
+  }
 
-if ($omnirouteApiKey) { $env:OMNIROUTE_API_KEY = $omnirouteApiKey }
+  try {
+    return @([MatrixOmniRouteSqlite]::ReadActiveKeys($Path))
+  } catch {
+    return @()
+  }
+}
+
+function Resolve-OmniRouteApiKey {
+  param(
+    [string]$HealthUri,
+    [string]$CredentialPath,
+    [string[]]$StoragePaths,
+    [string]$EnvironmentKey
+  )
+
+  $stored = Read-MatrixApiKeyFromStore -Path $CredentialPath
+  $candidates = @($EnvironmentKey, $stored) + @($StoragePaths | ForEach-Object {
+    Read-OmniRouteApiKeysFromDatabase -Path $_
+  })
+
+  foreach ($candidate in @($candidates | Where-Object { $_ } | Select-Object -Unique)) {
+    if (-not (Test-LocalService -Uri $HealthUri -Headers @{ Authorization = "Bearer $candidate" })) { continue }
+    if ($candidate -ne $stored) { Write-MatrixApiKeyToStore -Path $CredentialPath -Key $candidate }
+    return $candidate
+  }
+  return $null
+}
 
 $matrixApiHealth = "http://127.0.0.1:$matrixApiPort/v1/models"
 $matrixApiHeaders = @{}
 if ($matrixApiKey) { $matrixApiHeaders['Authorization'] = "Bearer $matrixApiKey" }
-$omniRouteHeaders = @{}
-if ($omnirouteApiKey) { $omniRouteHeaders['Authorization'] = "Bearer $omnirouteApiKey" }
 
 # --- lifecycle state --------------------------------------------------------
 
@@ -430,6 +540,7 @@ $readinessTimeout = 15
 
 $omniRoutePidFile = Join-Path $root '.matrix\omniroute.pid'
 $omniRouteHealth  = 'http://127.0.0.1:20128/v1/models'
+$omniRouteLiveness = 'http://127.0.0.1:20128/api/health/ping'
 $omniRouteStarted = $false
 $omniRouteProcess = $null
 
@@ -453,12 +564,15 @@ try {
   $canStartExe  = Test-Path -LiteralPath $omniExe
 
   # --- PROBE FIRST: if OmniRoute already healthy, reuse and skip all startup logic ---
-  $omniRouteHealthy = Test-LocalService -Uri $omniRouteHealth -Headers $omniRouteHeaders
-  if ($omniRouteHealthy) {
-    Write-Host "OmniRoute already active at $omniRouteHealth. Reusing it."
+  $omniRouteAlive = Test-OmniRouteService -Uri $omniRouteLiveness
+  if ($omniRouteAlive) {
+    Write-Host "OmniRoute already active at $omniRouteLiveness. Reusing it."
     $omniRouteStarted = $true
     $omniRouteProcess = $null
   } else {
+    if (Get-NetTCPConnection -State Listen -LocalPort 20128 -ErrorAction SilentlyContinue) {
+      throw 'Port 20128 is occupied by a service that could not be identified as OmniRoute.'
+    }
     # No healthy OmniRoute — resolve a launch axis (vendored exe, vendored node,
     # or a global omniroute installation: .exe, .ps1 / ExternalScript, .cmd/.bat).
     $globalOmni = $null
@@ -477,8 +591,7 @@ try {
     if ($canStartNode -or $canStartExe -or $globalOmni) {
       $omniRoute = Start-ManagedService `
         -Name 'OmniRoute' `
-        -HealthUri $omniRouteHealth `
-        -Headers $omniRouteHeaders `
+        -HealthUri $omniRouteLiveness `
         -PidFile $omniRoutePidFile `
         -CmdLineMarker 'omniroute' `
         -ReadinessTimeout $readinessTimeout `
@@ -518,11 +631,32 @@ try {
       }
       $omniRouteStarted = $omniRoute.Started
       $omniRouteProcess = $omniRoute.Process
+      $omniRouteAlive = $omniRoute.Ready -and (Test-OmniRouteService -Uri $omniRouteLiveness)
     } else {
       Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
       Write-Host '  OmniRoute routes may report "Cannot connect to API" until a provider is configured.'
     }
   }
+
+  if ($omniRouteAlive) {
+    $storagePaths = @(
+      if ($env:DATA_DIR) { Join-Path $env:DATA_DIR 'storage.sqlite' }
+      if ($originalXdgConfigHome) { Join-Path $originalXdgConfigHome 'omniroute\storage.sqlite' }
+      Join-Path $root '.matrix\config\omniroute\storage.sqlite'
+      if ($env:USERPROFILE) { Join-Path $env:USERPROFILE '.omniroute\storage.sqlite' }
+    ) | Select-Object -Unique
+    $omnirouteApiKey = Resolve-OmniRouteApiKey `
+      -HealthUri $omniRouteHealth `
+      -CredentialPath $omnirouteCredFile `
+      -StoragePaths $storagePaths `
+      -EnvironmentKey $_omniEnvKey
+    if (-not $omnirouteApiKey) {
+      throw 'OmniRoute is running, but no active local API credential could authenticate. Create an endpoint key in OmniRoute and reopen Matrix Code.'
+    }
+    $env:OMNIROUTE_API_KEY = $omnirouteApiKey
+    Write-Host 'OmniRoute authentication resolved for Matrix Code.'
+  }
+  Remove-Variable _omniEnvKey -ErrorAction SilentlyContinue
 
   # --- Matrix API (port 20260) ----------------------------------------------
   # Keyed like the core API contract. A live listener is reused; otherwise the

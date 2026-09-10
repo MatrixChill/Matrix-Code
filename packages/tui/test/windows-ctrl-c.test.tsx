@@ -5,6 +5,17 @@ import { expect, test } from "bun:test"
 import { onCleanup } from "solid-js"
 import { OPENCODE_BASE_MODE } from "../src/keymap"
 
+test("Windows Ctrl+C guard is scoped to the TUI and never changes console appearance", async () => {
+  const terminal = await Bun.file(new URL("../src/terminal-win32.ts", import.meta.url)).text()
+  const app = await Bun.file(new URL("../src/app.tsx", import.meta.url)).text()
+
+  expect(app).toContain("Effect.sync(win32InstallCtrlCGuard)")
+  expect(app).toContain("remove?.()")
+  expect(terminal).toContain("mode & ~ENABLE_PROCESSED_INPUT")
+  expect(terminal).toContain("SetConsoleMode(handle, initial)")
+  expect(terminal).not.toMatch(/SetCurrentConsoleFontEx|SetConsoleScreenBufferInfoEx|SetConsoleWindowInfo/)
+})
+
 // Regression test for the Windows Ctrl+C blocker:
 // packages/tui/src/component/prompt/index.tsx installs a Ctrl+C key intercept.
 //

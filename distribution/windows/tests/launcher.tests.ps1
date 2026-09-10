@@ -120,8 +120,7 @@ Describe 'OmniRoute Support' {
 
   It 'connection-refused probes should remain safe under strict mode' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
-    $content | Should -Match "PSObject\.Properties\['Response'\]"
-    $content | Should -Not -Match '\$_\.Exception\.Response\s+-and'
+    $content | Should -Match 'catch \{\s*return \$false\s*\}'
   }
 
   It 'an already-active OmniRoute listener on 20128 is reused, not restarted or killed' {
@@ -147,13 +146,15 @@ Describe 'OmniRoute Support' {
 }
 
 Describe 'Matrix API Support' {
-  It 'the bundled config exposes only Matrix Free Auto and Matrix Coding Reliable through port 20260' {
+  It 'the bundled config preserves the direct OmniRoute free model and both Matrix API models' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'templates\opencode.omniroute.jsonc') -Raw
-    $content | Should -Match 'matrix-api/matrix-coding-reliable'
+    $content | Should -Match 'omniroute/auto-coding-free'
+    $content | Should -Match 'auto/coding:free'
+    $content | Should -Match 'Matrix Coding Free \(Direct\)'
     $content | Should -Match 'matrix-free-auto'
     $content | Should -Match 'matrix-coding-reliable'
     $content | Should -Match '127\.0\.0\.1:20260/v1'
-    $content | Should -Not -Match '"omniroute"\s*:'
+    $content | Should -Match '127\.0\.0\.1:20128/v1'
   }
 
   It 'matrix.ps1 should reference the Matrix API env surface and port 20260' {
@@ -271,12 +272,18 @@ Describe 'Build Script Integration' {
 }
 
 Describe 'OmniRoute Upstream Credential' {
-  It 'matrix.ps1 should persist a supplied OmniRoute key and restore it on later launches' {
+  It 'matrix.ps1 should resolve an active local OmniRoute key and arm Matrix children only after validation' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'Read-OmniRouteApiKeysFromDatabase'
+    $content | Should -Match "SELECT \[key\] FROM api_keys"
+    $content | Should -Match 'COALESCE\(is_active, 1\) = 1'
+    $content | Should -Match 'revoked_at IS NULL'
+    $content | Should -Match 'Test-LocalService -Uri \$HealthUri -Headers @\{ Authorization = "Bearer \$candidate" \}'
     $content | Should -Match 'omniroute-api\.cred'
     $content | Should -Match '\$env:OMNIROUTE_API_KEY = \$omnirouteApiKey'
     $content | Should -Not -Match '\$startInfo\.Arguments =.*OMNIROUTE_API_KEY'
     $content | Should -Not -Match 'Write-Host[^\r\n]*\$omnirouteApiKey'
+    $content | Should -Not -Match 'Write-Host[^\r\n]*\$candidate'
   }
 
   It 'matrix.ps1 should not invent a gateway key or force REQUIRE_API_KEY' {
@@ -286,6 +293,14 @@ Describe 'OmniRoute Upstream Credential' {
     $content | Should -Not -Match 'Read-Host[^\r\n]*OmniRoute'
   }
 
+  It 'matrix.ps1 should distinguish public OmniRoute liveness from authenticated readiness' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match '/api/health/ping'
+    $content | Should -Match 'Test-OmniRouteService'
+    $content | Should -Match '/v1/models'
+    $content | Should -Match 'no active local API credential could authenticate'
+  }
+
   It 'the .matrix/state credential store should stay out of Git and the release build' {
     $rootIgnore = Get-Content -LiteralPath (Join-Path $RepoRoot '.gitignore') -Raw
     $rootIgnore | Should -Match '\.matrix'
@@ -293,6 +308,56 @@ Describe 'OmniRoute Upstream Credential' {
     $tracked | Should -Not -Match '\.matrix'
     $build = Get-Content -LiteralPath (Join-Path $RepoRoot 'script\build-windows-distribution.ps1') -Raw
     $build | Should -Not -Match '\.matrix'
+  }
+}
+
+Describe 'OmniRoute Credential Auto Resolution' {
+  BeforeAll {
+    $launcherPath = (Resolve-Path -LiteralPath (Join-Path $DistDir 'matrix.ps1')).Path
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($launcherPath, [ref]$tokens, [ref]$parseErrors)
+    foreach ($name in @('Read-MatrixApiKeyFromStore', 'Write-MatrixApiKeyToStore', 'Read-OmniRouteApiKeysFromDatabase', 'Test-LocalService', 'Resolve-OmniRouteApiKey')) {
+      $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true)
+      if (-not $fn) { throw "$name not found in matrix.ps1" }
+      . ([scriptblock]::Create($fn.Extent.Text))
+    }
+  }
+
+  It 'finds a valid active storage credential when OMNIROUTE_API_KEY was not defined' {
+    Mock Read-MatrixApiKeyFromStore { return $null }
+    Mock Read-OmniRouteApiKeysFromDatabase { return @('stale-test-value', 'valid-test-value') }
+    Mock Test-LocalService {
+      param($Uri, $Headers)
+      return ($Uri -eq 'http://127.0.0.1:20128/v1/models' -and $Headers.Authorization -eq 'Bearer valid-test-value')
+    }
+    Mock Write-MatrixApiKeyToStore { }
+
+    $result = Resolve-OmniRouteApiKey `
+      -HealthUri 'http://127.0.0.1:20128/v1/models' `
+      -CredentialPath 'TestDrive:\omniroute.cred' `
+      -StoragePaths @('TestDrive:\storage.sqlite') `
+      -EnvironmentKey $null
+
+    $result | Should -Be 'valid-test-value'
+    Should -Invoke Test-LocalService -Times 2 -Exactly
+    Should -Invoke Write-MatrixApiKeyToStore -Times 1 -Exactly
+  }
+
+  It 'rejects every invalid candidate instead of treating 401 as readiness' {
+    Mock Read-MatrixApiKeyFromStore { return 'stored-test-value' }
+    Mock Read-OmniRouteApiKeysFromDatabase { return @('database-test-value') }
+    Mock Test-LocalService { return $false }
+    Mock Write-MatrixApiKeyToStore { }
+
+    $result = Resolve-OmniRouteApiKey `
+      -HealthUri 'http://127.0.0.1:20128/v1/models' `
+      -CredentialPath 'TestDrive:\omniroute.cred' `
+      -StoragePaths @('TestDrive:\storage.sqlite') `
+      -EnvironmentKey $null
+
+    $result | Should -BeNullOrEmpty
+    Should -Invoke Write-MatrixApiKeyToStore -Times 0 -Exactly
   }
 }
 

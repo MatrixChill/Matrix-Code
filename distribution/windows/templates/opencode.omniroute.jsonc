@@ -1,7 +1,24 @@
-{
+﻿{
   "$schema": "https://opencode.ai/config.json",
-  "model": "matrix-api/matrix-coding-reliable",
+  "model": "omniroute/auto-coding-free",
   "provider": {
+    "omniroute": {
+      "name": "OmniRoute Free",
+      "npm": "@ai-sdk/openai-compatible",
+      "env": ["OMNIROUTE_API_KEY"],
+      "options": {
+        "baseURL": "http://127.0.0.1:20128/v1"
+      },
+      "models": {
+        "auto-coding-free": {
+          "id": "auto/coding:free",
+          "name": "Matrix Coding Free (Direct)",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        }
+      }
+    },
     "matrix-api": {
       "name": "Matrix API",
       "npm": "@ai-sdk/openai-compatible",

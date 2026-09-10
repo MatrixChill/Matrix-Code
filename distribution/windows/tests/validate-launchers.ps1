@@ -178,12 +178,11 @@ Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
 
 # --- Matrix API orchestration ---
 
-Assert-Test 'bundled config exposes only the two Matrix API choices through port 20260' {
+Assert-Test 'bundled config exposes the direct free route and both Matrix API choices' {
   $content = Get-Content -LiteralPath (Join-Path $d 'templates\opencode.omniroute.jsonc') -Raw
-  foreach ($r in @('matrix-api/matrix-coding-reliable', 'matrix-free-auto', 'matrix-coding-reliable', '127.0.0.1:20260/v1')) {
+  foreach ($r in @('omniroute/auto-coding-free', 'auto/coding:free', 'Matrix Coding Free (Direct)', 'matrix-free-auto', 'matrix-coding-reliable', '127.0.0.1:20260/v1', '127.0.0.1:20128/v1')) {
     if ($content -notmatch [regex]::Escape($r)) { throw "Missing Matrix API config: $r" }
   }
-  if ($content -match '"omniroute"\s*:') { throw "Template still exposes manual OmniRoute provider choices" }
 }
 
 Assert-Test 'matrix.ps1 references Matrix API env surface and port 20260' {
@@ -238,10 +237,13 @@ Assert-Test 'matrix.ps1 tracks the Matrix API PID for targeted cleanup' {
 
 # --- OmniRoute upstream credential ---
 
-Assert-Test 'matrix.ps1 persists and restores an explicitly supplied OmniRoute key' {
+Assert-Test 'matrix.ps1 resolves and validates an active local OmniRoute key' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -notmatch '\$env:OMNIROUTE_API_KEY = \$omnirouteApiKey') { throw "OmniRoute key is not armed via environment" }
   if ($content -notmatch 'omniroute-api\.cred') { throw "No OmniRoute DPAPI store" }
+  foreach ($required in @('Read-OmniRouteApiKeysFromDatabase', 'SELECT [key] FROM api_keys', 'COALESCE(is_active, 1) = 1', 'revoked_at IS NULL', '/api/health/ping')) {
+    if ($content -notmatch [regex]::Escape($required)) { throw "Missing OmniRoute auto-auth behavior: $required" }
+  }
 }
 
 Assert-Test 'matrix.ps1 never invents or exposes an OmniRoute key' {
@@ -250,6 +252,7 @@ Assert-Test 'matrix.ps1 never invents or exposes an OmniRoute key' {
     throw "OmniRoute key interpolated into the child command line"
   }
   if ($content -match 'Write-Host[^\r\n]*\$omnirouteApiKey') { throw "OmniRoute key printed via Write-Host" }
+  if ($content -match 'Write-Host[^\r\n]*\$candidate') { throw "OmniRoute candidate printed via Write-Host" }
   if ($content -match '\$env:REQUIRE_API_KEY\s*=') { throw "Launcher forces OmniRoute API-key mode" }
   if ($content -match 'No OmniRoute API key was configured\. Generated') { throw "Launcher invents an invalid OmniRoute key" }
 }
