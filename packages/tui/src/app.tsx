@@ -86,7 +86,7 @@ import type { EventSource } from "./context/sdk"
 import { DialogVariant } from "./component/dialog-variant"
 import { createTuiAttention } from "./attention"
 import * as TuiAudio from "./audio"
-import { win32DisableProcessedInput, win32FlushInputBuffer } from "./terminal-win32"
+import { win32FlushInputBuffer, win32InstallCtrlCGuard } from "./terminal-win32"
 import { destroyRenderer } from "./util/renderer"
 import { cliErrorMessage, errorFormat } from "./util/error"
 import { I18nProvider, t, useI18n } from "./i18n"
@@ -215,7 +215,10 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
             destroyRenderer(renderer)
           }),
       )
-      win32DisableProcessedInput()
+      yield* Effect.acquireRelease(
+        Effect.sync(win32InstallCtrlCGuard),
+        (remove) => Effect.sync(() => remove?.()),
+      )
       const keymap = createDefaultOpenTuiKeymap(renderer)
       yield* Effect.acquireRelease(
         Effect.sync(() => registerOpencodeKeymap(keymap, renderer, input.config)),

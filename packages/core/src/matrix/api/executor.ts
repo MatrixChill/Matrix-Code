@@ -1,24 +1,20 @@
 // Chat execution for the local OpenAI-compatible Matrix API.
 //
-// A chat completion NEVER routes through the OmniRoute provider. It only
-// travels through Matrix's own direct provider pool — real OpenAI-compatible
-// free providers Matrix reaches directly (see pool.ts) — or, as a legacy
-// override, an explicitly configured `MATRIX_API_DIRECT_BASE_URL` upstream.
-// OmniRoute-backed candidates are rejected up front (recursion protection),
-// and the legacy direct override is only used when no eligible free candidate
-// exists. Outbound requests are stamped with recursion headers so a chain of
-// Matrix APIs cannot loop; a mis-configured chain is cut at the hop limit with
-// a structured error.
+// The preferred path is the local OmniRoute gateway's `auto/coding:free`
+// policy. OmniRoute owns provider health, quota filtering and provider-level
+// fallback; Matrix owns the logical models, recursion guard and route health.
+// The legacy direct free pool remains available only when no OmniRoute URL is
+// configured.
 //
-// `matrix-coding` picks the best eligible free candidate once.
-// `matrix-coding-reliable` retries and falls back across the eligible pool via
-// MatrixRouter health/cooldown plus MatrixReliable error classification.
+// `matrix-coding-reliable` falls back across the eligible pool without
+// repeating a failed Matrix candidate.
 
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Option, Sink, Stream } from "effect"
 import { randomUUID } from "node:crypto"
-import { LLM, Message, type LLMError, type Model } from "@opencode-ai/llm"
+import { InvalidProviderOutputReason, LLM, LLMError, Message, type LLMEvent, type Model } from "@opencode-ai/llm"
 import { OpenAICompatible } from "@opencode-ai/llm/providers"
 import { LLMClient, Auth } from "@opencode-ai/llm/route"
+import { MatrixCatalog } from "../catalog"
 import { MatrixRouterService } from "../router-service"
 import { MatrixRouter } from "../router"
 import { MatrixReliable } from "../reliable"
@@ -41,6 +37,10 @@ export interface ChatCompletionInput {
   readonly incomingHop: number
 }
 
+export type ChatCompletionResult =
+  | { readonly stream: false; readonly response: ChatCompletionResponse }
+  | { readonly stream: true; readonly response: Stream.Stream<string, MatrixApiError> }
+
 // Secret-free routing snapshot for the status endpoint: last selected pool
 // candidate and the candidates currently in cooldown / degraded health.
 export interface RouteStatus {
@@ -50,7 +50,7 @@ export interface RouteStatus {
 
 export interface Executor {
   readonly settings: Settings
-  readonly chatCompletion: (input: ChatCompletionInput) => Effect.Effect<ChatCompletionResponse, MatrixApiError>
+  readonly chatCompletion: (input: ChatCompletionInput) => Effect.Effect<ChatCompletionResult, MatrixApiError>
   readonly routeStatus: () => RouteStatus
 }
 
@@ -66,19 +66,32 @@ interface ExecutorContext {
 export function layer(settings: Settings) {
   const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
   const override = MatrixApiPool.overrideEntry(settings)
-  const allEligible: PoolEntry[] = [...resolved.free]
-  if (override !== undefined && override.classification === "DIRECT_AUTHENTICATED" && resolved.free.length === 0) {
-    allEligible.push(override)
-  }
+  const eligible = settings.omnirouteBaseURL && settings.directBaseURL === undefined
+    ? [omnirouteEntry(settings.omnirouteBaseURL)]
+    : [
+        ...resolved.free,
+        ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
+      ]
+
   const ctx: ExecutorContext = {
     settings,
     router: MatrixRouter.make(),
-    eligible: allEligible,
+    eligible,
     state: { lastSelected: undefined },
   }
   const chatCompletion = chatCompletionImpl(ctx) as Executor["chatCompletion"]
   const routeStatus = () => routeStatusImpl(ctx)
   return Layer.succeed(Service, Service.of({ settings, chatCompletion, routeStatus }))
+}
+
+function omnirouteEntry(baseURL: string): PoolEntry {
+  return {
+    candidate: MatrixCatalog.CATALOG.find((candidate) => candidate.model === "auto/coding:free")!,
+    baseURL,
+    keyEnv: "OMNIROUTE_API_KEY",
+    free: true,
+    classification: "OMNIROUTE_BACKED",
+  }
 }
 
 const chatCompletionImpl =
@@ -118,25 +131,13 @@ function toCandidates(entries: readonly PoolEntry[]) {
 }
 
 function noFreeRouteError(ctx: ExecutorContext): MatrixApiError {
-  const { settings } = ctx
-  const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
-  const rejected = resolved.omniroute.length
-  const override = MatrixApiPool.overrideEntry(settings)
-
-  if (
-    resolved.free.length === 0 &&
-    override !== undefined &&
-    override.classification === "OMNIROUTE_BACKED"
-  ) {
+  if (MatrixApiPool.overrideEntry(ctx.settings)?.classification === "OMNIROUTE_BACKED") {
     return ApiSchema.recursionDetected(
       "Direct Matrix API route would loop back through the configured OmniRoute gateway.",
     )
   }
-
   return ApiSchema.noFreeRoute(
-    `No direct free Matrix provider is eligible (eligible: ${ctx.eligible.length}, rejected OmniRoute-backed: ${rejected}). ` +
-      "Configure a free provider credential in the pool (e.g. OPENROUTER_API_KEY) or set " +
-      "MATRIX_API_DIRECT_BASE_URL/MATRIX_API_DIRECT_API_KEY as an explicit override, then retry.",
+    `No free Matrix route is eligible (eligible: ${ctx.eligible.length}). Configure OmniRoute or an authenticated free direct provider.`,
   )
 }
 
@@ -152,7 +153,7 @@ interface BuiltRequest {
 function buildUpstream(entry: PoolEntry, settings: Settings) {
   const apiKey = MatrixApiPool.credential(entry, settings, settings.poolEnv ?? process.env)
   const facade = apiKey === undefined
-    ? OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL })
+    ? OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, auth: Auth.none })
     : OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, apiKey })
   return { upstream: facade.model(entry.candidate.model), keyEnv: entry.keyEnv }
 }
@@ -173,12 +174,12 @@ function buildRequest(
     system,
     messages: history,
     generation,
-    http: { headers: propagationHeaders(hops) },
+    http: { headers: { ...propagationHeaders(hops), "x-opencode-retry-disabled": "true" } },
   })
 }
 
 type AttemptResult =
-  | { readonly ok: true; readonly response: ChatCompletionResponse }
+  | { readonly ok: true; readonly result: ChatCompletionResult }
   | { readonly ok: false; readonly error: LLMError; readonly status: number }
 
 class UpstreamAttemptFailure {
@@ -201,28 +202,113 @@ function runAttempt(
     const built = buildUpstream(entry, settings)
     const request = buildRequest(input, model, built, hops)
     const llm = yield* LLMClient.Service
+
+    if (input.request.stream) {
+      const [firstOption, restStream] = yield* llm.stream(request).pipe(
+        Stream.mapError((error) => new UpstreamAttemptFailure(error, upstreamStatus(error))),
+        Stream.rechunk(1),
+        Stream.peel(Sink.find<LLMEvent>(isReadyEvent)),
+      )
+      const first = Option.getOrUndefined(firstOption)
+      if (first === undefined) return yield* Effect.fail(emptyStreamFailure())
+      if (first.type === "provider-error") return yield* Effect.fail(providerEventFailure(first.message))
+      const combinedStream = Stream.make(first).pipe(
+        Stream.concat(restStream),
+        Stream.mapError((failure) =>
+          ApiSchema.upstreamFailure(MatrixRouterService.sanitizeMessage(failure.error.message), failure.status),
+        ),
+      )
+      const id = `chatcmpl-${randomUUID()}`
+      const created = Math.floor(Date.now() / 1000)
+      const sseStream = combinedStream.pipe(
+        Stream.mapEffect((event) => {
+          if (event.type === "provider-error") return Effect.fail(ApiSchema.upstreamFailure(event.message))
+          if (event.type === "text-delta") {
+            const payload = {
+              id,
+              object: "chat.completion.chunk",
+              created,
+              model: input.request.model,
+              choices: [
+                {
+                  index: 0,
+                  delta: { content: event.text },
+                  finish_reason: null,
+                }
+              ],
+            }
+            return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
+          }
+          if (event.type === "finish") {
+            const finishReason = mapFinishReason(event.reason)
+            const payload = {
+              id,
+              object: "chat.completion.chunk",
+              created,
+              model: input.request.model,
+              choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
+            }
+            return Effect.succeed(`data: ${JSON.stringify(payload)}\n\ndata: [DONE]\n\n`)
+          }
+          return Effect.succeed("")
+        }),
+        Stream.filter((s) => s.length > 0),
+      )
+
+      return {
+        ok: true as const,
+        result: { stream: true as const, response: sseStream }
+      }
+    }
+
     const response = yield* llm.generate(request).pipe(
       Effect.mapError((error: LLMError) => new UpstreamAttemptFailure(error, upstreamStatus(error))),
     )
     return {
       ok: true as const,
-      response: chatCompletionResponse({
-        id: `chatcmpl-${randomUUID()}`,
-        created: Math.floor(Date.now() / 1000),
-        model: input.request.model,
-        content: response.text,
-        finishReason: mapFinishReason(response.finishReason),
-        promptTokens: response.usage?.inputTokens,
-        completionTokens: response.usage?.outputTokens,
-      }),
+      result: {
+        stream: false as const,
+        response: chatCompletionResponse({
+          id: `chatcmpl-${randomUUID()}`,
+          created: Math.floor(Date.now() / 1000),
+          model: input.request.model,
+          content: response.text,
+          finishReason: mapFinishReason(response.finishReason),
+          promptTokens: response.usage?.inputTokens,
+          completionTokens: response.usage?.outputTokens,
+        }),
+      },
     }
-  }).pipe(Effect.catch((failure: UpstreamAttemptFailure) => Effect.succeed({ ok: false as const, error: failure.error, status: failure.status })))
+  }).pipe(
+    Effect.catchTag("UpstreamAttemptFailure", (failure) =>
+      Effect.succeed<AttemptResult>({ ok: false as const, error: failure.error, status: failure.status }),
+    ),
+  )
+}
+
+function isReadyEvent(event: LLMEvent): boolean {
+  return event.type === "text-delta" || event.type === "finish" || event.type === "provider-error"
+}
+
+function emptyStreamFailure() {
+  return providerEventFailure("Empty stream from upstream")
+}
+
+function providerEventFailure(message: string) {
+  return new UpstreamAttemptFailure(
+    new LLMError({
+      module: "MatrixApi",
+      method: "stream",
+      reason: new InvalidProviderOutputReason({ message }),
+    }),
+    502,
+  )
 }
 
 function onSuccess(ctx: ExecutorContext, entry: PoolEntry, result: Extract<AttemptResult, { ok: true }>) {
   ctx.router.recordSuccess(entry.candidate)
   ctx.state.lastSelected = entry.candidate.id
-  return Effect.succeed(result.response)
+  return Effect.succeed(result.result)
 }
 
 // Record a provider failure into the router (only recoverable failures move
@@ -270,7 +356,7 @@ function runSingleCoding(
 }
 
 // ---------------------------------------------------------------------------
-// matrix-coding-reliable: retry then fallback across the eligible pool
+// matrix-coding-reliable: fallback across the eligible pool
 // ---------------------------------------------------------------------------
 
 function runReliable(
@@ -285,10 +371,14 @@ function runReliable(
     const maxAttempts = settings.maxAttempts
     let currentId = first.candidate.id
     let attempt = 0
+    const attempted = new Set<string>()
+
     while (true) {
       const entry = entryFor(ctx, currentId)
       if (entry === undefined) return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
       attempt += 1
+      attempted.add(currentId)
+
       const result = yield* runAttempt(ctx, input, model, entry, hops)
       if (result.ok) return yield* onSuccess(ctx, entry, result)
 
@@ -305,7 +395,7 @@ function runReliable(
       })
 
       // Decide whether to retry the same candidate or fall back to another.
-      const others = toCandidates(eligible).filter((candidate) => candidate.id !== currentId)
+      const others = toCandidates(eligible).filter((candidate) => !attempted.has(candidate.id))
       const decision = MatrixReliable.decideFailure(
         code,
         text,

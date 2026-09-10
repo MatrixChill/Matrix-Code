@@ -10,7 +10,7 @@ import { NodeHttpServer } from "@effect/platform-node"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { LayerNodePlatform } from "@opencode-ai/core/effect/app-node-platform"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { Context, Effect, Exit, Layer, MutableRef, Option, Scope } from "effect"
+import { Context, Effect, Exit, Layer, MutableRef, Option, Scope, Stream } from "effect"
 import { createHash, timingSafeEqual } from "node:crypto"
 import { createServer } from "node:http"
 import { Headers, HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
@@ -145,7 +145,12 @@ function chatHandler(settings: Settings) {
       return yield* executor
         .chatCompletion({ request: body, incomingHop: parseHop(getHeader(request, HOP_HEADER)) })
         .pipe(
-          Effect.map((value) => HttpServerResponse.jsonUnsafe(value)),
+          Effect.map((result) => {
+            if (result.stream) {
+              return HttpServerResponse.stream(result.response.pipe(Stream.encodeText), { contentType: "text/event-stream" })
+            }
+            return HttpServerResponse.jsonUnsafe(result.response)
+          }),
           Effect.catch((error) => apiErrorResponse(error)),
         )
     }),

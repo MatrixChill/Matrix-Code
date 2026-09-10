@@ -6,6 +6,7 @@
 
 import { MatrixProfile, type ProfileID } from "../profile"
 
+export const MODEL_FREE_AUTO = "matrix-free-auto" as const
 export const MODEL_CODING = "matrix-coding" as const
 export const MODEL_CODING_RELIABLE = "matrix-coding-reliable" as const
 
@@ -22,16 +23,23 @@ export const MODELS: readonly MatrixModel[] = [
   {
     id: MODEL_CODING,
     name: "Matrix Coding",
-    description: "Balanced Matrix coding profile tuned for everyday development work.",
+    description: "Compatibility alias for the free automatic coding route.",
     profile: "coding-max",
-    upstreamModel: MODEL_CODING,
+    upstreamModel: "auto/coding:free",
+  },
+  {
+    id: MODEL_FREE_AUTO,
+    name: "Matrix Free Auto",
+    description: "Automatic coding route restricted to healthy, zero-cost OmniRoute candidates.",
+    profile: "free",
+    upstreamModel: "auto/coding:free",
   },
   {
     id: MODEL_CODING_RELIABLE,
     name: "Matrix Coding Reliable",
     description: "Matrix reliability-first coding profile for careful, tool-heavy work.",
     profile: "reliable",
-    upstreamModel: MODEL_CODING_RELIABLE,
+    upstreamModel: "auto/coding:free",
   },
 ]
 

@@ -47,9 +47,9 @@ describe("MatrixReliable.decideFailure", () => {
     expect(outcome.action).toBe("stop")
   })
 
-  test("retryable error continues until attempts are exhausted", () => {
+  test("retryable error falls back immediately without repeating the failed candidate", () => {
     const router = MatrixRouter.make()
-    const within = MatrixReliable.decideFailure(
+    const outcome = MatrixReliable.decideFailure(
       "429",
       "",
       1,
@@ -59,18 +59,7 @@ describe("MatrixReliable.decideFailure", () => {
       MatrixCatalog.CATALOG,
       available,
     )
-    expect(within.action).toBe("continue")
-    const exhausted = MatrixReliable.decideFailure(
-      "429",
-      "",
-      3,
-      3,
-      router,
-      "reliable",
-      MatrixCatalog.CATALOG,
-      available,
-    )
-    expect(exhausted.action).toBe("fallback")
+    expect(outcome.action).toBe("fallback")
   })
 
   test("504 falls back immediately to another candidate", () => {
