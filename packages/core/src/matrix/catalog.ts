@@ -111,15 +111,15 @@ const GATEWAY_ROUTES: Readonly<Record<string, GatewayRoute>> = {
     cost: 0,
     context: 128000,
   },
-  "auto/vision": {
+  "opencode/mimo-v2.5-free": {
     id: "omniroute/matrix-vision",
-    name: "Matrix Vision",
-    coding: 0.4,
-    reasoning: 0.5,
-    speed: 0.6,
-    toolCalls: 0.4,
+    name: "Matrix Vision (MiMo V2.5 Free)",
+    coding: 0.7,
+    reasoning: 0.7,
+    speed: 0.7,
+    toolCalls: 0.7,
     vision: true,
-    cost: 2,
+    cost: 0,
     context: 128000,
   },
 }
@@ -141,7 +141,11 @@ export const CATALOG: readonly Candidate[] = [
 // vision is a capability the router activates when the active model lacks it and
 // the task needs an image.
 export const VISION_CANDIDATES: readonly Candidate[] = [
-  { ...GATEWAY_ROUTES["auto/vision"]!, provider: "omniroute", model: "auto/vision" },
+  {
+    ...GATEWAY_ROUTES["opencode/mimo-v2.5-free"]!,
+    provider: "omniroute",
+    model: "opencode/mimo-v2.5-free",
+  },
 ]
 
 export function byId(catalog: readonly Candidate[], id: string): Candidate | undefined {

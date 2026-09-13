@@ -601,6 +601,7 @@ const layer = Layer.effect(
           "session.id": input.sessionID,
           messageID: input.assistantMessage.id,
           error: errorMessage(e),
+          cause: effectCauseMessage(e),
           stack: e instanceof Error ? e.stack : undefined,
         })
         const error = parse(e)
@@ -695,6 +696,11 @@ const layer = Layer.effect(
     return Service.of({ create })
   }),
 )
+
+function effectCauseMessage(error: unknown) {
+  if (!(error instanceof Error) || !Cause.isCause(error.cause)) return undefined
+  return errorMessage(Cause.squash(error.cause))
+}
 
 export const node = LayerNode.make({
   service: Service,

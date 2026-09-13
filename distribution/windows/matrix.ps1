@@ -12,7 +12,7 @@
   OmniRoute (port 20128):
     - <portable-root>\omniroute\omniroute.exe       (standalone binary)
     - <portable-root>\omniroute\node.exe            (bundled Node runtime)
-    - <portable-root>\omniroute\app\bin\omniroute.mjs (Node entry point)
+    - <portable-root>\omniroute\app\node_modules\omniroute\dist\server-ws.mjs
 
   Matrix API (port 20260):
     - started only when MATRIX_API_ENABLED=true AND a key is available
@@ -214,6 +214,122 @@ function Wait-LocalService {
   return $false
 }
 
+# Start a quiet child while continuously draining both redirected streams.
+# OmniRoute emits enough migration output on a fresh Portable to fill an
+# unread pipe and block before binding its port.
+function Start-QuietProcess {
+  param([System.Diagnostics.ProcessStartInfo]$StartInfo)
+
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo = $StartInfo
+  $null = $process.Start()
+  $process.BeginOutputReadLine()
+  $process.BeginErrorReadLine()
+  return $process
+}
+
+if (-not ('MatrixLauncherJob' -as [type])) {
+  Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+public static class MatrixLauncherJob {
+  private const uint JobObjectExtendedLimitInformation = 9;
+  private const uint JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000;
+  private const uint ProcessTerminate = 0x0001;
+  private const uint ProcessSetQuota = 0x0100;
+  private const uint ProcessQueryLimitedInformation = 0x1000;
+
+  [StructLayout(LayoutKind.Sequential)]
+  private struct IoCounters {
+    public ulong ReadOperationCount;
+    public ulong WriteOperationCount;
+    public ulong OtherOperationCount;
+    public ulong ReadTransferCount;
+    public ulong WriteTransferCount;
+    public ulong OtherTransferCount;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  private struct BasicLimitInformation {
+    public long PerProcessUserTimeLimit;
+    public long PerJobUserTimeLimit;
+    public uint LimitFlags;
+    public UIntPtr MinimumWorkingSetSize;
+    public UIntPtr MaximumWorkingSetSize;
+    public uint ActiveProcessLimit;
+    public UIntPtr Affinity;
+    public uint PriorityClass;
+    public uint SchedulingClass;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  private struct ExtendedLimitInformation {
+    public BasicLimitInformation BasicLimitInformation;
+    public IoCounters IoInfo;
+    public UIntPtr ProcessMemoryLimit;
+    public UIntPtr JobMemoryLimit;
+    public UIntPtr PeakProcessMemoryUsed;
+    public UIntPtr PeakJobMemoryUsed;
+  }
+
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern IntPtr CreateJobObject(IntPtr attributes, string name);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool SetInformationJobObject(IntPtr job, uint infoClass, ref ExtendedLimitInformation info, uint length);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern IntPtr OpenProcess(uint access, bool inheritHandle, uint processId);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool CloseHandle(IntPtr handle);
+
+  public static IntPtr Create() {
+    IntPtr job = CreateJobObject(IntPtr.Zero, null);
+    if (job == IntPtr.Zero) throw new InvalidOperationException("Could not create launcher job object.");
+    ExtendedLimitInformation info = new ExtendedLimitInformation();
+    info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (!SetInformationJobObject(job, JobObjectExtendedLimitInformation, ref info, (uint)Marshal.SizeOf(typeof(ExtendedLimitInformation)))) {
+      CloseHandle(job);
+      throw new InvalidOperationException("Could not configure launcher job object.");
+    }
+    return job;
+  }
+
+  public static bool Assign(IntPtr job, int processId) {
+    IntPtr process = OpenProcess(ProcessTerminate | ProcessSetQuota, false, (uint)processId);
+    if (process == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not open managed process for launcher job.");
+    try {
+      if (!AssignProcessToJobObject(job, process)) throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not assign managed process to launcher job.");
+    } finally {
+      CloseHandle(process);
+    }
+    if (!IsAssigned(job, processId)) throw new InvalidOperationException("Managed process was not assigned to MatrixLauncherJob.");
+    return true;
+  }
+
+  public static bool IsAssigned(IntPtr job, int processId) {
+    IntPtr process = OpenProcess(ProcessQueryLimitedInformation, false, (uint)processId);
+    if (process == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not query managed process job membership.");
+    try {
+      bool result;
+      if (!IsProcessInJob(process, job, out result)) throw new Win32Exception(Marshal.GetLastWin32Error(), "Could not query MatrixLauncherJob membership.");
+      return result;
+    } finally {
+      CloseHandle(process);
+    }
+  }
+
+  public static void Close(IntPtr job) {
+    if (job != IntPtr.Zero) CloseHandle(job);
+  }
+}
+'@
+}
+
 # Start a service unless a live listener already covers the port, reusing the
 # existing listener whenever possible. Stale PID tracking is recovered without
 # ever killing a process whose command line does not look like the service.
@@ -262,6 +378,12 @@ function Start-ManagedService {
     Write-Host "Starting $Name..."
     $process = & $Starter
     if ($null -eq $process) { throw "Failed to start $Name" }
+    try {
+      [MatrixLauncherJob]::Assign($launcherJob, $process.Id) | Out-Null
+    } catch {
+      Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+      throw
+    }
     $started = $true
     $pidValue = $process.Id
     New-Item -ItemType Directory -Force -Path (Split-Path $PidFile) | Out-Null
@@ -296,6 +418,34 @@ function Start-ManagedService {
     Pid     = $pidValue
     Process = $process
     Ready   = [bool]$ready
+  }
+}
+
+function Stop-ManagedService {
+  param(
+    [string]$Name,
+    [bool]$Started,
+    [int]$ProcessId,
+    [string]$CmdLineMarker,
+    [string]$PidFile
+  )
+
+  try {
+    if (-not $Started) { return }
+    $ownedPid = if ($ProcessId) { $ProcessId } else { Get-TrackedPid -PidFile $PidFile }
+    if (-not $ownedPid -or -not (Test-ProcessAlive -ProcessId $ownedPid)) { return }
+    $cmdLine = Get-ProcessCommandLine -ProcessId $ownedPid
+    if (-not $cmdLine -or $cmdLine -notmatch [regex]::Escape($CmdLineMarker)) {
+      Write-Warning "Refusing to stop PID $ownedPid because it no longer matches $Name."
+      return
+    }
+    Write-Host "Stopping $Name..."
+    Stop-Process -Id $ownedPid -Force -ErrorAction Stop
+    Wait-Process -Id $ownedPid -Timeout 5 -ErrorAction SilentlyContinue
+  } catch {
+    Write-Warning "Could not stop $Name process."
+  } finally {
+    Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
   }
 }
 
@@ -412,6 +562,7 @@ if ($explicitApiDisable) {
 
 # --- OmniRoute credential ---------------------------------------------------
 $omnirouteCredFile = Join-Path $root '.matrix\state\omniroute-api.cred'
+$omnirouteStorageCredFile = Join-Path $root '.matrix\state\omniroute-storage.cred'
 $_omniEnvKey = $env:OMNIROUTE_API_KEY
 if ($_omniEnvKey) { $_omniEnvKey = $_omniEnvKey.Trim() }
 Remove-Item Env:OMNIROUTE_API_KEY -ErrorAction SilentlyContinue
@@ -536,13 +687,17 @@ if ($matrixApiKey) { $matrixApiHeaders['Authorization'] = "Bearer $matrixApiKey"
 
 # --- lifecycle state --------------------------------------------------------
 
-$readinessTimeout = 15
+# Fresh bundled OmniRoute storage performs first-run migrations before binding.
+# Keep this above the observed cold-start time; warm starts still return as soon
+# as the authenticated listener answers.
+$readinessTimeout = 60
 
 $omniRoutePidFile = Join-Path $root '.matrix\omniroute.pid'
 $omniRouteHealth  = 'http://127.0.0.1:20128/v1/models'
 $omniRouteLiveness = 'http://127.0.0.1:20128/api/health/ping'
 $omniRouteStarted = $false
 $omniRouteProcess = $null
+$omniRoutePid     = $null
 
 $matrixApiPidFile  = Join-Path $root '.matrix\matrix-api.pid'
 $matrixApiStarted  = $false
@@ -550,6 +705,7 @@ $matrixApiProcess  = $null
 $matrixApiPid      = $null
 
 $matrixExit = 0
+$launcherJob = [MatrixLauncherJob]::Create()
 
 try {
   # --- OmniRoute (port 20128) ------------------------------------------------
@@ -558,16 +714,18 @@ try {
   # runtime, or a normal/global omniroute installation. With none of those and
   # no active listener, Matrix runs on fallback without OmniRoute.
   $nodeExe   = Join-Path $root 'omniroute\node.exe'
-  $entryMjs  = Join-Path $root 'omniroute\app\bin\omniroute.mjs'
+  $entryMjs  = Join-Path $root 'omniroute\app\node_modules\omniroute\dist\server-ws.mjs'
   $omniExe   = Join-Path $root 'omniroute\omniroute.exe'
   $canStartNode = (Test-Path -LiteralPath $nodeExe) -and (Test-Path -LiteralPath $entryMjs)
   $canStartExe  = Test-Path -LiteralPath $omniExe
+  $bundledOmniApiKey = $null
+  $bundledOmniStorageKey = $null
 
   # --- PROBE FIRST: if OmniRoute already healthy, reuse and skip all startup logic ---
   $omniRouteAlive = Test-OmniRouteService -Uri $omniRouteLiveness
   if ($omniRouteAlive) {
     Write-Host "OmniRoute already active at $omniRouteLiveness. Reusing it."
-    $omniRouteStarted = $true
+    $omniRouteStarted = $false
     $omniRouteProcess = $null
   } else {
     if (Get-NetTCPConnection -State Listen -LocalPort 20128 -ErrorAction SilentlyContinue) {
@@ -588,6 +746,25 @@ try {
       }
     }
 
+    if ($canStartNode -or $canStartExe) {
+      $bundledOmniApiKey = $_omniEnvKey
+      if (-not $bundledOmniApiKey) {
+        $bundledOmniApiKey = Read-MatrixApiKeyFromStore -Path $omnirouteCredFile
+      }
+      if (-not $bundledOmniApiKey) {
+        $bundledOmniApiKey = New-MatrixApiKey
+        Write-MatrixApiKeyToStore -Path $omnirouteCredFile -Key $bundledOmniApiKey
+        Write-Host 'Matrix Code created a protected local OmniRoute credential for this Portable.'
+      }
+
+      $bundledOmniStorageKey = Read-MatrixApiKeyFromStore -Path $omnirouteStorageCredFile
+      if (-not $bundledOmniStorageKey) {
+        $bundledOmniStorageKey = New-MatrixApiKey
+        Write-MatrixApiKeyToStore -Path $omnirouteStorageCredFile -Key $bundledOmniStorageKey
+        Write-Host 'Matrix Code initialized protected OmniRoute storage for this Portable.'
+      }
+    }
+
     if ($canStartNode -or $canStartExe -or $globalOmni) {
       $omniRoute = Start-ManagedService `
         -Name 'OmniRoute' `
@@ -599,6 +776,7 @@ try {
         $startInfo = New-Object System.Diagnostics.ProcessStartInfo
         if ($canStartExe) {
           $startInfo.FileName = $omniExe
+          $startInfo.Arguments = '--headless'
           $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
         } elseif ($globalOmni) {
           $src = $globalOmni.Source
@@ -620,17 +798,34 @@ try {
           }
         } else {
           $startInfo.FileName = $nodeExe
-          $startInfo.Arguments = $entryMjs
+          $startInfo.Arguments = "`"$entryMjs`""
           $startInfo.WorkingDirectory = Join-Path $root 'omniroute'
         }
         $startInfo.UseShellExecute       = $false
         $startInfo.CreateNoWindow         = $true
         $startInfo.RedirectStandardOutput = $true
         $startInfo.RedirectStandardError  = $true
-        [System.Diagnostics.Process]::Start($startInfo)
+        if ($canStartNode -or $canStartExe) {
+          $startInfo.EnvironmentVariables['OMNIROUTE_API_KEY'] = $bundledOmniApiKey
+          $startInfo.EnvironmentVariables['STORAGE_ENCRYPTION_KEY'] = $bundledOmniStorageKey
+          $startInfo.EnvironmentVariables['REQUIRE_API_KEY'] = 'true'
+          $startInfo.EnvironmentVariables['DATA_DIR'] = Join-Path $root '.matrix\config\omniroute'
+          $startInfo.EnvironmentVariables['OMNIROUTE_SERVER_HOST'] = '127.0.0.1'
+          $startInfo.EnvironmentVariables['HOSTNAME'] = '127.0.0.1'
+          $startInfo.EnvironmentVariables['OMNIROUTE_PORT'] = '20128'
+          $startInfo.EnvironmentVariables['PORT'] = '20128'
+          $startInfo.EnvironmentVariables['API_PORT'] = '20128'
+          $startInfo.EnvironmentVariables['DASHBOARD_PORT'] = '20128'
+          $startInfo.EnvironmentVariables['NODE_ENV'] = 'production'
+          $startInfo.EnvironmentVariables['OMNIROUTE_NO_UPDATE_NOTIFIER'] = '1'
+          $startInfo.EnvironmentVariables['OMNIROUTE_HEADLESS'] = 'true'
+          $startInfo.EnvironmentVariables['NO_LOG_API_KEY_IDS'] = 'env-key'
+        }
+        Start-QuietProcess -StartInfo $startInfo
       }
       $omniRouteStarted = $omniRoute.Started
       $omniRouteProcess = $omniRoute.Process
+      $omniRoutePid = $omniRoute.Pid
       $omniRouteAlive = $omniRoute.Ready -and (Test-OmniRouteService -Uri $omniRouteLiveness)
     } else {
       Write-Host 'OmniRoute is not available locally. Starting Matrix Code without OmniRoute.'
@@ -650,6 +845,13 @@ try {
       -CredentialPath $omnirouteCredFile `
       -StoragePaths $storagePaths `
       -EnvironmentKey $_omniEnvKey
+    if (-not $omnirouteApiKey -and $bundledOmniApiKey) {
+      $omnirouteApiKey = Resolve-OmniRouteApiKey `
+        -HealthUri $omniRouteHealth `
+        -CredentialPath $omnirouteCredFile `
+        -StoragePaths @() `
+        -EnvironmentKey $bundledOmniApiKey
+    }
     if (-not $omnirouteApiKey) {
       throw 'OmniRoute is running, but no active local API credential could authenticate. Create an endpoint key in OmniRoute and reopen Matrix Code.'
     }
@@ -679,7 +881,7 @@ try {
       $startInfo.RedirectStandardOutput = $true
       $startInfo.RedirectStandardError  = $true
       $startInfo.WorkingDirectory       = $root
-      [System.Diagnostics.Process]::Start($startInfo)
+      Start-QuietProcess -StartInfo $startInfo
     }
     $matrixApiStarted = $matrixApi.Started
     $matrixApiProcess = $matrixApi.Process
@@ -698,16 +900,33 @@ try {
   }) -join ' '
 
   if ($tuiInCurrentConsole) {
-    & $matrixExe @args
-    $matrixExit = $LASTEXITCODE
-  }
-
-  if (-not $tuiInCurrentConsole) {
+    if ($tuiArgString) {
+      $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -NoNewWindow -PassThru
+    } else {
+      $tuiProcess = Start-Process -FilePath $matrixExe -NoNewWindow -PassThru
+    }
+    try {
+      [MatrixLauncherJob]::Assign($launcherJob, $tuiProcess.Id) | Out-Null
+    } catch {
+      Write-Warning "Could not assign TUI PID $($tuiProcess.Id) to MatrixLauncherJob: $($_.Exception.Message)"
+      Stop-Process -Id $tuiProcess.Id -Force -ErrorAction SilentlyContinue
+      throw
+    }
+    $tuiProcess.WaitForExit()
+    $matrixExit = $tuiProcess.ExitCode
+  } else {
     if (-not $tuiWindow) { $tuiWindow = 'Hidden' }
     if ($tuiArgString) {
       $tuiProcess = Start-Process -FilePath $matrixExe -ArgumentList $tuiArgString -WindowStyle $tuiWindow -PassThru
     } else {
       $tuiProcess = Start-Process -FilePath $matrixExe -WindowStyle $tuiWindow -PassThru
+    }
+    try {
+      [MatrixLauncherJob]::Assign($launcherJob, $tuiProcess.Id) | Out-Null
+    } catch {
+      Write-Warning "Could not assign TUI PID $($tuiProcess.Id) to MatrixLauncherJob: $($_.Exception.Message)"
+      Stop-Process -Id $tuiProcess.Id -Force -ErrorAction SilentlyContinue
+      throw
     }
     $tuiProcess.WaitForExit()
     $matrixExit = $tuiProcess.ExitCode
@@ -715,27 +934,9 @@ try {
   if ($null -eq $matrixExit) { $matrixExit = 0 }
 }
 finally {
-  if ($omniRouteStarted -and $null -ne $omniRouteProcess) {
-    try {
-      if (-not $omniRouteProcess.HasExited) {
-        Write-Host 'Stopping OmniRoute gateway...'
-        $omniRouteProcess.Kill()
-        $omniRouteProcess.WaitForExit(5000)
-      }
-    } catch { }
-    Remove-Item -LiteralPath $omniRoutePidFile -Force -ErrorAction SilentlyContinue
-  }
-
-  if ($matrixApiStarted -and $matrixApiPid -and $null -ne $matrixApiProcess) {
-    try {
-      if (-not $matrixApiProcess.HasExited) {
-        Write-Host 'Stopping Matrix API...'
-        $matrixApiProcess.Kill()
-        $matrixApiProcess.WaitForExit(5000)
-      }
-    } catch { }
-    Remove-Item -LiteralPath $matrixApiPidFile -Force -ErrorAction SilentlyContinue
-  }
+  Stop-ManagedService -Name 'OmniRoute gateway' -Started $omniRouteStarted -ProcessId $omniRoutePid -CmdLineMarker 'omniroute' -PidFile $omniRoutePidFile
+  Stop-ManagedService -Name 'Matrix API' -Started $matrixApiStarted -ProcessId $matrixApiPid -CmdLineMarker 'matrix-api' -PidFile $matrixApiPidFile
+  [MatrixLauncherJob]::Close($launcherJob)
 }
 
 exit $matrixExit

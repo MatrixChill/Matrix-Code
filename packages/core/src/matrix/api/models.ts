@@ -9,6 +9,7 @@ import { MatrixProfile, type ProfileID } from "../profile"
 export const MODEL_FREE_AUTO = "matrix-free-auto" as const
 export const MODEL_CODING = "matrix-coding" as const
 export const MODEL_CODING_RELIABLE = "matrix-coding-reliable" as const
+export const MODEL_VISION = "matrix-vision" as const
 
 export interface MatrixModel {
   readonly id: string
@@ -40,6 +41,13 @@ export const MODELS: readonly MatrixModel[] = [
     description: "Matrix reliability-first coding profile for careful, tool-heavy work.",
     profile: "reliable",
     upstreamModel: "auto/coding:free",
+  },
+  {
+    id: MODEL_VISION,
+    name: "Matrix Vision",
+    description: "Multimodal route restricted to OmniRoute candidates that accept image input.",
+    profile: "vision",
+    upstreamModel: "opencode/mimo-v2.5-free",
   },
 ]
 

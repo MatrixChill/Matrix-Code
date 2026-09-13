@@ -73,6 +73,7 @@ import { createTuiApiAdapters } from "./plugin/adapters"
 import { createTuiApi } from "./plugin/api"
 import { createPluginRuntime, PluginRuntimeProvider, usePluginRuntime, type TuiPluginHost } from "./plugin/runtime"
 import { CommandPaletteDialog } from "./component/command-palette"
+import { APP_NAME, APP_TAGLINE } from "./brand"
 import {
   COMMAND_PALETTE_COMMAND,
   OPENCODE_BASE_MODE,
@@ -471,14 +472,14 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
     if (!terminalTitleEnabled() || Flag.OPENCODE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("Matrix Code")
+      renderer.setTerminalTitle(APP_NAME)
       return
     }
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("Matrix Code")
+        renderer.setTerminalTitle(APP_NAME)
         return
       }
 
@@ -852,12 +853,21 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
       },
       {
         name: "help.show",
-        title: "Help",
+        title: `${APP_NAME} help`,
         slashName: "help",
         run: () => {
           dialog.replace(() => <DialogHelp />)
         },
         category: "System",
+      },
+      {
+        name: "matrix.about",
+        title: `About ${APP_NAME}`,
+        slashName: "about",
+        run: () => {
+          void DialogAlert.show(dialog, `${APP_NAME} v${InstallationVersion}`, APP_TAGLINE)
+        },
+        category: "Matrix Code",
       },
       {
         name: "docs.open",
@@ -1081,8 +1091,8 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
 
     const choice = await DialogConfirm.show(
       dialog,
-      `Update Available`,
-      `A new release v${version} is available. Would you like to update now?`,
+      `${APP_NAME} update available`,
+      `${APP_NAME} v${version} is available. Would you like to update now?`,
       "skip",
     )
 
@@ -1104,7 +1114,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
     if (result.error || !result.data?.success) {
       toast.show({
         variant: "error",
-        title: "Update Failed",
+        title: `${APP_NAME} update failed`,
         message: "Update failed",
         duration: 10000,
       })
@@ -1113,8 +1123,8 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
 
     await DialogAlert.show(
       dialog,
-      "Update Complete",
-      `Successfully updated to Matrix Code v${result.data.version}. Please restart the application.`,
+      `${APP_NAME} update complete`,
+      `Successfully updated to ${APP_NAME} v${result.data.version}. Please restart the application.`,
     )
 
     void exit()

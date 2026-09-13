@@ -8,11 +8,46 @@
 import { Schema } from "effect"
 
 const TextContentPart = Schema.Struct({ type: Schema.Literal("text"), text: Schema.String })
+const ImageContentPart = Schema.Struct({
+  type: Schema.Literal("image_url"),
+  image_url: Schema.Struct({
+    url: Schema.String,
+    detail: Schema.optional(Schema.Union([Schema.Literal("auto"), Schema.Literal("low"), Schema.Literal("high")])),
+  }),
+})
+
+const MessageToolCall = Schema.Struct({
+  id: Schema.String,
+  type: Schema.Literal("function"),
+  function: Schema.Struct({
+    name: Schema.String,
+    arguments: Schema.String,
+  }),
+})
 
 export class ChatMessage extends Schema.Class<ChatMessage>("Matrix.ChatMessage")({
-  role: Schema.Union([Schema.Literal("user"), Schema.Literal("assistant"), Schema.Literal("system")]),
-  content: Schema.Union([Schema.String, Schema.Null, Schema.Array(TextContentPart)]),
+  role: Schema.Union([
+    Schema.Literal("user"),
+    Schema.Literal("assistant"),
+    Schema.Literal("system"),
+    Schema.Literal("tool"),
+  ]),
+  content: Schema.Union([Schema.String, Schema.Null, Schema.Array(Schema.Union([TextContentPart, ImageContentPart]))]),
+  tool_calls: Schema.optional(Schema.Array(MessageToolCall)),
+  tool_call_id: Schema.optional(Schema.String),
+  name: Schema.optional(Schema.String),
 }) {}
+
+const ToolFunction = Schema.Struct({
+  name: Schema.String,
+  description: Schema.optional(Schema.String),
+  parameters: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+})
+
+const ToolDefinition = Schema.Struct({
+  type: Schema.Literal("function"),
+  function: ToolFunction,
+})
 
 export class ChatCompletionRequest extends Schema.Class<ChatCompletionRequest>("Matrix.ChatCompletionRequest")({
   model: Schema.String,
@@ -20,6 +55,18 @@ export class ChatCompletionRequest extends Schema.Class<ChatCompletionRequest>("
   temperature: Schema.optional(Schema.Number),
   max_tokens: Schema.optional(Schema.Int),
   stream: Schema.optional(Schema.Boolean),
+  tools: Schema.optional(Schema.Array(ToolDefinition)),
+  tool_choice: Schema.optional(
+    Schema.Union([
+      Schema.Literal("auto"),
+      Schema.Literal("none"),
+      Schema.Literal("required"),
+      Schema.Struct({
+        type: Schema.Literal("function"),
+        function: Schema.Struct({ name: Schema.String }),
+      }),
+    ]),
+  ),
 }) {}
 
 // ---------------------------------------------------------------------------
@@ -33,7 +80,11 @@ export interface ChatCompletionResponse {
   readonly model: string
   readonly choices: ReadonlyArray<{
     readonly index: number
-    readonly message: { readonly role: "assistant"; readonly content: string }
+    readonly message: { readonly role: "assistant"; readonly content: string | null; readonly tool_calls?: ReadonlyArray<{
+      readonly id: string
+      readonly type: "function"
+      readonly function: { readonly name: string; readonly arguments: string }
+    }> }
     readonly finish_reason: string
   }>
   readonly usage?: {
@@ -51,6 +102,7 @@ export function chatCompletionResponse(input: {
   finishReason: string
   promptTokens?: number
   completionTokens?: number
+  toolCalls?: ReadonlyArray<{ id: string; name: string; input: unknown }>
 }): ChatCompletionResponse {
   const usage =
     input.promptTokens !== undefined || input.completionTokens !== undefined
@@ -60,6 +112,14 @@ export function chatCompletionResponse(input: {
           total_tokens: (input.promptTokens ?? 0) + (input.completionTokens ?? 0),
         }
       : undefined
+  const toolCalls =
+    input.toolCalls !== undefined && input.toolCalls.length > 0
+      ? input.toolCalls.map((call) => ({
+          id: call.id,
+          type: "function" as const,
+          function: { name: call.name, arguments: JSON.stringify(call.input) },
+        }))
+      : undefined
   return {
     id: input.id,
     object: "chat.completion",
@@ -68,7 +128,11 @@ export function chatCompletionResponse(input: {
     choices: [
       {
         index: 0,
-        message: { role: "assistant", content: input.content },
+        message: {
+          role: "assistant",
+          content: toolCalls !== undefined ? null : input.content,
+          ...(toolCalls !== undefined ? { tool_calls: toolCalls } : {}),
+        },
         finish_reason: input.finishReason,
       },
     ],

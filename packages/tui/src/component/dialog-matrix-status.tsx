@@ -3,6 +3,7 @@ import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 import { useSync } from "../context/sync"
 import { For, Show, createMemo } from "solid-js"
+import { APP_NAME } from "../brand"
 
 export type DialogMatrixStatusProps = {}
 
@@ -56,7 +57,7 @@ export function DialogMatrixStatus() {
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
-          /matrix-status
+          {APP_NAME} · Status
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc

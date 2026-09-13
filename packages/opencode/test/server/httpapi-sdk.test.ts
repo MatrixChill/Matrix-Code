@@ -1,7 +1,7 @@
 import { afterEach, describe, expect } from "bun:test"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
-import { Deferred, Effect, Layer } from "effect"
+import { Deferred, Effect, Exit, Fiber, Layer } from "effect"
 import type * as Scope from "effect/Scope"
 import { HttpServer } from "effect/unstable/http"
 import { ChildProcessSpawner } from "effect/unstable/process"
@@ -614,6 +614,39 @@ describe("HttpApi SDK", () => {
           todoCount: array(todo.data).length,
           messageCount: array(messages.data).length,
         }
+      }),
+    ),
+  )
+
+  serverPathParity("cancels an active prompt before deleting its session rows", (serverPath) =>
+    withFakeLlm(serverPath, ({ sdk, llm }) =>
+      Effect.gen(function* () {
+        yield* llm.hang
+        const session = yield* capture(() =>
+          sdk.session.create({
+            title: "delete active prompt",
+            permission: [{ permission: "*", pattern: "*", action: "allow" }],
+          }),
+        )
+        const sessionID = String(record(session.data).id)
+        const prompt = yield* capture(() =>
+          sdk.session.prompt({
+            sessionID,
+            agent: "build",
+            model: { providerID: "test", modelID: "test-model" },
+            parts: [{ type: "text", text: "wait" }],
+          }),
+        ).pipe(Effect.forkChild)
+
+        yield* awaitWithTimeout(llm.wait(1), "timed out waiting for active prompt", "5 seconds")
+        const deleted = yield* capture(() => sdk.session.delete({ sessionID }))
+        const promptExit = yield* awaitWithTimeout(
+          Fiber.await(prompt),
+          "active prompt survived session deletion",
+          "5 seconds",
+        )
+        expect(deleted.status).toBe(200)
+        expect(Exit.isSuccess(promptExit)).toBe(true)
       }),
     ),
   )

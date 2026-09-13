@@ -16,14 +16,18 @@ type StubMode = "ok" | "error500"
 interface StubRecord {
   headers: IncomingMessage["headers"]
   count: number
+  body: string
 }
 
 function stubServer(mode: StubMode): Promise<{ server: Server; url: string; record: StubRecord }> {
   return new Promise((resolve, reject) => {
-    const record: StubRecord = { headers: {}, count: 0 }
+    const record: StubRecord = { headers: {}, count: 0, body: "" }
     const server = createServer((req, res) => {
       record.headers = req.headers
       record.count++
+      req.setEncoding("utf8")
+      req.on("data", (chunk) => (record.body += chunk))
+      req.on("end", () => {
       if (mode === "error500") {
         res.writeHead(500, { "content-type": "application/json" })
         res.end(JSON.stringify({ error: { message: "boom sk-TESTREALAK31337 boom" } }))
@@ -47,6 +51,7 @@ function stubServer(mode: StubMode): Promise<{ server: Server; url: string; reco
       ]
       res.writeHead(200, { "content-type": "text/event-stream; charset=utf-8" })
       res.end(`${events.map((event) => `data: ${JSON.stringify(event)}`).join("\n\n")}\n\ndata: [DONE]\n\n`)
+      })
     })
     server.once("error", reject)
     server.listen(0, "127.0.0.1", () => {
@@ -341,6 +346,166 @@ describe("Matrix API HTTP", () => {
         expect(stub.record.count).toBe(1)
         expect(stub.record.headers["x-matrix-origin"]).toBe("matrix-api")
         expect(stub.record.headers["x-matrix-hop"]).toBe("1")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("forwards assistant tool calls and tool results for native continuation", async () => {
+    const stub = await stubServer("ok")
+    try {
+      const settings = baseSettings({
+        directBaseURL: stub.url,
+        directApiKey: "test-direct-key",
+        omnirouteBaseURL: "https://omniroute.example/v1",
+        poolEnv: { OPENROUTER_API_KEY: undefined, CEREBRAS_API_KEY: undefined },
+      })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          JSON.stringify({
+            model: "matrix-coding",
+            messages: [
+              { role: "user", content: "Check the branch" },
+              {
+                role: "assistant",
+                content: null,
+                tool_calls: [
+                  {
+                    id: "call_branch",
+                    type: "function",
+                    function: { name: "bash", arguments: '{"command":"git branch --show-current"}' },
+                  },
+                ],
+              },
+              { role: "tool", tool_call_id: "call_branch", content: "dev\n" },
+            ],
+          }),
+        )
+        expect(response.status).toBe(200)
+        const upstream = JSON.parse(stub.record.body) as { messages: unknown[] }
+        expect(JSON.stringify(upstream.messages)).toContain('"tool_calls"')
+        expect(JSON.stringify(upstream.messages)).toContain('"tool_call_id":"call_branch"')
+        expect(JSON.stringify(upstream.messages)).toContain("dev\\n")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("rejects an image on a model that does not guarantee vision", async () => {
+    const settings = baseSettings({
+      omnirouteBaseURL: "http://127.0.0.1:1/v1",
+      poolEnv: { OMNIROUTE_API_KEY: "test-only" },
+    })
+    await withApi(settings, async (listener) => {
+      const response = await postChat(
+        `${listener.url}/v1/chat/completions`,
+        settings.apiKey!,
+        JSON.stringify({
+          model: "matrix-free-auto",
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Read this" },
+                { type: "image_url", image_url: { url: "data:image/png;base64,AQID" } },
+              ],
+            },
+          ],
+        }),
+      )
+      const payload = await readJson<ErrorResponse>(response)
+      expect(response.status).toBe(400)
+      expect(payload.error.code).toBe("image_input_not_supported")
+      expect(payload.error.message).toContain("matrix-vision")
+    })
+  })
+
+  test("preserves text and inline image on the vision route", async () => {
+    const stub = await stubServer("ok")
+    try {
+      const settings = baseSettings({
+        poolBaseURLOverrides: { "openrouter/nemotron-3-ultra-free": stub.url },
+        poolEnv: { OPENROUTER_API_KEY: "test-openrouter", CEREBRAS_API_KEY: undefined },
+      })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          JSON.stringify({
+            model: "matrix-vision",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: "Read this image" },
+                  { type: "image_url", image_url: { url: "data:image/jpeg;base64,AQID" } },
+                ],
+              },
+            ],
+          }),
+        )
+        expect(response.status).toBe(200)
+        const upstream = JSON.parse(stub.record.body) as { model: string; messages: unknown[] }
+        expect(upstream.model).toBe("nvidia/nemotron-3-ultra-550b-a55b:free")
+        expect(JSON.stringify(upstream.messages)).toContain("Read this image")
+        expect(JSON.stringify(upstream.messages)).toContain("data:image/jpeg;base64,AQID")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("rejects remote and unsupported image URLs before contacting a provider", async () => {
+    const settings = baseSettings({
+      omnirouteBaseURL: "http://127.0.0.1:1/v1",
+      poolEnv: { OMNIROUTE_API_KEY: "test-only" },
+    })
+    for (const url of ["https://example.com/image.png", "data:image/gif;base64,AQID"]) {
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          JSON.stringify({
+            model: "matrix-vision",
+            messages: [{ role: "user", content: [{ type: "image_url", image_url: { url } }] }],
+          }),
+        )
+        expect(response.status).toBe(400)
+        expect((await readJson<ErrorResponse>(response)).error.code).toBe("invalid_image_input")
+      })
+    }
+  })
+
+  test("never echoes inline image data when a multimodal upstream fails", async () => {
+    const stub = await stubServer("error500")
+    try {
+      const settings = baseSettings({
+        poolBaseURLOverrides: { "openrouter/nemotron-3-ultra-free": stub.url },
+        poolEnv: { OPENROUTER_API_KEY: "test-openrouter", CEREBRAS_API_KEY: undefined },
+      })
+      await withApi(settings, async (listener) => {
+        const marker = "U0VDUkVUX0lNQUdFX01BUktFUg=="
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          JSON.stringify({
+            model: "matrix-vision",
+            messages: [
+              {
+                role: "user",
+                content: [{ type: "image_url", image_url: { url: `data:image/png;base64,${marker}` } }],
+              },
+            ],
+          }),
+        )
+        expect(response.status).toBeGreaterThanOrEqual(500)
+        const body = await response.text()
+        expect(body).not.toContain(marker)
+        expect(body).not.toContain("base64")
       })
     } finally {
       await closeServer(stub.server)

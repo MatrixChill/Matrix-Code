@@ -8,6 +8,7 @@ import { DialogVariant } from "./dialog-variant"
 import * as fuzzysort from "fuzzysort"
 import { useConnected } from "./use-connected"
 import { useSync } from "../context/sync"
+import { APP_NAME, MATRIX_MODEL_CATEGORY } from "../brand"
 
 export function DialogModel(props: { providerID?: string }) {
   const local = useLocal()
@@ -77,7 +78,12 @@ export function DialogModel(props: { providerID?: string }) {
             description: favorites.some((item) => item.providerID === provider.id && item.modelID === model)
               ? "(Favorite)"
               : undefined,
-            category: connected() ? provider.name : undefined,
+            category:
+              connected() && (provider.id === "omniroute" || provider.id === "matrix-api")
+                ? MATRIX_MODEL_CATEGORY
+                : connected()
+                  ? provider.name
+                  : undefined,
             disabled: provider.id === "opencode" && model.includes("-nano"),
             footer: info.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
             onSelect() {
@@ -135,7 +141,7 @@ export function DialogModel(props: { providerID?: string }) {
 
   const title = createMemo(() => {
     const value = provider()
-    if (!value) return "Select model"
+    if (!value) return `${APP_NAME} · Models`
     return value.name
   })
 

@@ -16,11 +16,15 @@ import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { InstanceStore } from "@/project/instance-store"
 import { InstanceBootstrap } from "@/project/bootstrap"
+import { Database } from "@opencode-ai/core/database/database"
+import { MessageTable, PartTable } from "@opencode-ai/core/session/sql"
+import { eq, sql } from "drizzle-orm"
 
 const it = testEffect(
   AppNodeBuilder.build(
     LayerNode.group([
       SessionNs.node,
+      Database.node,
       EventV2Bridge.node,
       SessionProjector.node,
       CrossSpawnSpawner.node,
@@ -206,6 +210,79 @@ describe("step-finish token propagation via event", () => {
 })
 
 describe("Session", () => {
+  it.instance("persists session message and part upserts across sessions", () =>
+    Effect.gen(function* () {
+      const sessions = yield* SessionNs.Service
+      const db = (yield* Database.Service).db
+      const first = yield* sessions.create({ title: "part persistence one" })
+      const second = yield* sessions.create({ title: "part persistence two" })
+      const firstMessage = MessageID.ascending()
+      const secondMessage = MessageID.ascending()
+      const otherMessage = MessageID.ascending()
+      const createMessage = (sessionID: SessionID, id: MessageID) =>
+        sessions.updateMessage({
+          id,
+          sessionID,
+          role: "user",
+          time: { created: Date.now() },
+          agent: "test",
+          model: { providerID: "test", modelID: "test" },
+          tools: {},
+        } as SessionV1.User)
+
+      yield* createMessage(first.id, firstMessage)
+      yield* createMessage(first.id, secondMessage)
+      yield* createMessage(second.id, otherMessage)
+
+      const stepID = PartID.ascending()
+      yield* sessions.updatePart({
+        id: stepID,
+        sessionID: first.id,
+        messageID: firstMessage,
+        type: "step-start",
+        snapshot: "before",
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        sessionID: first.id,
+        messageID: firstMessage,
+        type: "text",
+        text: "second part",
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        sessionID: first.id,
+        messageID: secondMessage,
+        type: "text",
+        text: "second message",
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        sessionID: second.id,
+        messageID: otherMessage,
+        type: "text",
+        text: "other session",
+      })
+      yield* sessions.updatePart({
+        id: stepID,
+        sessionID: first.id,
+        messageID: firstMessage,
+        type: "step-start",
+        snapshot: "after",
+      })
+
+      const parts = yield* db.select().from(PartTable).where(eq(PartTable.session_id, first.id)).all()
+      expect(parts).toHaveLength(3)
+      expect(parts.find((part) => part.id === stepID)?.data).toMatchObject({ type: "step-start", snapshot: "after" })
+      expect(yield* db.select().from(MessageTable).where(eq(MessageTable.session_id, first.id)).all()).toHaveLength(2)
+      expect(yield* db.select().from(MessageTable).where(eq(MessageTable.session_id, second.id)).all()).toHaveLength(1)
+      expect(yield* db.all(sql`PRAGMA foreign_key_check`)).toEqual([])
+
+      yield* sessions.remove(first.id)
+      yield* sessions.remove(second.id)
+    }),
+  )
+
   it.live("remove works without an instance", () =>
     Effect.gen(function* () {
       const session = yield* SessionNs.Service

@@ -24,7 +24,7 @@ describe("MatrixOmniRouteHealth.listModels", () => {
     const { server, url } = await stubModels({
       data: [
         { id: "auto", name: "Auto", context_length: 131072 },
-        { id: "auto/vision", modalities: { output: ["text", "image"] } },
+        { id: "auto/vision", modalities: { input: ["text", "image"], output: ["text"] } },
         { id: "weird/entry" },
       ],
     })
@@ -33,6 +33,22 @@ describe("MatrixOmniRouteHealth.listModels", () => {
       expect(result?.models.map((m) => m.id)).toEqual(["auto", "auto/vision", "weird/entry"])
       expect(result!.models[0]!.context).toBe(131072)
       expect(result!.models[0]!.name).toBe("Auto")
+      expect(result!.models[1]!.vision).toBe(true)
+    } finally {
+      await closeServer(server)
+    }
+  })
+
+  test("does not confuse image output with image input", async () => {
+    const { server, url } = await stubModels({
+      data: [
+        { id: "image-generator", modalities: { input: ["text"], output: ["image"] } },
+        { id: "vision", input_modalities: ["text", "image"] },
+      ],
+    })
+    try {
+      const result = await MatrixOmniRouteHealth.listModels(url)
+      expect(result!.models[0]!.vision).toBeUndefined()
       expect(result!.models[1]!.vision).toBe(true)
     } finally {
       await closeServer(server)

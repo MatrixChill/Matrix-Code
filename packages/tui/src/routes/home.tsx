@@ -13,6 +13,8 @@ import { useTerminalDimensions } from "@opentui/solid"
 import { useTuiConfig } from "../config"
 import { HomeSessionDestinationProvider } from "./home/session-destination"
 import { t } from "../i18n"
+import { APP_TAGLINE } from "../brand"
+import { useTheme } from "../context/theme"
 
 let once = false
 export function Home() {
@@ -26,6 +28,7 @@ export function Home() {
   const editor = useEditorContext()
   const dimensions = useTerminalDimensions()
   const tuiConfig = useTuiConfig()
+  const { theme } = useTheme()
   const placeholder = createMemo(() => ({
     normal: [t("homeFixTodo"), t("homeTechStack"), t("homeFixTests")],
     shell: ["ls -la", "git status", "pwd"],
@@ -72,10 +75,15 @@ export function Home() {
       <box flexGrow={1} alignItems="center" paddingLeft={2} paddingRight={2}>
         <box flexGrow={1} minHeight={0} />
         <box height={4} minHeight={0} flexShrink={1} />
-        <box flexShrink={0}>
-          <pluginRuntime.Slot name="home_logo" mode="replace">
-            <Logo />
-          </pluginRuntime.Slot>
+        <box flexDirection="column" alignItems="center" flexShrink={0}>
+          <box flexShrink={0}>
+            <pluginRuntime.Slot name="home_logo" mode="replace">
+              <Logo />
+            </pluginRuntime.Slot>
+          </box>
+          <text fg={theme.textMuted} flexShrink={0}>
+            {APP_TAGLINE}
+          </text>
         </box>
         <box height={1} minHeight={0} flexShrink={1} />
         <box width="100%" maxWidth={promptMaxWidth()} zIndex={1000} paddingTop={1} flexShrink={0}>

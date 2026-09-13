@@ -7,6 +7,7 @@ import { MatrixProfile } from "@opencode-ai/core/matrix/profile"
 import { MatrixCatalog } from "@opencode-ai/core/matrix/catalog"
 import { MatrixRouter } from "@opencode-ai/core/matrix/router"
 import { MatrixOmniRouteHealth } from "@opencode-ai/core/matrix/omniroute-health"
+import { APP_NAME } from "../brand"
 
 export type DialogMatrixModelsProps = {}
 
@@ -71,7 +72,7 @@ export function DialogMatrixModels() {
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
-          /matrix-models
+          {APP_NAME} · Models
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc

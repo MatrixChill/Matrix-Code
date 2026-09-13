@@ -11,11 +11,12 @@ describe("MatrixCatalog.CATALOG", () => {
     expect(models["matrix/matrix-coding-reliable"]).toBe("omniroute/matrix-coding-reliable")
   })
 
-  test("vision candidate is separate and uses the gateway vision route", () => {
+  test("vision candidate is separate and uses a proven free multimodal gateway model", () => {
     const vision = MatrixCatalog.VISION_CANDIDATES[0]!
     expect(vision.id).toBe("omniroute/matrix-vision")
-    expect(vision.model).toBe("auto/vision")
+    expect(vision.model).toBe("opencode/mimo-v2.5-free")
     expect(vision.vision).toBe(true)
+    expect(vision.cost).toBe(0)
   })
 })
 

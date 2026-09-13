@@ -1161,6 +1161,18 @@ export function Prompt(props: PromptProps) {
       void promptModelWarning()
       return false
     }
+    const hasImage = store.prompt.parts.some((part) => part.type === "file" && part.mime.startsWith("image/"))
+    const selectedModelInfo = sync.data.provider
+      .find((provider) => provider.id === selectedModel.providerID)
+      ?.models[selectedModel.modelID]
+    if (hasImage && selectedModelInfo?.capabilities.input.image !== true) {
+      toast.show({
+        title: "Image input is not supported",
+        message: `${selectedModelInfo?.name ?? selectedModel.modelID} cannot receive images. Select Matrix Vision; the attachment was kept.`,
+        variant: "warning",
+      })
+      return false
+    }
 
     const workspaceSession = props.sessionID ? sync.session.get(props.sessionID) : undefined
     const workspaceID = workspaceSession?.workspaceID
@@ -1369,6 +1381,15 @@ export function Prompt(props: PromptProps) {
         draft.extmarkToPartIndex.set(extmarkId, partIndex)
       }),
     )
+    schedulePasteRender()
+  }
+
+  function schedulePasteRender() {
+    setTimeout(() => {
+      if (!input || input.isDestroyed) return
+      renderer.currentRenderBuffer.clear()
+      renderer.requestRender()
+    }, 0)
   }
 
   async function pasteInputText(text: string) {
@@ -1404,12 +1425,7 @@ export function Prompt(props: PromptProps) {
     }
 
     input.insertText(normalizedText)
-
-    setTimeout(() => {
-      if (!input || input.isDestroyed) return
-      input.getLayoutNode().markDirty()
-      renderer.requestRender()
-    }, 0)
+    schedulePasteRender()
   }
 
   async function pasteAttachment(file: { filename?: string; filepath?: string; content: string; mime: string }) {
@@ -1457,6 +1473,7 @@ export function Prompt(props: PromptProps) {
         draft.extmarkToPartIndex.set(extmarkId, partIndex)
       }),
     )
+    schedulePasteRender()
     return
   }
 
@@ -1538,9 +1555,10 @@ export function Prompt(props: PromptProps) {
 
   return (
     <>
-      <box ref={(r: BoxRenderable) => (anchor = r)} visible={props.visible !== false} width="100%">
+      <box ref={(r: BoxRenderable) => (anchor = r)} visible={props.visible !== false} width="100%" flexShrink={0}>
         <box
           width="100%"
+          flexShrink={0}
           border={["left"]}
           borderColor={borderHighlight()}
           customBorderChars={{
@@ -1599,6 +1617,7 @@ export function Prompt(props: PromptProps) {
                 // Windows Terminal <1.25 can surface image-only clipboard as an
                 // empty bracketed paste. Windows Terminal 1.25+ does not.
                 if (!pastedContent) {
+                  event.preventDefault()
                   keymap.dispatchCommand("prompt.paste")
                   return
                 }

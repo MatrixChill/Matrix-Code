@@ -22,6 +22,12 @@ BeforeAll {
 }
 
 Describe 'Launcher Script Syntax' {
+  It 'dev-windows.ps1 should have valid PowerShell syntax' {
+    $errors = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $repoRoot 'script\dev-windows.ps1'), [ref]$null, [ref]$errors)
+    $errors.Count | Should -Be 0
+  }
+
   It '<file> should have valid PowerShell syntax' -ForEach @(
     @{ File = 'matrix.ps1' }
     @{ File = 'matrix-personal.ps1' }
@@ -77,7 +83,7 @@ Describe 'Environment Variables' {
 Describe 'OmniRoute Support' {
   It 'matrix.ps1 should reference standalone exe, Node runtime, and Node entry' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
-    @('omniroute\omniroute.exe', 'omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs') |
+    @('omniroute\omniroute.exe', 'omniroute\node.exe', 'omniroute\app\node_modules\omniroute\dist\server-ws.mjs') |
       ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
   }
 
@@ -100,11 +106,20 @@ Describe 'OmniRoute Support' {
   It 'matrix.ps1 should use PID tracking for process cleanup' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     $content | Should -Match 'omniroute\.pid'
-    $content | Should -Match '\.Kill\(\)'
+    $content | Should -Match 'Stop-ManagedService'
+    $content | Should -Match 'Get-ProcessCommandLine -ProcessId \$ownedPid'
+    $content | Should -Match 'Stop-Process -Id \$ownedPid -Force'
     $content | Should -Match 'Get-MatchingListenerProcess'
     $content | Should -Match 'Get-NetTCPConnection -State Listen'
     $content | Should -Match '\$started -and -not \$ready'
     $content | Should -Match '\$parent\.Name -ne \$processInfo\.Name'
+    $content | Should -Match 'JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE'
+    $content | Should -Match 'MatrixLauncherJob'
+    $content | Should -Match 'IsProcessInJob\(process, job'
+    $content | Should -Match 'Marshal.GetLastWin32Error\(\)'
+    $content | Should -Match '\[MatrixLauncherJob\]::Assign\(\$launcherJob, \$process\.Id\)'
+    $content | Should -Match '\[MatrixLauncherJob\]::Assign\(\$launcherJob, \$tuiProcess\.Id\)'
+    $content | Should -Match '\[MatrixLauncherJob\]::Close\(\$launcherJob\)'
   }
 
   It 'launchers should use 127.0.0.1 not localhost for health checks' {
@@ -129,7 +144,7 @@ Describe 'OmniRoute Support' {
     $content | Should -Match 'Start-ManagedService'
     $content | Should -Match 'Running = \[bool\]\$running'
     $content | Should -Match '\$omniRoute\.Started'
-    $content | Should -Match 'if \(\$omniRouteStarted -and \$null -ne \$omniRouteProcess\)'
+    $content | Should -Match 'Stop-ManagedService -Name ''OmniRoute gateway''.*-Started \$omniRouteStarted.*-ProcessId \$omniRoutePid'
   }
 
   It 'a normal/global omniroute installation is discovered via Get-Command' {
@@ -196,7 +211,7 @@ Describe 'Matrix API Support' {
   It 'matrix.ps1 should track the Matrix API PID for targeted cleanup' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
     $content | Should -Match 'matrix-api\.pid'
-    $content | Should -Match '\$matrixApiStarted -and \$matrixApiPid'
+    $content | Should -Match 'Stop-ManagedService -Name ''Matrix API''.*-Started \$matrixApiStarted.*-ProcessId \$matrixApiPid'
   }
 }
 
@@ -240,6 +255,8 @@ Describe 'Launcher Window Behaviour' {
     $content | Should -Match 'Start-Process -FilePath \$matrixExe'
     $content | Should -Match '\$tuiWindow'
     $content | Should -Match 'MATRIX_TUI_WINDOW'
+    $content | Should -Match 'Start-Process -FilePath \$matrixExe -NoNewWindow -PassThru'
+    $content | Should -Match '\$tuiProcess\.WaitForExit\(\)'
   }
 
   It 'matrix.ps1 should hide the TUI when output is redirected and show it for the desktop user' {
@@ -255,9 +272,39 @@ Describe 'Launcher Window Behaviour' {
     $content | Should -Match '\-ArgumentList \$tuiArgString'
     $content | Should -Match 'Start-Process -FilePath \$matrixExe -WindowStyle'
   }
+
+  It 'matrix.ps1 should not have a trap handler that continues past finally block' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Not -Match 'trap\s*\{'
+    # The trap handler's 'continue' was at script level; ensure no 'trap { ... continue }' pattern
+    $content | Should -Not -Match 'trap\s*\{[^}]*continue'
+  }
+
+  It 'matrix.ps1 should wait for TUI exit before running finally block cleanup' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    # The TUI wait ($tuiProcess.WaitForExit()) must be in the try block before finally
+    $content | Should -Match '\$tuiProcess\.WaitForExit\(\)'
+    # Finally block should only kill services started by this launcher
+    $content | Should -Match 'Stop-ManagedService -Name ''OmniRoute gateway''.*-Started \$omniRouteStarted'
+    $content | Should -Match 'Stop-ManagedService -Name ''Matrix API''.*-Started \$matrixApiStarted'
+  }
 }
 
 Describe 'Build Script Integration' {
+  It 'dev loop should reuse release outputs without creating archives or rebuilding Voice' {
+    $content = Get-Content -LiteralPath (Join-Path $repoRoot 'script\dev-windows.ps1') -Raw
+    $content | Should -Match 'build --single --skip-install --skip-embed-web-ui'
+    $content | Should -Match 'opencode-windows-x64\\bin\\opencode\.exe'
+    $content | Should -Match 'tmp\\matrix-dependencies'
+    $content | Should -Not -Match 'Compress-Archive|PyInstaller|download-model'
+  }
+
+  It 'dev loop should preserve its main environment when Clean is requested' {
+    $content = Get-Content -LiteralPath (Join-Path $repoRoot 'script\dev-windows.ps1') -Raw
+    $content | Should -Match 'Matrix-Code-Dev-Clean-'
+    $content | Should -Not -Match 'Remove-Item[^\r\n]*\$dev'
+  }
+
   It 'build script should copy matrix.ps1 to portable distribution' {
     $buildScript = Join-Path $RepoRoot 'script\build-windows-distribution.ps1'
     $content = Get-Content -LiteralPath $buildScript -Raw
@@ -268,6 +315,36 @@ Describe 'Build Script Integration' {
     $buildScript = Join-Path $RepoRoot 'script\build-windows-distribution.ps1'
     $content = Get-Content -LiteralPath $buildScript -Raw
     $content | Should -Match 'matrix\.ps1.*--version'
+  }
+
+  It 'allows enough time for a fresh bundled OmniRoute cold start' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match '\$readinessTimeout\s*=\s*60'
+  }
+
+  It 'drains quiet service output so a fresh migration cannot block readiness' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'function Start-QuietProcess'
+    $content | Should -Match '\.BeginOutputReadLine\(\)'
+    $content | Should -Match '\.BeginErrorReadLine\(\)'
+    $content | Should -Not -Match '\[System\.Diagnostics\.Process\]::Start\(\$startInfo\)'
+  }
+
+  It 'matrix.ps1 should launch the bundled official executable headlessly' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match "Arguments = '--headless'"
+    $content | Should -Match "EnvironmentVariables\['OMNIROUTE_HEADLESS'\] = 'true'"
+    $content | Should -Match "EnvironmentVariables\['NO_LOG_API_KEY_IDS'\] = 'env-key'"
+  }
+
+  It 'build script should stage the pinned verified official OmniRoute CLI and Node runtime into the Portable ZIP' {
+    $content = Get-Content -LiteralPath (Join-Path $RepoRoot 'script\build-windows-distribution.ps1') -Raw
+    $content | Should -Match '\$omniRouteVersion = "3\.8\.50"'
+    $content | Should -Match 'Get-FileHash -Algorithm SHA256'
+    $content | Should -Match '\$nodeVersion = "24\.13\.0"'
+    $content | Should -Match 'omniroute/app/node_modules/omniroute/dist/server-ws\.mjs'
+    $content | Should -Match 'build-generated \.env'
+    $content | Should -Match 'Remove-Item -LiteralPath \$omniRouteGeneratedEnv'
   }
 }
 
@@ -286,10 +363,13 @@ Describe 'OmniRoute Upstream Credential' {
     $content | Should -Not -Match 'Write-Host[^\r\n]*\$candidate'
   }
 
-  It 'matrix.ps1 should not invent a gateway key or force REQUIRE_API_KEY' {
+  It 'matrix.ps1 should bootstrap only the bundled gateway with protected random credentials and auth enabled' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
-    $content | Should -Not -Match '\$env:REQUIRE_API_KEY\s*='
-    $content | Should -Not -Match 'No OmniRoute API key was configured\. Generated'
+    $content | Should -Match "EnvironmentVariables\['REQUIRE_API_KEY'\] = 'true'"
+    $content | Should -Match 'omniroute-storage\.cred'
+    $content | Should -Match 'Write-MatrixApiKeyToStore -Path \$omnirouteCredFile'
+    $content | Should -Match 'Write-MatrixApiKeyToStore -Path \$omnirouteStorageCredFile'
+    $content | Should -Not -Match 'REQUIRE_API_KEY=false'
     $content | Should -Not -Match 'Read-Host[^\r\n]*OmniRoute'
   }
 

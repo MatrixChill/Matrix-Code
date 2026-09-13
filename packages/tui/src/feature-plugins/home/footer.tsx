@@ -4,6 +4,7 @@ import { createMemo, Match, Show, Switch } from "solid-js"
 import { abbreviateHome } from "../../runtime"
 import { useTuiPaths } from "../../context/runtime"
 import { useHomeSessionDestination } from "../../routes/home/session-destination"
+import { APP_NAME } from "../../brand"
 
 const id = "internal:home-footer"
 
@@ -56,7 +57,7 @@ function Version(props: { api: TuiPluginApi }) {
 
   return (
     <box flexShrink={0}>
-      <text fg={theme().textMuted}>{props.api.app.version}</text>
+      <text fg={theme().textMuted}>{APP_NAME} v{props.api.app.version}</text>
     </box>
   )
 }

@@ -28,6 +28,31 @@ describe("prompt local attachments", () => {
     })
   })
 
+  test("accepts PNG, JPEG, and WebP paths including Windows paths with spaces", async () => {
+    const content = new Uint8Array([1, 2, 3])
+    for (const [file, mime] of [
+      ["C:\\Users\\Matrix User\\Pictures\\error shot.PNG", "image/png"],
+      ["C:\\Users\\Matrix User\\Pictures\\interface.jpeg", "image/jpeg"],
+      ["C:\\Users\\Matrix User\\Pictures\\diagram.webp", "image/webp"],
+    ] as const) {
+      let received = ""
+      expect(
+        await readLocalAttachmentWith(
+          {
+            mime: async (path) => {
+              received = path
+              return mime
+            },
+            readText: async () => "",
+            readBytes: async () => content,
+          },
+          file,
+        ),
+      ).toEqual({ type: "binary", mime, content })
+      expect(received).toBe(file)
+    }
+  })
+
   test("ignores unsupported and unreadable local files", async () => {
     expect(await readLocalAttachmentWith(files({ mime: "text/plain" }), "/tmp/file.txt")).toBeUndefined()
     expect(

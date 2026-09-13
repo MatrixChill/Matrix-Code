@@ -9,9 +9,38 @@ $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $dist = Join-Path $repo "packages\opencode\dist"
 $release = Join-Path $dist "matrix-release"
 $voiceBuild = Join-Path $dist "matrix-voice-build"
+$dependencyCache = Join-Path $repo "tmp\matrix-dependencies"
+
+$omniRouteVersion = "3.8.50"
+$omniRouteUrl = "https://registry.npmjs.org/omniroute/-/omniroute-$omniRouteVersion.tgz"
+$omniRouteSha256 = "738c58af1faae8c57eb643a939d1191f8d7e083d9295ef61687d2bff04878c29"
+$nodeVersion = "24.13.0"
+$nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
+$nodeSha256 = "ca2742695be8de44027d71b3f53a4bdb36009b95575fe1ae6f7f0b5ce091cb88"
 
 if (-not $release.StartsWith($repo, [StringComparison]::OrdinalIgnoreCase)) {
   throw "Release path escaped the repository"
+}
+
+function Get-VerifiedDependency {
+  param(
+    [string]$Uri,
+    [string]$Path,
+    [string]$Sha256
+  )
+
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Path) | Out-Null
+  if (-not (Test-Path -LiteralPath $Path) -or (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash -ne $Sha256) {
+    $partial = "$Path.partial"
+    Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+    Invoke-WebRequest -Uri $Uri -OutFile $partial -UseBasicParsing
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $partial).Hash -ne $Sha256) {
+      Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+      throw "Downloaded dependency failed SHA-256 validation: $([IO.Path]::GetFileName($Path))"
+    }
+    Move-Item -LiteralPath $partial -Destination $Path -Force
+  }
+  return $Path
 }
 
 if (-not $SkipCliBuild) {
@@ -89,10 +118,64 @@ Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.ps1") -Dest
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-personal.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\templates") -Destination $portable -Recurse
 
+# Bundle the official CLI package with a pinned Node runtime. npm is used only
+# while producing the release; the resulting Portable never needs a global
+# OmniRoute, Node.js, npm, or a first-run download.
+$omniRoutePackage = Get-VerifiedDependency `
+  -Uri $omniRouteUrl `
+  -Path (Join-Path $dependencyCache "omniroute-$omniRouteVersion.tgz") `
+  -Sha256 $omniRouteSha256
+$nodeArchive = Get-VerifiedDependency `
+  -Uri $nodeUrl `
+  -Path (Join-Path $dependencyCache "node-v$nodeVersion-win-x64.zip") `
+  -Sha256 $nodeSha256
+$nodeRoot = Join-Path $dependencyCache "node-v$nodeVersion-win-x64"
+if (-not (Test-Path -LiteralPath (Join-Path $nodeRoot "node.exe"))) {
+  Expand-Archive -LiteralPath $nodeArchive -DestinationPath $dependencyCache -Force
+}
+$omniRouteRuntime = Join-Path $dependencyCache "omniroute-runtime-$omniRouteVersion-node-$nodeVersion"
+$omniRouteMarker = Join-Path $omniRouteRuntime ".complete"
+if (-not (Test-Path -LiteralPath $omniRouteMarker)) {
+  if (Test-Path -LiteralPath $omniRouteRuntime) { Remove-Item -LiteralPath $omniRouteRuntime -Recurse -Force }
+  New-Item -ItemType Directory -Force -Path $omniRouteRuntime | Out-Null
+  & (Join-Path $nodeRoot "npm.cmd") install --prefix $omniRouteRuntime $omniRoutePackage --omit=dev --no-audit --no-fund --package-lock=false
+  if ($LASTEXITCODE -ne 0) { throw "OmniRoute runtime installation failed" }
+  if (-not (Test-Path -LiteralPath (Join-Path $omniRouteRuntime "node_modules\omniroute\dist\server-ws.mjs"))) {
+    throw "Official OmniRoute standalone server entry point was not installed"
+  }
+  Set-Content -LiteralPath $omniRouteMarker -Value "$omniRouteVersion`n$nodeVersion" -Encoding ascii
+}
+$omniRouteStage = Join-Path $portable "omniroute"
+New-Item -ItemType Directory -Force -Path $omniRouteStage | Out-Null
+Copy-Item -LiteralPath (Join-Path $nodeRoot "node.exe") -Destination (Join-Path $omniRouteStage "node.exe")
+New-Item -ItemType Directory -Force -Path (Join-Path $omniRouteStage "app") | Out-Null
+Copy-Item -LiteralPath (Join-Path $omniRouteRuntime "node_modules") -Destination (Join-Path $omniRouteStage "app\node_modules") -Recurse
+
+# OmniRoute's npm install generates a local .env with runtime-only signing
+# secrets. The launcher supplies fresh protected credentials through the child
+# environment, so the build-generated file must never become release material.
+$omniRouteGeneratedEnv = Join-Path $omniRouteStage "app\node_modules\omniroute\.env"
+if (Test-Path -LiteralPath $omniRouteGeneratedEnv) {
+  Remove-Item -LiteralPath $omniRouteGeneratedEnv -Force
+}
+
 $standardZip = Join-Path $release "Matrix-Code-Windows-x64.zip"
 $portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable.zip"
 Compress-Archive -Path (Join-Path $standard "*") -DestinationPath $standardZip -CompressionLevel Optimal
 Compress-Archive -Path (Join-Path $portable "*") -DestinationPath $portableZip -CompressionLevel Optimal
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$portableArchive = [IO.Compression.ZipFile]::OpenRead($portableZip)
+try {
+  $portableEntries = @($portableArchive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+  if ($portableEntries -notcontains "omniroute/node.exe") { throw "Portable ZIP is missing its Node.js runtime" }
+  if ($portableEntries -notcontains "omniroute/app/node_modules/omniroute/dist/server-ws.mjs") { throw "Portable ZIP is missing OmniRoute" }
+  if ($portableEntries -contains "omniroute/app/node_modules/omniroute/.env") {
+    throw "Portable ZIP contains OmniRoute's build-generated .env"
+  }
+} finally {
+  $portableArchive.Dispose()
+}
 
 # Smoke tests
 & (Join-Path $standard "matrix.exe") --version

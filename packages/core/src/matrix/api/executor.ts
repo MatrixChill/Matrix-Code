@@ -11,7 +11,7 @@
 
 import { Context, Effect, Layer, Option, Sink, Stream } from "effect"
 import { randomUUID } from "node:crypto"
-import { InvalidProviderOutputReason, LLM, LLMError, Message, type LLMEvent, type Model } from "@opencode-ai/llm"
+import { InvalidProviderOutputReason, LLM, LLMError, Message, type LLMEvent, type Model, ToolDefinition } from "@opencode-ai/llm"
 import { OpenAICompatible } from "@opencode-ai/llm/providers"
 import { LLMClient, Auth } from "@opencode-ai/llm/route"
 import { MatrixCatalog } from "../catalog"
@@ -67,7 +67,10 @@ export function layer(settings: Settings) {
   const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
   const override = MatrixApiPool.overrideEntry(settings)
   const eligible = settings.omnirouteBaseURL && settings.directBaseURL === undefined
-    ? [omnirouteEntry(settings.omnirouteBaseURL)]
+    ? [
+        omnirouteEntry(settings.omnirouteBaseURL, "auto/coding:free"),
+        omnirouteEntry(settings.omnirouteBaseURL, "opencode/mimo-v2.5-free"),
+      ]
     : [
         ...resolved.free,
         ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
@@ -84,9 +87,9 @@ export function layer(settings: Settings) {
   return Layer.succeed(Service, Service.of({ settings, chatCompletion, routeStatus }))
 }
 
-function omnirouteEntry(baseURL: string): PoolEntry {
+function omnirouteEntry(baseURL: string, model: "auto/coding:free" | "opencode/mimo-v2.5-free"): PoolEntry {
   return {
-    candidate: MatrixCatalog.CATALOG.find((candidate) => candidate.model === "auto/coding:free")!,
+    candidate: [...MatrixCatalog.CATALOG, ...MatrixCatalog.VISION_CANDIDATES].find((candidate) => candidate.model === model)!,
     baseURL,
     keyEnv: "OMNIROUTE_API_KEY",
     free: true,
@@ -114,7 +117,22 @@ const chatCompletionImpl =
     if (input.request.messages.length === 0)
       return yield* Effect.fail(ApiSchema.invalidRequest("messages must contain at least one message", "empty_messages"))
 
-    const candidates = toCandidates(eligible)
+    const hasImage = requestHasImage(input.request)
+    if (hasImage && !requestImagesAreSupported(input.request))
+      return yield* Effect.fail(
+        ApiSchema.invalidRequest(
+          "Image input must be a user-message inline PNG, JPEG, or WebP data URL.",
+          "invalid_image_input",
+        ),
+      )
+    if (hasImage && model.profile !== "vision")
+      return yield* Effect.fail(
+        ApiSchema.invalidRequest(
+          `Model '${model.id}' does not guarantee image input. Select 'matrix-vision' so the image is preserved.`,
+          "image_input_not_supported",
+        ),
+      )
+    const candidates = toCandidates(eligible).filter((candidate) => !hasImage || candidate.vision)
     const selection =
       candidates.length === 0
         ? undefined
@@ -169,11 +187,26 @@ function buildRequest(
     ...(input.request.temperature === undefined ? {} : { temperature: input.request.temperature }),
     ...(input.request.max_tokens === undefined ? {} : { maxTokens: input.request.max_tokens }),
   }
+  const tools = input.request.tools?.map((tool) =>
+    ToolDefinition.make({
+      name: tool.function.name,
+      description: tool.function.description ?? "",
+      inputSchema: (tool.function.parameters as Record<string, unknown>) ?? { type: "object", properties: {} },
+    }),
+  )
+  const toolChoice =
+    input.request.tool_choice === undefined
+      ? undefined
+      : typeof input.request.tool_choice === "string"
+        ? input.request.tool_choice
+        : input.request.tool_choice.function.name
   return LLM.request({
     model: built.upstream,
     system,
     messages: history,
     generation,
+    tools: tools ?? [],
+    ...(toolChoice === undefined ? {} : { toolChoice }),
     http: { headers: { ...propagationHeaders(hops), "x-opencode-retry-disabled": "true" } },
   })
 }
@@ -239,6 +272,87 @@ function runAttempt(
             }
             return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
           }
+          if (event.type === "tool-call") {
+            const payload = {
+              id,
+              object: "chat.completion.chunk",
+              created,
+              model: input.request.model,
+              choices: [
+                {
+                  index: 0,
+                  delta: {
+                    tool_calls: [
+                      {
+                        index: 0,
+                        id: event.id,
+                        type: "function",
+                        function: {
+                          name: event.name,
+                          arguments: JSON.stringify(event.input),
+                        },
+                      },
+                    ],
+                  },
+                  finish_reason: null,
+                }
+              ],
+            }
+            return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
+          }
+          if (event.type === "tool-input-start") {
+            const payload = {
+              id,
+              object: "chat.completion.chunk",
+              created,
+              model: input.request.model,
+              choices: [
+                {
+                  index: 0,
+                  delta: {
+                    tool_calls: [
+                      {
+                        index: 0,
+                        id: event.id,
+                        type: "function",
+                        function: {
+                          name: event.name,
+                          arguments: "",
+                        },
+                      },
+                    ],
+                  },
+                  finish_reason: null,
+                }
+              ],
+            }
+            return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
+          }
+          if (event.type === "tool-input-delta") {
+            const payload = {
+              id,
+              object: "chat.completion.chunk",
+              created,
+              model: input.request.model,
+              choices: [
+                {
+                  index: 0,
+                  delta: {
+                    tool_calls: [
+                      {
+                        index: 0,
+                        function: {
+                          arguments: event.text,
+                        },
+                      },
+                    ],
+                  },
+                  finish_reason: null,
+                }
+              ],
+            }
+            return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
+          }
           if (event.type === "finish") {
             const finishReason = mapFinishReason(event.reason)
             const payload = {
@@ -276,6 +390,7 @@ function runAttempt(
           finishReason: mapFinishReason(response.finishReason),
           promptTokens: response.usage?.inputTokens,
           completionTokens: response.usage?.outputTokens,
+          toolCalls: response.toolCalls.map((call) => ({ id: call.id, name: call.name, input: call.input })),
         }),
       },
     }
@@ -287,7 +402,15 @@ function runAttempt(
 }
 
 function isReadyEvent(event: LLMEvent): boolean {
-  return event.type === "text-delta" || event.type === "finish" || event.type === "provider-error"
+  return (
+    event.type === "text-delta" ||
+    event.type === "finish" ||
+    event.type === "provider-error" ||
+    event.type === "tool-call" ||
+    event.type === "tool-input-start" ||
+    event.type === "tool-input-delta" ||
+    event.type === "tool-input-end"
+  )
 }
 
 function emptyStreamFailure() {
@@ -336,7 +459,7 @@ const COOLDOWN_MS: Readonly<Record<MatrixReliable.RecoverableKind, number>> = {
 }
 
 // ---------------------------------------------------------------------------
-// matrix-coding: single best-eligible selection
+// matrix-coding: best-eligible selection with fallback across the pool
 // ---------------------------------------------------------------------------
 
 function runSingleCoding(
@@ -346,12 +469,43 @@ function runSingleCoding(
   selection: MatrixRouter.Selection,
   hops: number,
 ) {
-  const entry = entryFor(ctx, selection.candidate.id)
-  if (entry === undefined) return Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
+  const { router, eligible } = ctx
+  let currentId = selection.candidate.id
+  const attempted = new Set<string>()
+
   return Effect.gen(function* () {
-    const result = yield* runAttempt(ctx, input, model, entry, hops)
-    if (result.ok) return yield* onSuccess(ctx, entry, result)
-    return yield* onFailure(ctx, entry, result)
+    while (true) {
+      const entry = entryFor(ctx, currentId)
+      if (entry === undefined) return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
+
+      attempted.add(currentId)
+      const result = yield* runAttempt(ctx, input, model, entry, hops)
+      if (result.ok) return yield* onSuccess(ctx, entry, result)
+
+      const text = MatrixRouterService.sanitizeMessage(result.error.message)
+      const code = result.status >= 400 && result.status < 600 ? String(result.status) : undefined
+      const kind = MatrixReliable.classifyError(code, text)
+
+      // Permanent errors on a single-candidate pool (e.g. Direct auth 401
+      // with no other candidates): fail immediately.
+      if (kind === "none") return yield* onFailure(ctx, entry, result)
+
+      // Record the failure and try the next available candidate.
+      router.recordFailure(entry.candidate, COOLDOWN_MS[kind], {
+        message: text,
+        ...(code === undefined ? {} : { code }),
+        status: result.status,
+      })
+
+      const needsVision = requestHasImage(input.request)
+      const others = toCandidates(eligible).filter(
+        (candidate) => !attempted.has(candidate.id) && (!needsVision || candidate.vision),
+      )
+      const fallback = router.fallback(model.profile, others, () => true)
+      if (fallback === undefined) return yield* onFailure(ctx, entry, result)
+
+      currentId = fallback.candidate.id
+    }
   })
 }
 
@@ -395,7 +549,10 @@ function runReliable(
       })
 
       // Decide whether to retry the same candidate or fall back to another.
-      const others = toCandidates(eligible).filter((candidate) => !attempted.has(candidate.id))
+      const needsVision = requestHasImage(input.request)
+      const others = toCandidates(eligible).filter(
+        (candidate) => !attempted.has(candidate.id) && (!needsVision || candidate.vision),
+      )
       const decision = MatrixReliable.decideFailure(
         code,
         text,
@@ -444,22 +601,87 @@ function routeStatusImpl(ctx: ExecutorContext): RouteStatus {
 function splitMessages(messages: ReadonlyArray<ChatCompletionRequest["messages"][number]>) {
   const system: string[] = []
   const history: Array<Message.Input> = []
+  const toolNames = new Map<string, string>()
   for (const message of messages) {
     if (message.role === "system") {
       system.push(messageText(message))
       continue
     }
+    if (message.role === "user") {
+      history.push(Message.user(messageContent(message)))
+      continue
+    }
+    if (message.role === "assistant") {
+      const calls = (message.tool_calls ?? []).map((call) => {
+        toolNames.set(call.id, call.function.name)
+        return {
+          type: "tool-call" as const,
+          id: call.id,
+          name: call.function.name,
+          input: parseToolArguments(call.function.arguments),
+        }
+      })
+      history.push(Message.assistant([...messageTextParts(message), ...calls]))
+      continue
+    }
+    if (!message.tool_call_id) continue
     history.push(
-      message.role === "user" ? Message.user(messageText(message)) : Message.assistant(messageText(message)),
+      Message.tool({
+        id: message.tool_call_id,
+        name: message.name ?? toolNames.get(message.tool_call_id) ?? "tool",
+        result: messageText(message),
+        resultType: "text",
+      }),
     )
   }
   return { system: system.join("\n\n"), history }
 }
 
+function messageTextParts(message: ChatCompletionRequest["messages"][number]) {
+  const text = messageText(message)
+  return text ? [Message.text(text)] : []
+}
+
+function parseToolArguments(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return value
+  }
+}
+
+function requestHasImage(request: ChatCompletionRequest): boolean {
+  return request.messages.some(
+    (message) => Array.isArray(message.content) && message.content.some((part) => part.type === "image_url"),
+  )
+}
+
+function requestImagesAreSupported(request: ChatCompletionRequest): boolean {
+  return request.messages.every(
+    (message) =>
+      !Array.isArray(message.content) ||
+      message.content.every(
+        (part) =>
+          part.type !== "image_url" ||
+          (message.role === "user" && /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(part.image_url.url)),
+      ),
+  )
+}
+
+function messageContent(message: ChatCompletionRequest["messages"][number]): Message.ContentInput {
+  if (message.content === null || typeof message.content === "string") return message.content ?? ""
+  return message.content.map((part) => {
+    if (part.type === "text") return Message.text(part.text)
+    const match = part.image_url.url.match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/)
+    if (!match) return Message.text("ERROR: Image must be an inline PNG, JPEG, or WebP data URL.")
+    return { type: "media" as const, mediaType: match[1]!, data: match[2]! }
+  })
+}
+
 function messageText(message: ChatCompletionRequest["messages"][number]): string {
   if (message.content === null) return ""
   if (typeof message.content === "string") return message.content
-  return message.content.map((part) => part.text).join("")
+  return message.content.map((part) => (part.type === "text" ? part.text : "[image]")).join("")
 }
 
 // Derive an HTTP status from the provider error when it carries one.

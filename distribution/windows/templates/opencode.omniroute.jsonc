@@ -16,6 +16,14 @@
           "reasoning": true,
           "tool_call": true,
           "limit": { "context": 131072, "output": 32768 }
+        },
+        "vision-free": {
+          "id": "opencode/mimo-v2.5-free",
+          "name": "Matrix Vision (Direct)",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
+          "limit": { "context": 131072, "output": 32768 }
         }
       }
     },
@@ -39,6 +47,14 @@
           "name": "Matrix Coding Reliable",
           "reasoning": true,
           "tool_call": true,
+          "limit": { "context": 131072, "output": 32768 }
+        },
+        "matrix-vision": {
+          "id": "matrix-vision",
+          "name": "Matrix Vision",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 131072, "output": 32768 }
         }
       }

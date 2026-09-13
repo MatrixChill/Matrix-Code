@@ -32,26 +32,27 @@ Expected portable structure
     .matrix\              Portable config, data, cache, state
       state\              Secure per-user Matrix API key store (encrypted)
     matrix-voice\         Matrix Voice helper and model
-    omniroute\            (optional) Bundled OmniRoute gateway
-      node.exe            (optional) Bundled Node.js runtime
-      app\bin\omniroute.mjs  (optional) OmniRoute Node entry point
-      omniroute.exe       (optional) Standalone OmniRoute binary
+    omniroute\            Bundled OmniRoute gateway
+      node.exe            Bundled Node.js runtime
+      app\node_modules\  Official OmniRoute CLI and dependencies
     templates\            Configuration templates
 
-OmniRoute gateway (optional)
-  OmniRoute provides multi-model AI routing. It is optional — Matrix Code
-  works without it and will prompt for an AI provider on first use.
+OmniRoute gateway
+  The Portable includes OmniRoute for multi-model AI routing. Matrix Code can
+  still run without it and use another configured provider.
 
   The launcher auto-starts OmniRoute if it is available locally:
-    - omniroute\omniroute.exe     (standalone binary)
-    - omniroute\node.exe + omniroute\app\bin\omniroute.mjs  (bundled Node)
+    - omniroute\node.exe + app\node_modules\omniroute (bundled official CLI)
 
   The launcher checks localhost:20128 before starting anything. If OmniRoute
   is already running, the launcher reuses it. If not available, Matrix Code
   starts normally with a warning.
 
-  OmniRoute may be prepared on a trusted machine and copied to the USB.
-  No npm install is required at runtime. No global Node dependency needed.
+  No npm install, global Node.js, manual API key, or PowerShell environment
+  setup is required at runtime. Authentication remains enabled. Matrix Code
+  creates local random credentials and stores them encrypted with Windows
+  DPAPI under .matrix\state; secret values are never printed or passed as
+  command-line arguments.
 
   The launcher only cleans up an OmniRoute process it started itself.
   Pre-existing OmniRoute processes are never killed.

@@ -10,6 +10,7 @@ type StubMode = "success" | "429" | "503" | "timeout"
 interface UpstreamRequest {
   readonly model: string
   readonly stream?: boolean
+  readonly messages?: unknown
 }
 
 interface StubState {
@@ -47,6 +48,26 @@ function postChat(url: string, key: string, stream = true) {
       model: "matrix-coding-reliable",
       stream,
       messages: [{ role: "user", content: "hi" }],
+    }),
+  })
+}
+
+function postVision(url: string, key: string) {
+  return fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      model: "matrix-vision",
+      stream: true,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Read it" },
+            { type: "image_url", image_url: { url: "data:image/webp;base64,AQID" } },
+          ],
+        },
+      ],
     }),
   })
 }
@@ -150,6 +171,26 @@ describe("Matrix API OmniRoute path", () => {
         expect(response.status).toBe(200)
         expect(await response.text()).toContain("Hello ")
         expect(stub.state.requests[0]!.model).toBe("auto/coding:free")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("streams multimodal content only through the proven vision candidate", async () => {
+    const stub = await stubServer("success")
+    try {
+      const settings = baseSettings({
+        omnirouteBaseURL: stub.url,
+        poolEnv: { OMNIROUTE_API_KEY: "omniroute-test-key" },
+      })
+      await withApi(settings, async (listener) => {
+        const response = await postVision(`${listener.url}/v1/chat/completions`, settings.apiKey!)
+        expect(response.status).toBe(200)
+        expect(await response.text()).toContain("Hello ")
+        expect(stub.state.requests).toHaveLength(1)
+        expect(stub.state.requests[0]!.model).toBe("opencode/mimo-v2.5-free")
+        expect(JSON.stringify(stub.state.requests[0]!.messages)).toContain("data:image/webp;base64,AQID")
       })
     } finally {
       await closeServer(stub.server)

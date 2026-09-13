@@ -3,6 +3,7 @@ import { useTheme } from "../context/theme"
 import { useDialog } from "./dialog"
 import { useBindings, useCommandShortcut } from "../keymap"
 import { t } from "../i18n"
+import { APP_NAME, APP_TAGLINE } from "../brand"
 
 export function DialogHelp() {
   const dialog = useDialog()
@@ -20,13 +21,14 @@ export function DialogHelp() {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          {t("help")}
+          {APP_NAME} · {t("help")}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc/enter
         </text>
       </box>
       <box paddingBottom={1}>
+        <text fg={theme.primary}>{APP_TAGLINE}</text>
         <text fg={theme.textMuted}>
           {t("helpDescription", { shortcut: commandShortcut() })}
         </text>

@@ -118,7 +118,7 @@ Assert-Test 'no launcher weakens execution policy or uses policy flags' {
 foreach ($f in @('matrix.ps1')) {
   Assert-Test "$f references bundled Node OmniRoute paths" {
     $content = Get-Content -LiteralPath (Join-Path $d $f) -Raw
-    foreach ($r in @('omniroute\node.exe', 'omniroute\app\bin\omniroute.mjs', 'omniroute\omniroute.exe')) {
+    foreach ($r in @('omniroute\node.exe', 'omniroute\app\node_modules\omniroute\dist\server-ws.mjs', 'omniroute\omniroute.exe')) {
       if ($content -notmatch [regex]::Escape($r)) { throw "Missing: $r" }
     }
   }
@@ -246,15 +246,37 @@ Assert-Test 'matrix.ps1 resolves and validates an active local OmniRoute key' {
   }
 }
 
-Assert-Test 'matrix.ps1 never invents or exposes an OmniRoute key' {
+Assert-Test 'matrix.ps1 bootstraps the bundled gateway with protected credentials and auth enabled' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -match '\$startInfo\.Arguments =.*OMNIROUTE_API_KEY') {
     throw "OmniRoute key interpolated into the child command line"
   }
   if ($content -match 'Write-Host[^\r\n]*\$omnirouteApiKey') { throw "OmniRoute key printed via Write-Host" }
   if ($content -match 'Write-Host[^\r\n]*\$candidate') { throw "OmniRoute candidate printed via Write-Host" }
-  if ($content -match '\$env:REQUIRE_API_KEY\s*=') { throw "Launcher forces OmniRoute API-key mode" }
-  if ($content -match 'No OmniRoute API key was configured\. Generated') { throw "Launcher invents an invalid OmniRoute key" }
+  if ($content -notmatch "EnvironmentVariables\['REQUIRE_API_KEY'\] = 'true'") { throw "Bundled OmniRoute auth is not enforced" }
+  if ($content -match 'REQUIRE_API_KEY=false') { throw "Launcher disables OmniRoute authentication" }
+  if ($content -notmatch 'omniroute-storage\.cred') { throw "No protected OmniRoute storage credential" }
+}
+
+Assert-Test 'matrix.ps1 drains redirected service output during cold start' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch 'function Start-QuietProcess') { throw "No quiet process starter" }
+  if ($content -notmatch '\.BeginOutputReadLine\(\)') { throw "Standard output is not drained" }
+  if ($content -notmatch '\.BeginErrorReadLine\(\)') { throw "Standard error is not drained" }
+  if ($content -match '\[System\.Diagnostics\.Process\]::Start\(\$startInfo\)') { throw "Redirected process can still start without stream draining" }
+}
+
+Assert-Test 'release build excludes the OmniRoute install-generated .env' {
+  $content = Get-Content -LiteralPath (Join-Path $r 'script\build-windows-distribution.ps1') -Raw
+  if ($content -notmatch 'Remove-Item -LiteralPath \$omniRouteGeneratedEnv') { throw "Generated OmniRoute .env is not removed" }
+  if ($content -notmatch 'Portable ZIP contains OmniRoute''s build-generated \.env') { throw "Portable ZIP does not enforce the .env exclusion" }
+}
+
+Assert-Test 'matrix.ps1 launches the bundled official OmniRoute executable headlessly' {
+  $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
+  if ($content -notmatch "Arguments = '--headless'") { throw "Bundled OmniRoute is not started headlessly" }
+  if ($content -notmatch "EnvironmentVariables\['OMNIROUTE_HEADLESS'\] = 'true'") { throw "Bundled OmniRoute headless environment is missing" }
+  if ($content -notmatch "EnvironmentVariables\['NO_LOG_API_KEY_IDS'\] = 'env-key'") { throw "Bundled OmniRoute request-body logging is not disabled" }
 }
 
 Assert-Test 'the .matrix/state credential store stays out of Git and the release build' {
@@ -294,6 +316,13 @@ Assert-Test 'build script copies matrix.ps1 to portable distribution' {
 Assert-Test 'build script runs PowerShell launcher smoke test' {
   $content = Get-Content -LiteralPath (Join-Path $r 'script\build-windows-distribution.ps1') -Raw
   if ($content -notmatch 'matrix\.ps1.*--version') { throw "Build script missing PS1 smoke test" }
+}
+
+Assert-Test 'build script stages the pinned verified official OmniRoute CLI and Node runtime into the Portable ZIP' {
+  $content = Get-Content -LiteralPath (Join-Path $r 'script\build-windows-distribution.ps1') -Raw
+  foreach ($required in @('$omniRouteVersion = "3.8.50"', '$nodeVersion = "24.13.0"', 'Get-FileHash -Algorithm SHA256', 'omniroute/app/node_modules/omniroute/dist/server-ws.mjs')) {
+    if ($content -notmatch [regex]::Escape($required)) { throw "Missing verified bundled runtime behavior: $required" }
+  }
 }
 
 # --- Results ---

@@ -33,7 +33,8 @@ interface RawGatewayModel {
   readonly id?: unknown
   readonly name?: unknown
   readonly context_length?: unknown
-  readonly modalities?: { readonly output?: readonly unknown[] }
+  readonly modalities?: { readonly input?: readonly unknown[]; readonly output?: readonly unknown[] }
+  readonly input_modalities?: readonly unknown[]
 }
 
 // Fetch the models the OmniRoute gateway advertises through its OpenAI-style
@@ -71,6 +72,9 @@ function toGatewayModel(entry: RawGatewayModel): GatewayModel | undefined {
     ...(typeof entry.context_length === "number" && Number.isFinite(entry.context_length) && entry.context_length > 0
       ? { context: entry.context_length }
       : {}),
-    ...(Array.isArray(entry.modalities?.output) && entry.modalities.output.includes("image") ? { vision: true } : {}),
+    ...((Array.isArray(entry.modalities?.input) && entry.modalities.input.includes("image")) ||
+      (Array.isArray(entry.input_modalities) && entry.input_modalities.includes("image"))
+      ? { vision: true }
+      : {}),
   }
 }
