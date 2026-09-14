@@ -11,6 +11,8 @@ node_modules
 *~
 playground
 tmp
+Matrix-Code-Linux-x64.tar.gz
+SHA256SUMS-Linux.txt
 dist
 ts-dist
 .turbo
