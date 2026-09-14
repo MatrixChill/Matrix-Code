@@ -62,6 +62,7 @@ export class UpgradeFailedError extends Schema.TaggedErrorClass<UpgradeFailedErr
 
 // Response schemas for external version APIs
 const GitHubRelease = Schema.Struct({ tag_name: Schema.String })
+const MatrixReleaseList = Schema.Array(GitHubRelease)
 const NpmPackage = Schema.Struct({ version: Schema.String })
 const BrewFormula = Schema.Struct({ versions: Schema.Struct({ stable: Schema.String }) })
 const BrewInfoV2 = Schema.Struct({
@@ -164,6 +165,26 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
       Effect.mapError(() => new UpgradeFailedError({ stderr: upgradeFailure("curl") })),
     )
 
+    const resolveMatrixLatestTag = Effect.fn("Installation.resolveMatrixLatestTag")(function* () {
+      const response = yield* httpOk.execute(
+        HttpClientRequest.get("https://api.github.com/repos/MatrixChill/Matrix-Code/releases?per_page=20").pipe(
+          HttpClientRequest.acceptJson,
+        ),
+      )
+      const body = yield* HttpClientResponse.schemaBodyJson(Schema.Unknown)(response)
+      const releases = Array.isArray(body) ? body : []
+      const candidates = releases
+        .filter((release): release is { tag_name: string } => typeof release === "object" && release !== null && "tag_name" in release)
+        .map((release) => String(release.tag_name))
+        .filter((tag) => /^matrix-v/i.test(tag))
+        .sort((a, b) => {
+          const aVersion = semver.coerce(a.replace(/^matrix-v/i, ""))
+          const bVersion = semver.coerce(b.replace(/^matrix-v/i, ""))
+          return semver.compare(aVersion ?? "0.0.0", bVersion ?? "0.0.0")
+        })
+      return candidates.at(-1)?.replace(/^matrix-v/i, "") ?? "0.0.0"
+    })
+
     const result: Interface = {
       info: Effect.fn("Installation.info")(function* () {
         return {
@@ -254,70 +275,24 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
           return data.version
         }
 
+        const matrixLatest = yield* resolveMatrixLatestTag()
+        if (matrixLatest !== "0.0.0") return matrixLatest
+
         const response = yield* httpOk.execute(
-          HttpClientRequest.get("https://api.github.com/repos/anomalyco/opencode/releases/latest").pipe(
+          HttpClientRequest.get("https://api.github.com/repos/MatrixChill/Matrix-Code/releases/latest").pipe(
             HttpClientRequest.acceptJson,
           ),
         )
-        const data = yield* HttpClientResponse.schemaBodyJson(GitHubRelease)(response)
-        return data.tag_name.replace(/^v/, "")
+        const body = yield* HttpClientResponse.schemaBodyJson(Schema.Unknown)(response)
+        if (typeof body !== "object" || body === null || Array.isArray(body) || !("tag_name" in body)) {
+          return "0.0.0"
+        }
+        return String(body.tag_name).replace(/^matrix-v/i, "").replace(/^v/, "")
       }, Effect.orDie),
       upgrade: Effect.fn("Installation.upgrade")(function* (m: Method, target: string) {
-        let upgradeResult: { code: number; stdout: string; stderr: string } | undefined
-        switch (m) {
-          case "curl":
-            upgradeResult = yield* upgradeCurl(target)
-            break
-          case "npm":
-            upgradeResult = yield* run(["npm", "install", "-g", `opencode-ai@${target}`])
-            break
-          case "pnpm":
-            upgradeResult = yield* run(["pnpm", "install", "-g", `opencode-ai@${target}`])
-            break
-          case "bun":
-            upgradeResult = yield* run(["bun", "install", "-g", `opencode-ai@${target}`])
-            break
-          case "brew": {
-            const formula = yield* getBrewFormula()
-            const env = { HOMEBREW_NO_AUTO_UPDATE: "1" }
-            if (formula.includes("/")) {
-              const tap = yield* run(["brew", "tap", "anomalyco/tap"], { env })
-              if (tap.code !== 0) {
-                upgradeResult = tap
-                break
-              }
-              const repo = yield* text(["brew", "--repo", "anomalyco/tap"])
-              const dir = repo.trim()
-              if (dir) {
-                const pull = yield* run(["git", "pull", "--ff-only"], { cwd: dir, env })
-                if (pull.code !== 0) {
-                  upgradeResult = pull
-                  break
-                }
-              }
-            }
-            upgradeResult = yield* run(["brew", "upgrade", formula], { env })
-            break
-          }
-          case "choco":
-            upgradeResult = yield* run(["choco", "upgrade", "opencode", `--version=${target}`, "-y"])
-            break
-          case "scoop":
-            upgradeResult = yield* run(["scoop", "install", `opencode@${target}`])
-            break
-          default:
-            return yield* new UpgradeFailedError({ stderr: `Unknown installation method: ${m}` })
-        }
-        if (!upgradeResult || upgradeResult.code !== 0) {
-          return yield* new UpgradeFailedError({ stderr: upgradeFailure(m, upgradeResult) })
-        }
-        yield* Effect.logInfo("upgraded", {
-          method: m,
-          target,
-          stdout: upgradeResult.stdout,
-          stderr: upgradeResult.stderr,
+        return yield* new UpgradeFailedError({
+          stderr: `Automatic Matrix Code upgrades are disabled. Open the MatrixChill/Matrix-Code release for ${target}.`,
         })
-        yield* text([process.execPath, "--version"])
       }),
     }
 

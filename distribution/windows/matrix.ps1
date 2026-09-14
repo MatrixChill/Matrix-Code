@@ -49,6 +49,7 @@
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Security
 
 $root = $PSScriptRoot
 if (-not $root) {
@@ -56,6 +57,7 @@ if (-not $root) {
 }
 $root = (Resolve-Path -LiteralPath $root).Path
 $originalXdgConfigHome = $env:XDG_CONFIG_HOME
+$env:MATRIX_LAUNCHED = '1'
 
 $matrixExe = Join-Path $root 'matrix.exe'
 if (-not (Test-Path -LiteralPath $matrixExe)) {
@@ -483,10 +485,14 @@ function Write-MatrixApiKeyToStore {
     [string]$Key
   )
   New-Item -ItemType Directory -Force -Path (Split-Path $Path) | Out-Null
-  $secure = ConvertTo-SecureString -String $Key -AsPlainText -Force
-  $encrypted = ConvertFrom-SecureString -SecureString $secure
-  Set-Content -LiteralPath $Path -Value $encrypted -Force
-  $secure = $null
+  $plainBytes = [Text.Encoding]::UTF8.GetBytes($Key)
+  $encrypted = [System.Security.Cryptography.ProtectedData]::Protect(
+    $plainBytes,
+    $null,
+    [System.Security.Cryptography.DataProtectionScope]::CurrentUser
+  )
+  [IO.File]::WriteAllText($Path, [Convert]::ToBase64String($encrypted), [Text.Encoding]::ASCII)
+  [Array]::Clear($plainBytes, 0, $plainBytes.Length)
   Restrict-FileAccess -Path $Path
 }
 
@@ -496,12 +502,17 @@ function Read-MatrixApiKeyFromStore {
   try {
     $encrypted = (Get-Content -LiteralPath $Path -Raw -ErrorAction Stop).Trim()
     if (-not $encrypted) { return $null }
-    $secure = ConvertTo-SecureString -String $encrypted -ErrorAction Stop
-    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    $encryptedBytes = [Convert]::FromBase64String($encrypted)
+    $plainBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
+      $encryptedBytes,
+      $null,
+      [System.Security.Cryptography.DataProtectionScope]::CurrentUser
+    )
     try {
-      return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)
+      return [Text.Encoding]::UTF8.GetString($plainBytes)
     } finally {
-      [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer)
+      [Array]::Clear($encryptedBytes, 0, $encryptedBytes.Length)
+      [Array]::Clear($plainBytes, 0, $plainBytes.Length)
     }
   } catch {
     return $null

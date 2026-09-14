@@ -23,6 +23,9 @@ import { AttachCommand } from "./cli/cmd/attach"
 import { TuiThreadCommand } from "./cli/cmd/tui"
 import { AcpCommand } from "./cli/cmd/acp"
 import { EOL } from "os"
+import fs from "node:fs"
+import path from "node:path"
+import { spawnSync } from "node:child_process"
 import { WebCommand } from "./cli/cmd/web"
 import { PrCommand } from "./cli/cmd/pr"
 import { SessionCommand } from "./cli/cmd/session"
@@ -31,7 +34,63 @@ import { errorMessage } from "./util/error"
 import { PluginCommand } from "./cli/cmd/plug"
 import { Heap } from "./cli/heap"
 
+export function shouldInvokeWindowsLauncher(argv: readonly string[] = process.argv.slice(2)) {
+  if (process.platform !== "win32") return false
+  if (process.env.MATRIX_LAUNCHED === "1") return false
+  if (argv.some((arg) => arg === "matrix-api" || arg === "--version" || arg === "-v")) return false
+
+  const exeDir = path.dirname(process.execPath)
+  const launcherCandidates = [
+    path.join(exeDir, "matrix.ps1"),
+    path.join(exeDir, "matrix-installed.cmd"),
+    path.join(exeDir, "matrix.cmd"),
+    path.join(exeDir, "bin", "matrix.ps1"),
+    path.join(exeDir, "bin", "matrix.cmd"),
+  ]
+
+  return launcherCandidates.some((candidate) => fs.existsSync(candidate))
+}
+
+export function invokeWindowsMatrixLauncher() {
+  if (!shouldInvokeWindowsLauncher()) return false
+
+  const exeDir = path.dirname(process.execPath)
+  const launcherCandidates = [
+    path.join(exeDir, "matrix.ps1"),
+    path.join(exeDir, "matrix-installed.cmd"),
+    path.join(exeDir, "matrix.cmd"),
+    path.join(exeDir, "bin", "matrix.ps1"),
+    path.join(exeDir, "bin", "matrix.cmd"),
+  ]
+
+  const launcher = launcherCandidates.find((candidate) => fs.existsSync(candidate))
+  if (!launcher) return false
+
+  const shell = (() => {
+    const programFiles = process.env.PROGRAMFILES || "C:\\Program Files"
+    const pwsh = path.join(programFiles, "PowerShell", "7", "pwsh.exe")
+    return fs.existsSync(pwsh) ? pwsh : "powershell.exe"
+  })()
+
+  const args = launcher.toLowerCase().endsWith(".ps1")
+    ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", launcher]
+    : ["/d", "/c", launcher]
+
+  const result = spawnSync(shell, args, {
+    stdio: "inherit",
+    env: { ...process.env, MATRIX_LAUNCHED: "1" },
+    windowsHide: false,
+  })
+
+  process.exit(result.status ?? 0)
+  return true
+}
+
 const args = hideBin(process.argv)
+
+if (invokeWindowsMatrixLauncher()) {
+  process.exit(0)
+}
 
 function show(out: string) {
   const text = out.trimStart()

@@ -126,3 +126,64 @@ test("app.exit prints the session epilogue after scoped cleanup", async () => {
     mock.restore()
   }
 })
+
+test("ignores upstream update events without showing a modal or calling upgrade", async () => {
+  const setup = await createTestRenderer({ width: 80, height: 24, useThread: false })
+  const core = await import("@opentui/core")
+  mock.module("@opentui/core", () => ({ ...core, createCliRenderer: async () => setup.renderer }))
+  const events = createEventSource()
+  const upgrades: string[] = []
+  const calls = createFetch((url) => {
+    if (url.pathname === "/global/upgrade") {
+      upgrades.push(url.pathname)
+      return json({ success: true, version: "1.18.31" })
+    }
+  })
+  let started!: () => void
+  const ready = new Promise<void>((resolve) => {
+    started = resolve
+  })
+
+  try {
+    const { run } = await import("../src/app")
+    const task = Effect.runPromise(
+      run({
+        url: "http://test",
+        directory,
+        config: createTuiResolvedConfig({ plugin_enabled: {} }),
+        fetch: calls.fetch,
+        events: events.source,
+        args: {},
+        pluginHost: {
+          async start() {
+            started()
+          },
+          async dispose() {},
+        },
+      }).pipe(Effect.provide(AppNodeBuilder.build(Global.node))),
+    )
+    await ready
+
+    events.emit({
+      directory: "global",
+      payload: {
+        id: "evt_upstream_update",
+        type: "installation.update-available",
+        properties: { version: "1.18.31" },
+      },
+    })
+    await setup.renderOnce()
+    await setup.renderOnce()
+
+    const frame = setup.captureCharFrame()
+    expect(frame).not.toContain("update available")
+    expect(frame).not.toContain("1.18.31")
+    expect(upgrades).toEqual([])
+
+    process.emit("SIGHUP")
+    await task
+  } finally {
+    if (!setup.renderer.isDestroyed) setup.renderer.destroy()
+    mock.restore()
+  }
+})

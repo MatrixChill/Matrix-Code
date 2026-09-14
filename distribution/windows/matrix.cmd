@@ -23,5 +23,6 @@ if not exist "%MATRIX_PS1%" (
 set "MATRIX_TUI_WINDOW=Normal"
 set "MATRIX_POWERSHELL=powershell.exe"
 where pwsh.exe >nul 2>nul && set "MATRIX_POWERSHELL=pwsh.exe"
+set "MATRIX_LAUNCHED=1"
 "%MATRIX_POWERSHELL%" -NoProfile -WindowStyle Hidden -File "%MATRIX_PS1%" %*
 exit /b %ERRORLEVEL%

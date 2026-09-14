@@ -12,6 +12,7 @@ if not exist "%MATRIX_EXE%" (
   echo Run install.ps1 from the distribution directory first.
   exit /b 1
 )
+set "MATRIX_LAUNCHED=1"
 
 rem Voice helper travels with the executable in the installed distribution.
 set "MATRIX_VOICE_HELPER=%~dp0matrix-voice\matrix-voice-helper.exe"

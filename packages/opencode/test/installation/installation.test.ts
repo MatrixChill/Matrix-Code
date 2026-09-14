@@ -77,6 +77,42 @@ describe("installation", () => {
         }),
     )
 
+    testEffect(testLayer(() => jsonResponse([{ tag_name: "matrix-v1.0.1" }, { tag_name: "v1.18.30" }]))).effect(
+      "prefers Matrix tags and ignores upstream OpenCode tags",
+      () =>
+        Effect.gen(function* () {
+          const result = yield* Installation.use.latest("unknown")
+          expect(result).toBe("1.0.1")
+        }),
+    )
+
+    testEffect(testLayer(() => jsonResponse([{ tag_name: "vscode-v1.2.3" }, { tag_name: "v1.18.30" }]))).effect(
+      "ignores vscode and upstream tags when looking for a Matrix release",
+      () =>
+        Effect.gen(function* () {
+          const result = yield* Installation.use.latest("unknown")
+          expect(result).toBe("0.0.0")
+        }),
+    )
+
+    testEffect(testLayer(() => jsonResponse([{ tag_name: "v1.18.31" }, { tag_name: "vscode-v1.0.0" }, { tag_name: "matrix-v1.0.0" }]))).effect(
+      "reports no update when only upstream and current Matrix tags exist",
+      () =>
+        Effect.gen(function* () {
+          const result = yield* Installation.use.latest("unknown")
+          expect(result).toBe("1.0.0")
+        }),
+    )
+
+    testEffect(testLayer(() => jsonResponse([{ tag_name: "v1.18.31" }, { tag_name: "vscode-v1.0.0" }, { tag_name: "matrix-v1.0.2" }]))).effect(
+      "reports the newer Matrix release and ignores upstream tags",
+      () =>
+        Effect.gen(function* () {
+          const result = yield* Installation.use.latest("unknown")
+          expect(result).toBe("1.0.2")
+        }),
+    )
+
     testEffect(testLayer(() => jsonResponse({ tag_name: "v4.0.0-beta.1" }))).effect(
       "strips v prefix from GitHub release tag",
       () =>
@@ -182,58 +218,12 @@ describe("installation", () => {
   })
 
   describe("upgrade", () => {
-    testEffect(
-      testLayer(
-        () => jsonResponse({}),
-        (cmd) => {
-          if (cmd === "npm") return { code: 1, stderr: "token=secret command output" }
-          return ""
-        },
-      ),
-    ).effect("returns sanitized typed errors for failed package upgrades", () =>
+    testEffect(testLayer(() => jsonResponse({}))).effect("disables unsafe automatic Matrix upgrades", () =>
       Effect.gen(function* () {
         const error = yield* Effect.flip(Installation.use.upgrade("npm", "9.9.9"))
         expect(error).toBeInstanceOf(Installation.UpgradeFailedError)
-        expect(error.stderr).toBe("Upgrade failed for npm (exit code 1).")
-        expect(error.message).toBe(error.stderr)
-        expect(error.stderr).not.toContain("secret")
-        expect(error.stderr).not.toContain("command output")
-      }),
-    )
-
-    testEffect(
-      testLayer(
-        () => new Response("install script with token=secret", { status: 200 }),
-        (cmd, args) => {
-          if (cmd === "bash" && args[0] === "--version") return "GNU bash"
-          if (cmd === "bash" || cmd === "sh") return { code: 1, stderr: "script output with token=secret" }
-          return ""
-        },
-      ),
-    ).effect("returns sanitized typed errors when the curl install script fails", () =>
-      Effect.gen(function* () {
-        const error = yield* Effect.flip(Installation.use.upgrade("curl", "9.9.9"))
-        expect(error).toBeInstanceOf(Installation.UpgradeFailedError)
-        expect(error.stderr).toBe("Upgrade failed for curl (exit code 1).")
-        expect(error.message).toBe(error.stderr)
-        expect(error.stderr).not.toContain("secret")
-        expect(error.stderr).not.toContain("script output")
-      }),
-    )
-
-    testEffect(
-      testLayer(
-        () => new Response("install script", { status: 200 }),
-        (cmd, args) => {
-          if (cmd === "bash" && args[0] === "--version") return { code: 1, stderr: "missing" }
-          if (cmd === "bash") return { code: 1, stderr: "should not execute installer with bash" }
-          if (cmd === "sh") return "ok"
-          return ""
-        },
-      ),
-    ).effect("falls back to sh when bash is unavailable during curl upgrade", () =>
-      Effect.gen(function* () {
-        yield* Installation.use.upgrade("curl", "9.9.9")
+        expect(error.stderr).toContain("Automatic Matrix Code upgrades are disabled")
+        expect(error.stderr).toContain("MatrixChill/Matrix-Code")
       }),
     )
   })

@@ -6,8 +6,19 @@ import yargs from "yargs"
 import { tmpdir } from "../../fixture/fixture"
 import { TuiThreadCommand, resolveThreadDirectory } from "../../../src/cli/cmd/tui"
 import { cliIt } from "../../lib/cli-process"
+import { InstallationAutoUpdateDisabled } from "@opencode-ai/core/installation/version"
 
 describe("tui thread", () => {
+  test("does not schedule the Matrix startup update checker", async () => {
+    const source = await Bun.file(new URL("../../../src/cli/cmd/tui.ts", import.meta.url)).text()
+
+    expect(InstallationAutoUpdateDisabled).toBe(true)
+    expect(source).toContain("if (!InstallationAutoUpdateDisabled)")
+    expect(source.indexOf("if (!InstallationAutoUpdateDisabled)")).toBeLessThan(
+      source.indexOf('client.call("checkUpgrade"'),
+    )
+  })
+
   test("loads the TUI integration lazily", async () => {
     const source = await Bun.file(new URL("../../../src/cli/cmd/tui.ts", import.meta.url)).text()
 

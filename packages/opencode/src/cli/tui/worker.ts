@@ -10,6 +10,7 @@ import { Heap } from "@/cli/heap"
 import { AppRuntime } from "@/effect/app-runtime"
 import { Effect } from "effect"
 import { disposeAllInstancesAndEmitGlobalDisposed } from "@/server/global-lifecycle"
+import { InstallationAutoUpdateDisabled } from "@opencode-ai/core/installation/version"
 
 Heap.start()
 
@@ -57,6 +58,7 @@ export const rpc = {
     return { url: server.url.toString() }
   },
   async checkUpgrade(input: { directory: string }) {
+    if (InstallationAutoUpdateDisabled) return
     await InstanceRuntime.load({ directory: input.directory })
     await upgrade().catch(() => {})
   },

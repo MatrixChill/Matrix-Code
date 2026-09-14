@@ -147,11 +147,11 @@ function getConfig() {
       return {
         ...base,
         appId,
-        productName: "OpenCode",
-        protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" },
+        productName: "Matrix Code",
+        protocols: { name: "Matrix Code", schemes: ["matrix"] },
+        publish: { provider: "github", owner: "MatrixChill", repo: "Matrix-Code", channel: "latest" },
         deb: { fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
-        rpm: { packageName: "opencode", fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
+        rpm: { packageName: "matrix-code", fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
       }
     }
   }

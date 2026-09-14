@@ -191,7 +191,7 @@ Describe 'Matrix API Support' {
 
   It 'matrix.ps1 should persist and restore the Matrix API key once, never print it' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
-    @('matrix-api.cred', 'ConvertFrom-SecureString', 'ConvertTo-SecureString', 'New-MatrixApiKey') |
+    @('matrix-api.cred', 'ProtectedData', 'DataProtectionScope', 'New-MatrixApiKey') |
       ForEach-Object { $content | Should -Match ([regex]::Escape($_)) }
     $content | Should -Not -Match 'Write-Host[^\r\n]*\$matrixApiKey'
     $content | Should -Not -Match 'Set-Content[^\r\n]*\$matrixApiKey'

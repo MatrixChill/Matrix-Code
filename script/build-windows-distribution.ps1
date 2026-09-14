@@ -1,7 +1,8 @@
 param(
   [switch]$SkipCliBuild,
   [switch]$SkipVoiceBuild,
-  [switch]$SkipVoiceSelfTest
+  [switch]$SkipVoiceSelfTest,
+  [string]$MatrixVersion = '1.0.1'
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,7 +45,17 @@ function Get-VerifiedDependency {
 }
 
 if (-not $SkipCliBuild) {
-  & bun run --cwd (Join-Path $repo "packages\opencode") build --single --skip-install
+  $previousMatrixVersion = $env:MATRIX_VERSION
+  try {
+    $env:MATRIX_VERSION = $MatrixVersion
+    & bun run --cwd (Join-Path $repo "packages\opencode") build --single --skip-install
+  } finally {
+    if ($null -eq $previousMatrixVersion) {
+      Remove-Item Env:MATRIX_VERSION -ErrorAction SilentlyContinue
+    } else {
+      $env:MATRIX_VERSION = $previousMatrixVersion
+    }
+  }
   if ($LASTEXITCODE -ne 0) { throw "Windows CLI build failed" }
 }
 
@@ -116,6 +127,7 @@ Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-installed.c
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.cmd") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\matrix-personal.ps1") -Destination $portable
+Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\verify-matrix-rc.ps1") -Destination $portable
 Copy-Item -LiteralPath (Join-Path $repo "distribution\windows\templates") -Destination $portable -Recurse
 
 # Bundle the official CLI package with a pinned Node runtime. npm is used only
@@ -151,27 +163,42 @@ Copy-Item -LiteralPath (Join-Path $nodeRoot "node.exe") -Destination (Join-Path 
 New-Item -ItemType Directory -Force -Path (Join-Path $omniRouteStage "app") | Out-Null
 Copy-Item -LiteralPath (Join-Path $omniRouteRuntime "node_modules") -Destination (Join-Path $omniRouteStage "app\node_modules") -Recurse
 
-# OmniRoute's npm install generates a local .env with runtime-only signing
-# secrets. The launcher supplies fresh protected credentials through the child
+# OmniRoute's npm install generates a local build-generated .env with runtime-only signing
+# secrets. The build-generated .env file must never become release material;
+# the launcher supplies fresh protected credentials through the child
 # environment, so the build-generated file must never become release material.
 $omniRouteGeneratedEnv = Join-Path $omniRouteStage "app\node_modules\omniroute\.env"
 if (Test-Path -LiteralPath $omniRouteGeneratedEnv) {
   Remove-Item -LiteralPath $omniRouteGeneratedEnv -Force
 }
+Get-ChildItem -LiteralPath $omniRouteStage -Filter '.env' -File -Recurse -Force |
+  Remove-Item -Force
 
 $standardZip = Join-Path $release "Matrix-Code-Windows-x64.zip"
-$portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable.zip"
-Compress-Archive -Path (Join-Path $standard "*") -DestinationPath $standardZip -CompressionLevel Optimal
-Compress-Archive -Path (Join-Path $portable "*") -DestinationPath $portableZip -CompressionLevel Optimal
-
+$portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable-v$MatrixVersion-RC.zip"
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+if (Test-Path -LiteralPath $standardZip) { Remove-Item -LiteralPath $standardZip -Force }
+if (Test-Path -LiteralPath $portableZip) { Remove-Item -LiteralPath $portableZip -Force }
+[IO.Compression.ZipFile]::CreateFromDirectory(
+  $standard,
+  $standardZip,
+  [IO.Compression.CompressionLevel]::Optimal,
+  $false
+)
+[IO.Compression.ZipFile]::CreateFromDirectory(
+  $portable,
+  $portableZip,
+  [IO.Compression.CompressionLevel]::Optimal,
+  $false
+)
+
 $portableArchive = [IO.Compression.ZipFile]::OpenRead($portableZip)
 try {
   $portableEntries = @($portableArchive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
   if ($portableEntries -notcontains "omniroute/node.exe") { throw "Portable ZIP is missing its Node.js runtime" }
   if ($portableEntries -notcontains "omniroute/app/node_modules/omniroute/dist/server-ws.mjs") { throw "Portable ZIP is missing OmniRoute" }
-  if ($portableEntries -contains "omniroute/app/node_modules/omniroute/.env") {
-    throw "Portable ZIP contains OmniRoute's build-generated .env"
+  if ($portableEntries | Where-Object { $_ -match '(^|/)\.env$' }) {
+    throw "Portable ZIP contains a .env file"
   }
 } finally {
   $portableArchive.Dispose()

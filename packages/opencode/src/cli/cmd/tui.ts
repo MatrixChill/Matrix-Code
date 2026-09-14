@@ -14,6 +14,7 @@ import { writeHeapSnapshot } from "v8"
 import { ServerAuth } from "@/server/auth"
 import { validateSession } from "../tui/validate-session"
 import { win32InstallCtrlCGuard } from "@opencode-ai/tui/terminal-win32"
+import { InstallationAutoUpdateDisabled } from "@opencode-ai/core/installation/version"
 
 declare global {
   const OPENCODE_WORKER_PATH: string
@@ -262,9 +263,11 @@ export const TuiThreadCommand = cmd({
         return
       }
 
-      setTimeout(() => {
-        client.call("checkUpgrade", { directory: cwd }).catch(() => {})
-      }, 1000).unref?.()
+      if (!InstallationAutoUpdateDisabled) {
+        setTimeout(() => {
+          client.call("checkUpgrade", { directory: cwd }).catch(() => {})
+        }, 1000).unref?.()
+      }
 
       try {
         const { Effect } = await import("effect")
