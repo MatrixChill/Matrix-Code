@@ -144,7 +144,7 @@ describe("MatrixRouterService", () => {
 })
 
 describe("MatrixRouter fallback", () => {
-  test("select skips a failed candidate while degrade-fallback still returns it", async () => {
+  test("select and fallback both skip a cooling candidate", async () => {
     const svc = await Effect.runPromise(service())
     svc.recordFailure({
       providerID: "omniroute",
@@ -163,6 +163,8 @@ describe("MatrixRouter fallback", () => {
               health: state.health,
               cooldownUntil: state.cooldownUntil,
               recentFailures: state.recentFailures,
+              successes: state.successes,
+              failures: state.failures,
               ...(state.lastError === undefined
                 ? {}
                 : {
@@ -182,6 +184,36 @@ describe("MatrixRouter fallback", () => {
     const selected = router.select(profile, MatrixCatalog.CATALOG, available)
     expect(selected?.candidate.model).not.toBe("matrix/matrix-coding-reliable")
     const fallback = router.fallback(profile, MatrixCatalog.CATALOG, available)
-    expect(fallback?.candidate.model).toBe("matrix/matrix-coding-reliable")
+    expect(fallback?.candidate.model).not.toBe("matrix/matrix-coding-reliable")
+  })
+
+  test("successful candidate becomes sticky and records latency", () => {
+    const now = () => 1_000
+    const router = MatrixRouter.make(now)
+    const candidates = MatrixCatalog.RELIABLE_CANDIDATES
+    const initial = router.select("reliable", candidates, () => true)!.candidate
+    const alternate = candidates.find((entry) => entry.id !== initial.id)!
+
+    router.recordSuccess(alternate, "reliable", 120)
+    router.recordSuccess(alternate, "reliable", 80)
+
+    expect(router.select("reliable", candidates, () => true)?.candidate.id).toBe(alternate.id)
+    expect(router.preferredCandidate("reliable")).toBe(alternate.id)
+    expect(router.state(alternate)).toMatchObject({ successes: 2, failures: 0, latencyMs: 108 })
+  })
+
+  test("cooldown and disabled candidates stay out of selection", () => {
+    let now = 1_000
+    const router = MatrixRouter.make(() => now)
+    const candidates = MatrixCatalog.RELIABLE_CANDIDATES
+    const first = router.select("reliable", candidates, () => true)!.candidate
+    router.recordFailure(first, 5_000, { message: "rate limited", status: 429 })
+    expect(router.select("reliable", candidates, () => true)?.candidate.id).not.toBe(first.id)
+
+    now = 6_001
+    expect(router.select("reliable", candidates, () => true)?.candidate.id).toBe(first.id)
+    router.disable(first, "model_not_supported", { message: "unsupported model", status: 401 })
+    expect(router.select("reliable", candidates, () => true)?.candidate.id).not.toBe(first.id)
+    expect(router.state(first)?.disabledReason).toBe("model_not_supported")
   })
 })

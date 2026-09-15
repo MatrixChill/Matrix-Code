@@ -12,6 +12,15 @@ export type RecoverableKind =
   | "fallback" // a different model/provider should take over
   | "none" // permanent; do not fall back
 
+export type FailureDisposition =
+  | "rate_limit"
+  | "model_not_supported"
+  | "payment_required"
+  | "upstream_failure"
+  | "request_invalid"
+  | "authentication"
+  | "permanent"
+
 export const RETRY_ERRORS = new Set([
   "429",
   "502",
@@ -46,6 +55,35 @@ export function classifyError(code: string | undefined, text: string): Recoverab
     return "none"
   if (normalized.includes("permission")) return "none"
   return "none"
+}
+
+export function classifyFailure(code: string | undefined, text: string): FailureDisposition {
+  const normalized = text.toLowerCase()
+  if (code === "429" || normalized.includes("rate limit")) return "rate_limit"
+  if (
+    (code === "400" || code === "401" || code === "404") &&
+    (normalized.includes("model not supported") ||
+      normalized.includes("model is not supported") ||
+      normalized.includes("unsupported model") ||
+      normalized.includes("unknown model") ||
+      normalized.includes("model_not_found"))
+  )
+    return "model_not_supported"
+  if (code === "402") return "payment_required"
+  if (code === "400" || code === "408" || code === "422") return "request_invalid"
+  if (code === "401" || code === "403") return "authentication"
+  if (
+    code === "500" ||
+    code === "502" ||
+    code === "503" ||
+    code === "504" ||
+    normalized.includes("timeout") ||
+    normalized.includes("connection refused") ||
+    normalized.includes("provider offline") ||
+    normalized.includes("cannot connect to api")
+  )
+    return "upstream_failure"
+  return "permanent"
 }
 
 export interface FallbackOutcome {

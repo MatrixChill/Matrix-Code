@@ -33,6 +33,10 @@ export class RouterCandidateState extends Schema.Class<RouterCandidateState>("Ma
   health: Schema.Number,
   cooldownUntil: Schema.Number,
   recentFailures: Schema.Number,
+  successes: Schema.Number,
+  failures: Schema.Number,
+  latencyMs: Schema.Number.pipe(Schema.optional),
+  disabledReason: Schema.Literals(["model_not_supported", "payment_required"]).pipe(Schema.optional),
   lastError: RouterCandidateFailure.pipe(Schema.optional),
 }) {}
 
@@ -61,6 +65,7 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Ma
 
 const ALL_CANDIDATES: readonly MatrixCatalog.Candidate[] = [
   ...MatrixCatalog.CATALOG,
+  ...MatrixCatalog.RELIABLE_CANDIDATES,
   ...MatrixCatalog.VISION_CANDIDATES,
 ]
 
@@ -116,6 +121,10 @@ function snapshotOf(router: MatrixRouter.Router): RoutingSnapshot {
           health: state.health,
           cooldownUntil: state.cooldownUntil,
           recentFailures: state.recentFailures,
+          successes: state.successes,
+          failures: state.failures,
+          ...(state.latencyMs === undefined ? {} : { latencyMs: state.latencyMs }),
+          ...(state.disabledReason === undefined ? {} : { disabledReason: state.disabledReason }),
           ...(state.lastError === undefined
             ? {}
             : {

@@ -22,6 +22,12 @@ export interface CandidateState {
   // ms epoch when the candidate may be tried again; 0 = no cooldown
   cooldownUntil: number
   recentFailures: number
+  successes: number
+  failures: number
+  // Exponential moving average of successful time-to-first-response.
+  latencyMs?: number
+  // Session/process-scoped removal for terminal candidate failures.
+  disabledReason?: "model_not_supported" | "payment_required"
   // Most recent recorded failure, when the request error was surfaced.
   lastError?: CandidateError
 }
@@ -35,7 +41,13 @@ export interface Selection {
 // Predicate: true when the provider is configured and the model is expected to work.
 export type Available = (candidate: MatrixCatalog.Candidate) => boolean
 
-const freshState: CandidateState = { health: 1, cooldownUntil: 0, recentFailures: 0 }
+const freshState: CandidateState = {
+  health: 1,
+  cooldownUntil: 0,
+  recentFailures: 0,
+  successes: 0,
+  failures: 0,
+}
 
 // Score a candidate for a profile. Higher is better; -1 means not usable.
 export function score(candidate: MatrixCatalog.Candidate, profile: MatrixProfile.ProfileID): number {
@@ -58,6 +70,7 @@ export function score(candidate: MatrixCatalog.Candidate, profile: MatrixProfile
 
 export class Router {
   private readonly states = new Map<string, CandidateState>()
+  private readonly preferred = new Map<MatrixProfile.ProfileID, string>()
 
   constructor(private readonly now: () => number = () => Date.now()) {}
 
@@ -66,43 +79,39 @@ export class Router {
     return state !== undefined && state.cooldownUntil > this.now()
   }
 
+  private isEnabled(candidate: MatrixCatalog.Candidate): boolean {
+    return this.states.get(candidate.id)?.disabledReason === undefined
+  }
+
   // Best available candidate for a profile; undefined when none usable.
   select(
     profile: MatrixProfile.ProfileID,
     candidates: readonly MatrixCatalog.Candidate[],
     isAvailable: Available,
   ): Selection | undefined {
-    const ranked = candidates
+    const eligible = candidates
       .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
       .filter(isAvailable)
       .filter((candidate) => !this.isCoolingDown(candidate))
+      .filter((candidate) => this.isEnabled(candidate))
+    const preferred = this.preferred.get(profile)
+    const sticky = eligible.find((candidate) => candidate.id === preferred)
+    if (sticky !== undefined) return { candidate: sticky, rank: score(sticky, profile), profile }
+    const ranked = eligible
       .sort((a, b) => score(b, profile) - score(a, profile))
     const top = ranked[0]
     if (top === undefined) return undefined
     return { candidate: top, rank: score(top, profile), profile }
   }
 
-  // Degraded fallback: ignores health/cooldown so the user can still progress.
+  // Fallback uses the same circuit state as initial selection. A cooling or
+  // disabled candidate must not re-enter the same or a later request.
   fallback(
     profile: MatrixProfile.ProfileID,
     candidates: readonly MatrixCatalog.Candidate[],
     isAvailable: Available,
   ): Selection | undefined {
-    return this.forceSelect(profile, candidates, isAvailable)
-  }
-
-  private forceSelect(
-    profile: MatrixProfile.ProfileID,
-    candidates: readonly MatrixCatalog.Candidate[],
-    isAvailable: Available,
-  ): Selection | undefined {
-    const ranked = candidates
-      .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
-      .filter(isAvailable)
-      .sort((a, b) => score(b, profile) - score(a, profile))
-    const top = ranked[0]
-    if (top === undefined) return undefined
-    return { candidate: top, rank: score(top, profile), profile }
+    return this.select(profile, candidates, isAvailable)
   }
 
   recordFailure(candidate: MatrixCatalog.Candidate, cooldownMs: number, error?: Omit<CandidateError, "at">): void {
@@ -111,17 +120,53 @@ export class Router {
       health: Math.max(0, current.health - 0.25),
       cooldownUntil: this.now() + cooldownMs,
       recentFailures: current.recentFailures + 1,
+      successes: current.successes,
+      failures: current.failures + 1,
+      ...(current.latencyMs === undefined ? {} : { latencyMs: current.latencyMs }),
+      ...(current.disabledReason === undefined ? {} : { disabledReason: current.disabledReason }),
       ...(error === undefined ? {} : { lastError: { ...error, at: this.now() } }),
     })
   }
 
-  recordSuccess(candidate: MatrixCatalog.Candidate): void {
+  disable(
+    candidate: MatrixCatalog.Candidate,
+    reason: NonNullable<CandidateState["disabledReason"]>,
+    error?: Omit<CandidateError, "at">,
+  ): void {
+    const current = this.states.get(candidate.id) ?? freshState
+    this.states.set(candidate.id, {
+      ...current,
+      health: 0,
+      cooldownUntil: Number.POSITIVE_INFINITY,
+      recentFailures: current.recentFailures + 1,
+      failures: current.failures + 1,
+      disabledReason: reason,
+      ...(error === undefined ? {} : { lastError: { ...error, at: this.now() } }),
+    })
+    for (const [profile, id] of this.preferred) {
+      if (id === candidate.id) this.preferred.delete(profile)
+    }
+  }
+
+  recordSuccess(
+    candidate: MatrixCatalog.Candidate,
+    profile?: MatrixProfile.ProfileID,
+    latencyMs?: number,
+  ): void {
     const current = this.states.get(candidate.id) ?? freshState
     this.states.set(candidate.id, {
       health: Math.min(1, current.health + 0.1),
       cooldownUntil: 0,
       recentFailures: 0,
+      successes: current.successes + 1,
+      failures: current.failures,
+      ...(latencyMs === undefined
+        ? current.latencyMs === undefined
+          ? {}
+          : { latencyMs: current.latencyMs }
+        : { latencyMs: current.latencyMs === undefined ? latencyMs : current.latencyMs * 0.7 + latencyMs * 0.3 }),
     })
+    if (profile !== undefined) this.preferred.set(profile, candidate.id)
   }
 
   state(candidate: MatrixCatalog.Candidate): CandidateState | undefined {
@@ -142,6 +187,10 @@ export class Router {
   restore(states: ReadonlyMap<string, CandidateState>): void {
     this.states.clear()
     for (const [id, state] of states) this.states.set(id, { ...state })
+  }
+
+  preferredCandidate(profile: MatrixProfile.ProfileID): string | undefined {
+    return this.preferred.get(profile)
   }
 
   health(candidate: MatrixCatalog.Candidate): number {

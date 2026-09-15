@@ -45,7 +45,17 @@ export type ChatCompletionResult =
 // candidate and the candidates currently in cooldown / degraded health.
 export interface RouteStatus {
   readonly lastSelected: string | null
+  readonly preferredReliable: string | null
   readonly fallbackCandidates: ReadonlyArray<string>
+  readonly candidates: ReadonlyArray<{
+    readonly id: string
+    readonly health: number
+    readonly successes: number
+    readonly failures: number
+    readonly cooldownUntil: number
+    readonly latencyMs?: number
+    readonly disabledReason?: "model_not_supported" | "payment_required"
+  }>
 }
 
 export interface Executor {
@@ -70,6 +80,13 @@ export function layer(settings: Settings) {
     ? [
         omnirouteEntry(settings.omnirouteBaseURL, "auto/coding:free"),
         omnirouteEntry(settings.omnirouteBaseURL, "opencode/mimo-v2.5-free"),
+        ...MatrixCatalog.RELIABLE_CANDIDATES.map((candidate) => ({
+          candidate,
+          baseURL: settings.omnirouteBaseURL!,
+          keyEnv: "OMNIROUTE_API_KEY",
+          free: true,
+          classification: "OMNIROUTE_BACKED" as const,
+        })),
       ]
     : [
         ...resolved.free,
@@ -89,7 +106,9 @@ export function layer(settings: Settings) {
 
 function omnirouteEntry(baseURL: string, model: "auto/coding:free" | "opencode/mimo-v2.5-free"): PoolEntry {
   return {
-    candidate: [...MatrixCatalog.CATALOG, ...MatrixCatalog.VISION_CANDIDATES].find((candidate) => candidate.model === model)!,
+    candidate: [...MatrixCatalog.CATALOG, ...MatrixCatalog.VISION_CANDIDATES].find(
+      (candidate) => candidate.model === model,
+    )!,
     baseURL,
     keyEnv: "OMNIROUTE_API_KEY",
     free: true,
@@ -132,7 +151,15 @@ const chatCompletionImpl =
           "image_input_not_supported",
         ),
       )
-    const candidates = toCandidates(eligible).filter((candidate) => !hasImage || candidate.vision)
+    const candidates = toCandidates(eligible)
+      .filter((candidate) => !hasImage || candidate.vision)
+      .filter(
+        (candidate) =>
+          model.profile !== "reliable" ||
+          ctx.settings.omnirouteBaseURL === undefined ||
+          ctx.settings.directBaseURL !== undefined ||
+          candidate.profiles?.includes("reliable"),
+      )
     const selection =
       candidates.length === 0
         ? undefined
@@ -212,8 +239,8 @@ function buildRequest(
 }
 
 type AttemptResult =
-  | { readonly ok: true; readonly result: ChatCompletionResult }
-  | { readonly ok: false; readonly error: LLMError; readonly status: number }
+  | { readonly ok: true; readonly result: ChatCompletionResult; readonly latencyMs: number }
+  | { readonly ok: false; readonly error: LLMError; readonly status: number; readonly retryAfterMs?: number }
 
 class UpstreamAttemptFailure {
   readonly _tag = "UpstreamAttemptFailure"
@@ -235,6 +262,7 @@ function runAttempt(
     const built = buildUpstream(entry, settings)
     const request = buildRequest(input, model, built, hops)
     const llm = yield* LLMClient.Service
+    const startedAt = Date.now()
 
     if (input.request.stream) {
       const [firstOption, restStream] = yield* llm.stream(request).pipe(
@@ -371,7 +399,8 @@ function runAttempt(
 
       return {
         ok: true as const,
-        result: { stream: true as const, response: sseStream }
+        result: { stream: true as const, response: sseStream },
+        latencyMs: Date.now() - startedAt,
       }
     }
 
@@ -380,6 +409,7 @@ function runAttempt(
     )
     return {
       ok: true as const,
+      latencyMs: Date.now() - startedAt,
       result: {
         stream: false as const,
         response: chatCompletionResponse({
@@ -396,7 +426,12 @@ function runAttempt(
     }
   }).pipe(
     Effect.catchTag("UpstreamAttemptFailure", (failure) =>
-      Effect.succeed<AttemptResult>({ ok: false as const, error: failure.error, status: failure.status }),
+      Effect.succeed<AttemptResult>({
+        ok: false as const,
+        error: failure.error,
+        status: failure.status,
+        ...(failure.error.retryAfterMs === undefined ? {} : { retryAfterMs: failure.error.retryAfterMs }),
+      }),
     ),
   )
 }
@@ -428,10 +463,21 @@ function providerEventFailure(message: string) {
   )
 }
 
-function onSuccess(ctx: ExecutorContext, entry: PoolEntry, result: Extract<AttemptResult, { ok: true }>) {
-  ctx.router.recordSuccess(entry.candidate)
+function onSuccess(
+  ctx: ExecutorContext,
+  entry: PoolEntry,
+  profile: ProfileID,
+  result: Extract<AttemptResult, { ok: true }>,
+) {
+  ctx.router.recordSuccess(entry.candidate, profile, result.latencyMs)
   ctx.state.lastSelected = entry.candidate.id
-  return Effect.succeed(result.result)
+  return Effect.logInfo("Matrix route succeeded", {
+    candidate: entry.candidate.id,
+    provider: entry.candidate.provider,
+    model: entry.candidate.model,
+    latencyMs: result.latencyMs,
+    action: "preferred",
+  }).pipe(Effect.as(result.result))
 }
 
 // Record a provider failure into the router (only recoverable failures move
@@ -480,7 +526,7 @@ function runSingleCoding(
 
       attempted.add(currentId)
       const result = yield* runAttempt(ctx, input, model, entry, hops)
-      if (result.ok) return yield* onSuccess(ctx, entry, result)
+      if (result.ok) return yield* onSuccess(ctx, entry, model.profile, result)
 
       const text = MatrixRouterService.sanitizeMessage(result.error.message)
       const code = result.status >= 400 && result.status < 600 ? String(result.status) : undefined
@@ -522,7 +568,7 @@ function runReliable(
 ) {
   return Effect.gen(function* () {
     const { settings, router, eligible } = ctx
-    const maxAttempts = settings.maxAttempts
+    const maxAttempts = Math.min(settings.maxAttempts, 3)
     let currentId = first.candidate.id
     let attempt = 0
     const attempted = new Set<string>()
@@ -534,42 +580,56 @@ function runReliable(
       attempted.add(currentId)
 
       const result = yield* runAttempt(ctx, input, model, entry, hops)
-      if (result.ok) return yield* onSuccess(ctx, entry, result)
+      if (result.ok) return yield* onSuccess(ctx, entry, model.profile, result)
 
       const text = MatrixRouterService.sanitizeMessage(result.error.message)
       const code = result.status >= 400 && result.status < 600 ? String(result.status) : undefined
-      const kind = MatrixReliable.classifyError(code, text)
-      // Permanent errors never trigger a fallback (prompt/auth issues).
-      if (kind === "none") return yield* onFailure(ctx, entry, result)
-
-      router.recordFailure(entry.candidate, COOLDOWN_MS[kind], {
+      const disposition = MatrixReliable.classifyFailure(code, text)
+      const error = {
         message: text,
         ...(code === undefined ? {} : { code }),
         status: result.status,
-      })
+      }
+      if (disposition === "request_invalid" || disposition === "authentication" || disposition === "permanent")
+        return yield* onFailure(ctx, entry, result)
 
-      // Decide whether to retry the same candidate or fall back to another.
-      const needsVision = requestHasImage(input.request)
-      const others = toCandidates(eligible).filter(
-        (candidate) => !attempted.has(candidate.id) && (!needsVision || candidate.vision),
-      )
-      const decision = MatrixReliable.decideFailure(
-        code,
-        text,
+      const action =
+        disposition === "model_not_supported"
+          ? "disabled:model_not_supported"
+          : disposition === "payment_required"
+            ? "disabled:payment_required"
+            : "cooldown"
+      if (disposition === "model_not_supported") router.disable(entry.candidate, "model_not_supported", error)
+      if (disposition === "payment_required") router.disable(entry.candidate, "payment_required", error)
+      if (disposition === "rate_limit")
+        router.recordFailure(entry.candidate, Math.max(COOLDOWN_MS.retry, result.retryAfterMs ?? 0), error)
+      if (disposition === "upstream_failure")
+        router.recordFailure(entry.candidate, COOLDOWN_MS.fallback, error)
+      yield* Effect.logWarning("Matrix reliable fallback", {
+        candidate: entry.candidate.id,
+        provider: entry.candidate.provider,
+        model: entry.candidate.model,
+        status: result.status,
+        action,
         attempt,
         maxAttempts,
-        router,
-        model.profile as ProfileID,
-        others,
-        () => true,
+      })
+
+      if (attempt >= maxAttempts)
+        return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+
+      const needsVision = requestHasImage(input.request)
+      const others = toCandidates(eligible).filter(
+        (candidate) =>
+          !attempted.has(candidate.id) &&
+          (settings.omnirouteBaseURL === undefined ||
+            settings.directBaseURL !== undefined ||
+            candidate.profiles?.includes("reliable") === true) &&
+          (!needsVision || candidate.vision),
       )
-      if (decision.action === "continue") continue
-      if (decision.action === "fallback") {
-        currentId = decision.selection!.candidate.id
-        attempt = 0
-        continue
-      }
-      return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+      const fallback = router.fallback(model.profile as ProfileID, others, () => true)
+      if (fallback === undefined) return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+      currentId = fallback.candidate.id
     }
   })
 }
@@ -585,13 +645,30 @@ function entryFor(ctx: ExecutorContext, candidateId: string): PoolEntry | undefi
 function routeStatusImpl(ctx: ExecutorContext): RouteStatus {
   const now = Date.now()
   const fallbackCandidates: string[] = []
+  const candidates: RouteStatus["candidates"][number][] = []
   for (const entry of ctx.eligible) {
     const state = ctx.router.state(entry.candidate)
     if (state !== undefined && (state.cooldownUntil > now || state.health < 1)) {
       fallbackCandidates.push(entry.candidate.id)
     }
+    if (state !== undefined) {
+      candidates.push({
+        id: entry.candidate.id,
+        health: state.health,
+        successes: state.successes,
+        failures: state.failures,
+        cooldownUntil: state.cooldownUntil,
+        ...(state.latencyMs === undefined ? {} : { latencyMs: state.latencyMs }),
+        ...(state.disabledReason === undefined ? {} : { disabledReason: state.disabledReason }),
+      })
+    }
   }
-  return { lastSelected: ctx.state.lastSelected ?? null, fallbackCandidates }
+  return {
+    lastSelected: ctx.state.lastSelected ?? null,
+    preferredReliable: ctx.router.preferredCandidate("reliable") ?? null,
+    fallbackCandidates,
+    candidates,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -687,6 +764,8 @@ function messageText(message: ChatCompletionRequest["messages"][number]): string
 // Derive an HTTP status from the provider error when it carries one.
 function upstreamStatus(error: LLMError): number {
   if ("status" in error.reason) return error.reason.status ?? 502
+  if ("http" in error.reason && error.reason.http?.response !== undefined)
+    return error.reason.http.response.status
   return 502
 }
 

@@ -148,6 +148,70 @@ export const VISION_CANDIDATES: readonly Candidate[] = [
   },
 ]
 
+// Explicit zero-cost routes used by Matrix Coding Reliable. Sending these
+// concrete gateway model ids keeps the retry budget in Matrix instead of
+// handing one request to OmniRoute's much larger auto-combo cascade. They are
+// all models in OmniRoute's bundled OpenCode free catalog; availability is
+// still learned at runtime from real responses and circuit state.
+export const RELIABLE_CANDIDATES: readonly Candidate[] = [
+  {
+    id: "omniroute/opencode-zen/big-pickle",
+    name: "Big Pickle",
+    provider: "opencode-zen",
+    model: "opencode/big-pickle",
+    coding: 0.9,
+    reasoning: 0.85,
+    speed: 0.9,
+    toolCalls: 0.9,
+    vision: false,
+    cost: 0,
+    context: 200000,
+    profiles: ["reliable"],
+  },
+  {
+    id: "omniroute/opencode-zen/mimo-v2.5-free",
+    name: "MiMo V2.5 Free",
+    provider: "opencode-zen",
+    model: "opencode/mimo-v2.5-free",
+    coding: 0.85,
+    reasoning: 0.8,
+    speed: 0.75,
+    toolCalls: 0.85,
+    vision: false,
+    cost: 0,
+    context: 200000,
+    profiles: ["reliable"],
+  },
+  {
+    id: "omniroute/opencode-zen/deepseek-v4-flash-free",
+    name: "DeepSeek V4 Flash Free",
+    provider: "opencode-zen",
+    model: "opencode/deepseek-v4-flash-free",
+    coding: 0.85,
+    reasoning: 0.85,
+    speed: 0.7,
+    toolCalls: 0.8,
+    vision: false,
+    cost: 0,
+    context: 200000,
+    profiles: ["reliable"],
+  },
+  {
+    id: "omniroute/opencode-zen/nemotron-3-ultra-free",
+    name: "Nemotron 3 Ultra Free",
+    provider: "opencode-zen",
+    model: "opencode/nemotron-3-ultra-free",
+    coding: 0.8,
+    reasoning: 0.85,
+    speed: 0.4,
+    toolCalls: 0.8,
+    vision: false,
+    cost: 0,
+    context: 1000000,
+    profiles: ["reliable"],
+  },
+]
+
 export function byId(catalog: readonly Candidate[], id: string): Candidate | undefined {
   return catalog.find((candidate) => candidate.id === id)
 }

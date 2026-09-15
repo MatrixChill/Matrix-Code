@@ -5,7 +5,18 @@ import type { AddressInfo } from "node:net"
 import type { Settings } from "./config"
 import { MatrixApiServer } from "./server"
 
-type StubMode = "success" | "429" | "503" | "timeout"
+type StubMode =
+  | "success"
+  | "400"
+  | "401-auth"
+  | "401-model"
+  | "402"
+  | "429"
+  | "429-retry-after"
+  | "500"
+  | "503"
+  | "timeout"
+  | "all-503"
 
 interface UpstreamRequest {
   readonly model: string
@@ -40,12 +51,12 @@ function withApi<T>(settings: Settings, run: (listener: { readonly url: string }
   )
 }
 
-function postChat(url: string, key: string, stream = true) {
+function postChat(url: string, key: string, stream = true, model = "matrix-coding-reliable") {
   return fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
     body: JSON.stringify({
-      model: "matrix-coding-reliable",
+      model,
       stream,
       messages: [{ role: "user", content: "hi" }],
     }),
@@ -88,13 +99,34 @@ function stubServer(mode: StubMode): Promise<{ readonly server: Server; readonly
         state.headers.push(request.headers)
         state.firstModel ??= input.model
 
-        if (input.model === state.firstModel && mode !== "success") {
+        if ((input.model === state.firstModel || mode === "all-503") && mode !== "success") {
           if (mode === "timeout") {
             response.destroy()
             return
           }
-          response.writeHead(Number(mode), { "content-type": "application/json" })
-          response.end(JSON.stringify({ error: { message: "recoverable failure" } }))
+          const status =
+            mode === "401-auth" || mode === "401-model"
+              ? 401
+              : mode === "429-retry-after"
+                ? 429
+                : mode === "all-503"
+                  ? 503
+                  : Number(mode)
+          const message =
+            mode === "401-model"
+              ? "Model is not supported by this route"
+              : mode === "401-auth"
+                ? "Invalid API key"
+                : mode === "402"
+                  ? "Payment required"
+                  : mode === "400"
+                    ? "Invalid request payload"
+                    : "recoverable failure"
+          response.writeHead(status, {
+            "content-type": "application/json",
+            ...(mode === "429-retry-after" ? { "retry-after": "120" } : {}),
+          })
+          response.end(JSON.stringify({ error: { message } }))
           return
         }
 
@@ -151,7 +183,12 @@ describe("Matrix API OmniRoute path", () => {
         poolEnv: { OMNIROUTE_API_KEY: "omniroute-test-key" },
       })
       await withApi(settings, async (listener) => {
-        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
         expect(response.status).toBe(200)
         expect(stub.state.requests).toHaveLength(1)
         expect(stub.state.requests[0]!.model).toBe("auto/coding:free")
@@ -167,7 +204,12 @@ describe("Matrix API OmniRoute path", () => {
     try {
       const settings = baseSettings({ omnirouteBaseURL: stub.url })
       await withApi(settings, async (listener) => {
-        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!)
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          true,
+          "matrix-free-auto",
+        )
         expect(response.status).toBe(200)
         expect(await response.text()).toContain("Hello ")
         expect(stub.state.requests[0]!.model).toBe("auto/coding:free")
