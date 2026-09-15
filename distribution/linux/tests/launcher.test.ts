@@ -4,6 +4,7 @@ import path from "node:path"
 const root = path.resolve(import.meta.dir, "..")
 const launcher = await Bun.file(path.join(root, "matrix.sh")).text()
 const template = await Bun.file(path.join(root, "templates", "opencode.omniroute.jsonc")).text()
+const build = await Bun.file(path.resolve(root, "..", "..", "script", "build-linux-distribution.sh")).text()
 
 describe("Linux portable launcher", () => {
   test("uses portable paths and private local state", () => {
@@ -38,7 +39,9 @@ describe("Linux portable launcher", () => {
     expect(launcher).toContain("trap 'exit 130' INT")
     expect(launcher).toContain("trap 'exit 143' TERM")
     expect(launcher).toContain('process_matches "$owned_pid" "$owned_marker"')
-    expect(launcher).toContain('kill -TERM -- "-$owned_pid"')
+    expect(launcher).toContain('kill -TERM "-$owned_pid"')
+    expect(launcher).toContain('kill -KILL "-$owned_pid"')
+    expect(launcher).not.toContain('kill -TERM -- "-$owned_pid"')
     expect(launcher).toContain("OmniRoute already active and authenticated. Reusing it.")
   })
 
@@ -47,6 +50,23 @@ describe("Linux portable launcher", () => {
     expect(launcher).toContain('node_bin="$matrix_root/omniroute/node"')
     expect(launcher).toContain("omniroute/app/node_modules/omniroute/dist/server-ws.mjs")
     expect(launcher).not.toMatch(/command -v (node|npm|omniroute)/)
+  })
+
+  test("disables the upstream auto-updater", () => {
+    expect(launcher).toContain("export OPENCODE_DISABLE_AUTOUPDATE=true")
+  })
+})
+
+describe("Linux release build", () => {
+  test("builds the v1.0.1 release candidate through the supported version input", () => {
+    expect(build).toContain("matrix_version=1.0.1")
+    expect(build).toContain('OPENCODE_VERSION="$matrix_version"')
+    expect(build).toContain("bun_version=1.4.2")
+    expect(build).toContain("bun_sha256=36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913")
+    expect(build).toContain("wsl_bun_version=1.4.0")
+    expect(build).toContain('file "$bun_bin" | grep -E \'ELF 64-bit.*x86-64\'')
+    expect(build).toContain('WSLENV="${WSLENV:+$WSLENV:}OPENCODE_VERSION"')
+    expect(build).toContain('Matrix-Code-Linux-x64-Portable-v$matrix_version-RC.tar.gz')
   })
 })
 

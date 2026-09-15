@@ -31,6 +31,7 @@ export XDG_DATA_HOME="$matrix_home/data"
 export XDG_CACHE_HOME="$matrix_home/cache"
 export XDG_STATE_HOME="$state_dir"
 export OPENCODE_CONFIG_DIR="$XDG_CONFIG_HOME/opencode"
+export OPENCODE_DISABLE_AUTOUPDATE=true
 export OMNIROUTE_BASE_URL="${OMNIROUTE_BASE_URL:-http://127.0.0.1:20128/v1}"
 
 mkdir -p "$OPENCODE_CONFIG_DIR" "$XDG_DATA_HOME" "$XDG_CACHE_HOME" "$state_dir"
@@ -132,7 +133,7 @@ stop_owned() {
   if [ -n "$owned_pid" ] && kill -0 "$owned_pid" 2>/dev/null; then
     if process_matches "$owned_pid" "$owned_marker"; then
       printf '%s\n' "Stopping $owned_name..."
-      if [ "$owned_group" -eq 1 ]; then kill -TERM -- "-$owned_pid" 2>/dev/null || true
+      if [ "$owned_group" -eq 1 ]; then kill -TERM "-$owned_pid" 2>/dev/null || true
       else kill -TERM "$owned_pid" 2>/dev/null || true
       fi
       stop_count=0
@@ -141,7 +142,7 @@ stop_owned() {
         sleep 0.1
       done
       if kill -0 "$owned_pid" 2>/dev/null; then
-        if [ "$owned_group" -eq 1 ]; then kill -KILL -- "-$owned_pid" 2>/dev/null || true
+        if [ "$owned_group" -eq 1 ]; then kill -KILL "-$owned_pid" 2>/dev/null || true
         else kill -KILL "$owned_pid" 2>/dev/null || true
         fi
       fi

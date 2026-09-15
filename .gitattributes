@@ -1,2 +1,7 @@
 packages/core/migration/**/snapshot.json linguist-generated
 packages/core/src/database/migration.gen.ts linguist-generated
+
+# Linux shell scripts must always use LF
+distribution/linux/*.sh text eol=lf
+distribution/linux/**/*.sh text eol=lf
+script/*.sh text eol=lf
