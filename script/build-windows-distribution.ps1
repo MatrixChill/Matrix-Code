@@ -2,7 +2,7 @@ param(
   [switch]$SkipCliBuild,
   [switch]$SkipVoiceBuild,
   [switch]$SkipVoiceSelfTest,
-  [string]$MatrixVersion = '1.0.1'
+  [string]$MatrixVersion = '1.0.2'
 )
 
 $ErrorActionPreference = "Stop"

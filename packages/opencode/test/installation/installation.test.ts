@@ -77,12 +77,12 @@ describe("installation", () => {
         }),
     )
 
-    testEffect(testLayer(() => jsonResponse([{ tag_name: "matrix-v1.0.1" }, { tag_name: "v1.18.30" }]))).effect(
+    testEffect(testLayer(() => jsonResponse([{ tag_name: "matrix-v1.0.2" }, { tag_name: "v1.18.30" }]))).effect(
       "prefers Matrix tags and ignores upstream OpenCode tags",
       () =>
         Effect.gen(function* () {
           const result = yield* Installation.use.latest("unknown")
-          expect(result).toBe("1.0.1")
+          expect(result).toBe("1.0.2")
         }),
     )
 

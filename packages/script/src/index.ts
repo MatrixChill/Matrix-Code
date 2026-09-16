@@ -47,7 +47,7 @@ const VERSION = await (async () => {
   const matrixVersion = env.MATRIX_VERSION ?? env.OPENCODE_VERSION
   if (matrixVersion) return normalizeMatrixVersion(matrixVersion)
   if (IS_PREVIEW) return `0.0.0-${CHANNEL}-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}`
-  const fallback = "1.0.1"
+  const fallback = "1.0.2"
   return fallback
 })()
 
