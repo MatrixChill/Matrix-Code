@@ -21,7 +21,7 @@ export * as MatrixApiPool from "./pool"
 import type { Candidate } from "../catalog"
 import { routesToOmniRoute, type Settings } from "./config"
 
-export type Classification = "DIRECT_FREE" | "DIRECT_AUTHENTICATED" | "OMNIROUTE_BACKED" | "UNAVAILABLE"
+export type Classification = "DIRECT_FREE" | "DIRECT_AUTHENTICATED" | "OMNIROUTE_BACKED" | "LOCAL" | "UNAVAILABLE"
 
 export type Env = Readonly<Record<string, string | undefined>>
 
@@ -127,7 +127,11 @@ export function overrideEntry(settings: Settings): PoolEntry | undefined {
 // Credential accessor for an entry. Only the raw env value is a secret; the
 // KEY NAME (keyEnv) is safe to display. The override reads its dedicated key
 // (or passthrough auth) from Settings instead of the environment.
-export function credential(entry: Pick<PoolEntry, "candidate" | "keyEnv">, settings: Settings, env: Env): string | undefined {
+export function credential(
+  entry: Pick<PoolEntry, "candidate" | "keyEnv">,
+  settings: Settings,
+  env: Env,
+): string | undefined {
   if (entry.candidate.id === "matrix-api/direct") return settings.directApiKey
   return env[entry.keyEnv]?.trim() || undefined
 }
@@ -155,7 +159,15 @@ export function resolvePool(settings: Settings, env: Env = process.env): Resolve
     unavailable: [] as PoolEntry[],
   }
   for (const entry of entries) {
-    outflow[entry.classification === "DIRECT_FREE" ? "free" : entry.classification === "DIRECT_AUTHENTICATED" ? "authenticated" : entry.classification === "OMNIROUTE_BACKED" ? "omniroute" : "unavailable"].push(entry)
+    outflow[
+      entry.classification === "DIRECT_FREE"
+        ? "free"
+        : entry.classification === "DIRECT_AUTHENTICATED"
+          ? "authenticated"
+          : entry.classification === "OMNIROUTE_BACKED"
+            ? "omniroute"
+            : "unavailable"
+    ].push(entry)
   }
   return { ...outflow, all: entries }
 }
@@ -200,11 +212,13 @@ export function poolStatus(settings: Settings, env: Env = process.env): PoolStat
       classification: entry.classification,
     })),
     ...(omnirouteActive
-      ? [{
-          id: "omniroute/matrix-free-coding",
-          name: "Matrix Free Auto",
-          classification: "OMNIROUTE_BACKED" as const,
-        }]
+      ? [
+          {
+            id: "omniroute/matrix-free-coding",
+            name: "Matrix Free Auto",
+            classification: "OMNIROUTE_BACKED" as const,
+          },
+        ]
       : []),
   ]
   const override = overrideEntry(settings)

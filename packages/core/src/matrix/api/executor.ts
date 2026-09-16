@@ -3,21 +3,30 @@
 // The preferred path is the local OmniRoute gateway's `auto/coding:free`
 // policy. OmniRoute owns provider health, quota filtering and provider-level
 // fallback; Matrix owns the logical models, recursion guard and route health.
-// The legacy direct free pool remains available only when no OmniRoute URL is
-// configured.
+// Direct free providers remain isolated from Free Auto and Vision. Reliable
+// combines them with OmniRoute routes when their credentials are configured.
 //
 // `matrix-coding-reliable` falls back across the eligible pool without
 // repeating a failed Matrix candidate.
 
 import { Context, Effect, Layer, Option, Sink, Stream } from "effect"
 import { randomUUID } from "node:crypto"
-import { InvalidProviderOutputReason, LLM, LLMError, Message, type LLMEvent, type Model, ToolDefinition } from "@opencode-ai/llm"
+import {
+  InvalidProviderOutputReason,
+  LLM,
+  LLMError,
+  Message,
+  type LLMEvent,
+  type Model,
+  ToolDefinition,
+} from "@opencode-ai/llm"
 import { OpenAICompatible } from "@opencode-ai/llm/providers"
 import { LLMClient, Auth } from "@opencode-ai/llm/route"
 import { MatrixCatalog } from "../catalog"
 import { MatrixRouterService } from "../router-service"
 import { MatrixRouter } from "../router"
 import { MatrixReliable } from "../reliable"
+import { MatrixLocalProvider } from "../local-provider"
 import { MatrixProfile, type ProfileID } from "../profile"
 import { type Settings } from "./config"
 import { MatrixApiPool, type PoolEntry } from "./pool"
@@ -56,6 +65,14 @@ export interface RouteStatus {
     readonly latencyMs?: number
     readonly disabledReason?: "model_not_supported" | "payment_required"
   }>
+  readonly providers: {
+    readonly omniroute: "available" | "unavailable"
+    readonly openrouter: "configured" | "not configured"
+    readonly cerebras: "configured" | "not configured"
+    readonly ollama: "available" | "unavailable"
+    readonly ollamaModels: number
+    readonly independentInfrastructures: number
+  }
 }
 
 export interface Executor {
@@ -70,38 +87,52 @@ interface ExecutorContext {
   readonly settings: Settings
   readonly router: MatrixRouter.Router
   readonly eligible: readonly PoolEntry[]
+  readonly reliableBase: readonly PoolEntry[]
+  readonly local: { routes: readonly PoolEntry[] }
   readonly state: { lastSelected: string | undefined }
 }
 
 export function layer(settings: Settings) {
-  const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
-  const override = MatrixApiPool.overrideEntry(settings)
-  const eligible = settings.omnirouteBaseURL && settings.directBaseURL === undefined
-    ? [
-        omnirouteEntry(settings.omnirouteBaseURL, "auto/coding:free"),
-        omnirouteEntry(settings.omnirouteBaseURL, "opencode/mimo-v2.5-free"),
-        ...MatrixCatalog.RELIABLE_CANDIDATES.map((candidate) => ({
-          candidate,
-          baseURL: settings.omnirouteBaseURL!,
-          keyEnv: "OMNIROUTE_API_KEY",
-          free: true,
-          classification: "OMNIROUTE_BACKED" as const,
-        })),
-      ]
-    : [
-        ...resolved.free,
-        ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
-      ]
+  return Layer.effect(
+    Service,
+    Effect.promise(async () => {
+      const local = await MatrixLocalProvider.discover(ollamaDiscoveryOptions(settings))
+      const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
+      const override = MatrixApiPool.overrideEntry(settings)
+      const omnirouteActive = settings.omnirouteBaseURL !== undefined && settings.directBaseURL === undefined
+      const eligible = omnirouteActive
+        ? [
+            omnirouteEntry(settings.omnirouteBaseURL, "auto/coding:free"),
+            omnirouteEntry(settings.omnirouteBaseURL, "opencode/mimo-v2.5-free"),
+            ...MatrixCatalog.RELIABLE_CANDIDATES.map((candidate) => ({
+              candidate,
+              baseURL: settings.omnirouteBaseURL!,
+              keyEnv: "OMNIROUTE_API_KEY",
+              free: true,
+              classification: "OMNIROUTE_BACKED" as const,
+            })),
+          ]
+        : [
+            ...resolved.free,
+            ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
+          ]
+      const reliableBase = omnirouteActive
+        ? [...eligible.filter((entry) => entry.candidate.profiles?.includes("reliable") === true), ...resolved.free]
+        : eligible
 
-  const ctx: ExecutorContext = {
-    settings,
-    router: MatrixRouter.make(),
-    eligible,
-    state: { lastSelected: undefined },
-  }
-  const chatCompletion = chatCompletionImpl(ctx) as Executor["chatCompletion"]
-  const routeStatus = () => routeStatusImpl(ctx)
-  return Layer.succeed(Service, Service.of({ settings, chatCompletion, routeStatus }))
+      const ctx: ExecutorContext = {
+        settings,
+        router: MatrixRouter.make(),
+        eligible,
+        reliableBase,
+        local: { routes: local },
+        state: { lastSelected: undefined },
+      }
+      const chatCompletion = chatCompletionImpl(ctx) as Executor["chatCompletion"]
+      const routeStatus = () => routeStatusImpl(ctx)
+      return Service.of({ settings, chatCompletion, routeStatus })
+    }),
+  )
 }
 
 function omnirouteEntry(baseURL: string, model: "auto/coding:free" | "opencode/mimo-v2.5-free"): PoolEntry {
@@ -116,10 +147,9 @@ function omnirouteEntry(baseURL: string, model: "auto/coding:free" | "opencode/m
   }
 }
 
-const chatCompletionImpl =
-  (ctx: ExecutorContext) =>
+const chatCompletionImpl = (ctx: ExecutorContext) =>
   Effect.fn("MatrixApi.chatCompletion")(function* (input: ChatCompletionInput) {
-    const { settings, eligible } = ctx
+    const { settings } = ctx
     // Auth was already checked by the HTTP middleware; this is the durable
     // guard so the executor stays safe even when reused without the server.
     if (settings.apiKey === undefined) return yield* Effect.fail(ApiSchema.notConfigured())
@@ -134,7 +164,9 @@ const chatCompletionImpl =
       return yield* Effect.fail(ApiSchema.invalidRequest("max_tokens must be a positive integer", "invalid_max_tokens"))
 
     if (input.request.messages.length === 0)
-      return yield* Effect.fail(ApiSchema.invalidRequest("messages must contain at least one message", "empty_messages"))
+      return yield* Effect.fail(
+        ApiSchema.invalidRequest("messages must contain at least one message", "empty_messages"),
+      )
 
     const hasImage = requestHasImage(input.request)
     if (hasImage && !requestImagesAreSupported(input.request))
@@ -151,19 +183,16 @@ const chatCompletionImpl =
           "image_input_not_supported",
         ),
       )
-    const candidates = toCandidates(eligible)
+    if (model.profile === "reliable") {
+      ctx.local.routes = yield* Effect.promise(() => MatrixLocalProvider.discover(ollamaDiscoveryOptions(settings)))
+    }
+    const requiresTools = (input.request.tools?.length ?? 0) > 0
+    const estimatedTokens = estimateRequestTokens(input.request)
+    const candidates = toCandidates(model.profile === "reliable" ? reliableEntries(ctx) : ctx.eligible)
       .filter((candidate) => !hasImage || candidate.vision)
-      .filter(
-        (candidate) =>
-          model.profile !== "reliable" ||
-          ctx.settings.omnirouteBaseURL === undefined ||
-          ctx.settings.directBaseURL !== undefined ||
-          candidate.profiles?.includes("reliable"),
-      )
-    const selection =
-      candidates.length === 0
-        ? undefined
-        : ctx.router.select(model.profile, candidates, () => true)
+      .filter((candidate) => !requiresTools || candidate.toolCalls > 0)
+      .filter((candidate) => candidate.context < 0 || estimatedTokens <= candidate.context)
+    const selection = candidates.length === 0 ? undefined : ctx.router.select(model.profile, candidates, () => true)
 
     if (selection === undefined) return yield* Effect.fail(noFreeRouteError(ctx))
 
@@ -197,18 +226,14 @@ interface BuiltRequest {
 
 function buildUpstream(entry: PoolEntry, settings: Settings) {
   const apiKey = MatrixApiPool.credential(entry, settings, settings.poolEnv ?? process.env)
-  const facade = apiKey === undefined
-    ? OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, auth: Auth.none })
-    : OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, apiKey })
+  const facade =
+    apiKey === undefined
+      ? OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, auth: Auth.none })
+      : OpenAICompatible.configure({ provider: "matrix-api", baseURL: entry.baseURL, apiKey })
   return { upstream: facade.model(entry.candidate.model), keyEnv: entry.keyEnv }
 }
 
-function buildRequest(
-  input: ChatCompletionInput,
-  model: MatrixModel,
-  built: BuiltRequest,
-  hops: number,
-) {
+function buildRequest(input: ChatCompletionInput, model: MatrixModel, built: BuiltRequest, hops: number) {
   const { system, history } = splitMessages(input.request.messages)
   const generation = {
     ...(input.request.temperature === undefined ? {} : { temperature: input.request.temperature }),
@@ -295,7 +320,7 @@ function runAttempt(
                   index: 0,
                   delta: { content: event.text },
                   finish_reason: null,
-                }
+                },
               ],
             }
             return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
@@ -323,7 +348,7 @@ function runAttempt(
                     ],
                   },
                   finish_reason: null,
-                }
+                },
               ],
             }
             return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
@@ -351,7 +376,7 @@ function runAttempt(
                     ],
                   },
                   finish_reason: null,
-                }
+                },
               ],
             }
             return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
@@ -376,7 +401,7 @@ function runAttempt(
                     ],
                   },
                   finish_reason: null,
-                }
+                },
               ],
             }
             return Effect.succeed(`data: ${JSON.stringify(payload)}\n\n`)
@@ -404,9 +429,9 @@ function runAttempt(
       }
     }
 
-    const response = yield* llm.generate(request).pipe(
-      Effect.mapError((error: LLMError) => new UpstreamAttemptFailure(error, upstreamStatus(error))),
-    )
+    const response = yield* llm
+      .generate(request)
+      .pipe(Effect.mapError((error: LLMError) => new UpstreamAttemptFailure(error, upstreamStatus(error))))
     return {
       ok: true as const,
       latencyMs: Date.now() - startedAt,
@@ -522,7 +547,8 @@ function runSingleCoding(
   return Effect.gen(function* () {
     while (true) {
       const entry = entryFor(ctx, currentId)
-      if (entry === undefined) return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
+      if (entry === undefined)
+        return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
 
       attempted.add(currentId)
       const result = yield* runAttempt(ctx, input, model, entry, hops)
@@ -567,17 +593,21 @@ function runReliable(
   hops: number,
 ) {
   return Effect.gen(function* () {
-    const { settings, router, eligible } = ctx
+    const { settings, router } = ctx
+    const reliableEligible = reliableEntries(ctx)
     const maxAttempts = Math.min(settings.maxAttempts, 3)
     let currentId = first.candidate.id
     let attempt = 0
     const attempted = new Set<string>()
+    const attemptedInfrastructures = new Set<string>()
 
     while (true) {
       const entry = entryFor(ctx, currentId)
-      if (entry === undefined) return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
+      if (entry === undefined)
+        return yield* Effect.fail(ApiSchema.noFreeRoute("Selected pool candidate is not available."))
       attempt += 1
       attempted.add(currentId)
+      attemptedInfrastructures.add(MatrixCatalog.infrastructureId(entry.candidate))
 
       const result = yield* runAttempt(ctx, input, model, entry, hops)
       if (result.ok) return yield* onSuccess(ctx, entry, model.profile, result)
@@ -590,21 +620,21 @@ function runReliable(
         ...(code === undefined ? {} : { code }),
         status: result.status,
       }
-      if (disposition === "request_invalid" || disposition === "authentication" || disposition === "permanent")
-        return yield* onFailure(ctx, entry, result)
+      if (disposition === "request_invalid" || disposition === "permanent") return yield* onFailure(ctx, entry, result)
 
       const action =
         disposition === "model_not_supported"
           ? "disabled:model_not_supported"
           : disposition === "payment_required"
             ? "disabled:payment_required"
-            : "cooldown"
+            : disposition === "authentication"
+              ? "credential-switch"
+              : "cooldown"
       if (disposition === "model_not_supported") router.disable(entry.candidate, "model_not_supported", error)
       if (disposition === "payment_required") router.disable(entry.candidate, "payment_required", error)
       if (disposition === "rate_limit")
         router.recordFailure(entry.candidate, Math.max(COOLDOWN_MS.retry, result.retryAfterMs ?? 0), error)
-      if (disposition === "upstream_failure")
-        router.recordFailure(entry.candidate, COOLDOWN_MS.fallback, error)
+      if (disposition === "upstream_failure") router.recordFailure(entry.candidate, COOLDOWN_MS.fallback, error)
       yield* Effect.logWarning("Matrix reliable fallback", {
         candidate: entry.candidate.id,
         provider: entry.candidate.provider,
@@ -615,19 +645,22 @@ function runReliable(
         maxAttempts,
       })
 
-      if (attempt >= maxAttempts)
-        return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+      if (attempt >= maxAttempts) return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
 
       const needsVision = requestHasImage(input.request)
-      const others = toCandidates(eligible).filter(
-        (candidate) =>
-          !attempted.has(candidate.id) &&
-          (settings.omnirouteBaseURL === undefined ||
-            settings.directBaseURL !== undefined ||
-            candidate.profiles?.includes("reliable") === true) &&
-          (!needsVision || candidate.vision),
-      )
-      const fallback = router.fallback(model.profile as ProfileID, others, () => true)
+      const needsTools = (input.request.tools?.length ?? 0) > 0
+      const estimatedTokens = estimateRequestTokens(input.request)
+      const others = reliableEligible
+        .filter((candidateEntry) => disposition !== "authentication" || candidateEntry.keyEnv !== entry.keyEnv)
+        .map((candidateEntry) => candidateEntry.candidate)
+        .filter(
+          (candidate) =>
+            !attempted.has(candidate.id) &&
+            (!needsVision || candidate.vision) &&
+            (!needsTools || candidate.toolCalls > 0) &&
+            (candidate.context < 0 || estimatedTokens <= candidate.context),
+        )
+      const fallback = router.fallback(model.profile as ProfileID, others, () => true, attemptedInfrastructures)
       if (fallback === undefined) return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
       currentId = fallback.candidate.id
     }
@@ -635,7 +668,7 @@ function runReliable(
 }
 
 function entryFor(ctx: ExecutorContext, candidateId: string): PoolEntry | undefined {
-  return ctx.eligible.find((entry) => entry.candidate.id === candidateId)
+  return [...ctx.eligible, ...reliableEntries(ctx)].find((entry) => entry.candidate.id === candidateId)
 }
 
 // ---------------------------------------------------------------------------
@@ -646,7 +679,11 @@ function routeStatusImpl(ctx: ExecutorContext): RouteStatus {
   const now = Date.now()
   const fallbackCandidates: string[] = []
   const candidates: RouteStatus["candidates"][number][] = []
-  for (const entry of ctx.eligible) {
+  const reliableEligible = reliableEntries(ctx)
+  const entries = [...ctx.eligible, ...reliableEligible].filter(
+    (entry, index, all) => all.findIndex((candidate) => candidate.candidate.id === entry.candidate.id) === index,
+  )
+  for (const entry of entries) {
     const state = ctx.router.state(entry.candidate)
     if (state !== undefined && (state.cooldownUntil > now || state.health < 1)) {
       fallbackCandidates.push(entry.candidate.id)
@@ -663,11 +700,38 @@ function routeStatusImpl(ctx: ExecutorContext): RouteStatus {
       })
     }
   }
+  const infrastructures = new Set(reliableEligible.map((entry) => MatrixCatalog.infrastructureId(entry.candidate)))
   return {
     lastSelected: ctx.state.lastSelected ?? null,
     preferredReliable: ctx.router.preferredCandidate("reliable") ?? null,
     fallbackCandidates,
     candidates,
+    providers: {
+      omniroute: ctx.settings.omnirouteBaseURL === undefined ? "unavailable" : "available",
+      openrouter: ctx.settings.poolEnv?.OPENROUTER_API_KEY ? "configured" : "not configured",
+      cerebras: ctx.settings.poolEnv?.CEREBRAS_API_KEY ? "configured" : "not configured",
+      ollama: ctx.local.routes.length > 0 ? "available" : "unavailable",
+      ollamaModels: ctx.local.routes.length,
+      independentInfrastructures: infrastructures.size,
+    },
+  }
+}
+
+function estimateRequestTokens(request: ChatCompletionRequest): number {
+  return Math.ceil(JSON.stringify(request).length / 4) + (request.max_tokens ?? 0)
+}
+
+function reliableEntries(ctx: ExecutorContext): readonly PoolEntry[] {
+  return [
+    ...ctx.reliableBase,
+    ...ctx.local.routes.filter((entry) => entry.candidate.profiles?.includes("reliable") === true),
+  ]
+}
+
+function ollamaDiscoveryOptions(settings: Settings) {
+  return {
+    ...(settings.ollamaBaseURL === undefined ? {} : { baseURL: settings.ollamaBaseURL }),
+    ...(settings.ollamaCacheTtlMs === undefined ? {} : { ttlMs: settings.ollamaCacheTtlMs }),
   }
 }
 
@@ -740,7 +804,8 @@ function requestImagesAreSupported(request: ChatCompletionRequest): boolean {
       message.content.every(
         (part) =>
           part.type !== "image_url" ||
-          (message.role === "user" && /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(part.image_url.url)),
+          (message.role === "user" &&
+            /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(part.image_url.url)),
       ),
   )
 }
@@ -764,8 +829,7 @@ function messageText(message: ChatCompletionRequest["messages"][number]): string
 // Derive an HTTP status from the provider error when it carries one.
 function upstreamStatus(error: LLMError): number {
   if ("status" in error.reason) return error.reason.status ?? 502
-  if ("http" in error.reason && error.reason.http?.response !== undefined)
-    return error.reason.http.response.status
+  if ("http" in error.reason && error.reason.http?.response !== undefined) return error.reason.http.response.status
   return 502
 }
 

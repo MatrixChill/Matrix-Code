@@ -2,6 +2,7 @@ export * as MatrixProvider from "./provider"
 
 export type ProviderKind = "direct" | "gateway" | "local"
 export type ProviderProtocol = "openai-compatible" | "native"
+export type ProviderAccess = "managed" | "anonymous" | "local" | "api-key" | "oauth" | "device-code"
 
 export type ProviderAuth =
   | {
@@ -36,6 +37,7 @@ export interface ProviderConfig {
   readonly protocol: ProviderProtocol
   readonly endpoint: ProviderEndpoint
   readonly auth: ProviderAuth
+  readonly access: ProviderAccess
 }
 
 const BUILTIN_PROVIDERS: readonly ProviderConfig[] = [
@@ -46,6 +48,7 @@ const BUILTIN_PROVIDERS: readonly ProviderConfig[] = [
     protocol: "openai-compatible",
     endpoint: { type: "runtime", configKey: "OMNIROUTE_BASE_URL" },
     auth: { type: "bearer", apiKeyEnv: "OMNIROUTE_API_KEY" },
+    access: "managed",
   },
   {
     id: "openrouter",
@@ -54,6 +57,7 @@ const BUILTIN_PROVIDERS: readonly ProviderConfig[] = [
     protocol: "openai-compatible",
     endpoint: { type: "static", baseURL: "https://openrouter.ai/api/v1" },
     auth: { type: "bearer", apiKeyEnv: "OPENROUTER_API_KEY" },
+    access: "api-key",
   },
   {
     id: "cerebras",
@@ -62,6 +66,16 @@ const BUILTIN_PROVIDERS: readonly ProviderConfig[] = [
     protocol: "openai-compatible",
     endpoint: { type: "static", baseURL: "https://api.cerebras.ai/v1" },
     auth: { type: "bearer", apiKeyEnv: "CEREBRAS_API_KEY" },
+    access: "api-key",
+  },
+  {
+    id: "ollama",
+    name: "Ollama",
+    kind: "local",
+    protocol: "openai-compatible",
+    endpoint: { type: "static", baseURL: "http://127.0.0.1:11434/v1" },
+    auth: { type: "none" },
+    access: "local",
   },
 ]
 

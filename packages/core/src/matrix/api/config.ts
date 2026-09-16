@@ -35,6 +35,10 @@ export interface Settings {
   // for a self-hosted mirror of the same provider. Applied before recursion
   // checks so a mirror pointed at OmniRoute is still rejected.
   readonly poolBaseURLOverrides?: Readonly<Record<string, string>>
+  // Test/development override for the loopback-only Ollama detector. Normal
+  // runtime leaves this unset and probes only 127.0.0.1:11434.
+  readonly ollamaBaseURL?: string
+  readonly ollamaCacheTtlMs?: number
 }
 
 const parseBool = (value: string | undefined) => {

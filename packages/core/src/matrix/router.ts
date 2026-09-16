@@ -123,8 +123,7 @@ export class Router {
     const sticky = eligible.find((candidate) => candidate.id === preferred)
     if (sticky !== undefined && this.infrastructureHealth(sticky) === 1)
       return { candidate: sticky, rank: this.rank(sticky, profile), profile }
-    const ranked = eligible
-      .sort((a, b) => this.rank(b, profile) - this.rank(a, profile))
+    const ranked = eligible.sort((a, b) => this.rank(b, profile) - this.rank(a, profile))
     const top = ranked[0]
     if (top === undefined) return undefined
     return { candidate: top, rank: this.rank(top, profile), profile }
@@ -136,6 +135,7 @@ export class Router {
     profile: MatrixProfile.ProfileID,
     candidates: readonly MatrixCatalog.Candidate[],
     isAvailable: Available,
+    avoidInfrastructureIds: ReadonlySet<string> = new Set(),
   ): Selection | undefined {
     const eligible = candidates
       .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
@@ -143,8 +143,12 @@ export class Router {
       .filter((candidate) => !this.isCoolingDown(candidate))
       .filter((candidate) => this.isEnabled(candidate))
       .sort((a, b) => {
-        const diversity = this.infrastructureHealth(b) - this.infrastructureHealth(a)
-        return diversity === 0 ? this.rank(b, profile) - this.rank(a, profile) : diversity
+        const diversity =
+          Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(a))) -
+          Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(b)))
+        if (diversity !== 0) return diversity
+        const health = this.infrastructureHealth(b) - this.infrastructureHealth(a)
+        return health === 0 ? this.rank(b, profile) - this.rank(a, profile) : health
       })
     const top = eligible[0]
     if (top === undefined) return undefined
@@ -202,11 +206,7 @@ export class Router {
     }
   }
 
-  recordSuccess(
-    candidate: MatrixCatalog.Candidate,
-    profile?: MatrixProfile.ProfileID,
-    latencyMs?: number,
-  ): void {
+  recordSuccess(candidate: MatrixCatalog.Candidate, profile?: MatrixProfile.ProfileID, latencyMs?: number): void {
     const current = this.states.get(candidate.id) ?? freshState
     this.states.set(candidate.id, {
       health: Math.min(1, current.health + 0.1),

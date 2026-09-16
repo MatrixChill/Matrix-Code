@@ -8,6 +8,7 @@ describe("MatrixProvider Foundation", () => {
       "omniroute",
       "openrouter",
       "cerebras",
+      "ollama",
     ])
   })
 
@@ -28,6 +29,18 @@ describe("MatrixProvider Foundation", () => {
     }
   })
 
+  test("separates product access from HTTP authentication", () => {
+    expect(MatrixProvider.getProvider("omniroute")?.access).toBe("managed")
+    expect(MatrixProvider.getProvider("openrouter")?.access).toBe("api-key")
+    expect(MatrixProvider.getProvider("cerebras")?.access).toBe("api-key")
+    expect(MatrixProvider.getProvider("ollama")).toMatchObject({
+      kind: "local",
+      protocol: "openai-compatible",
+      auth: { type: "none" },
+      access: "local",
+    })
+  })
+
   test("OmniRoute has a runtime endpoint and direct providers have static endpoints", () => {
     expect(MatrixProvider.getProvider("omniroute")!.endpoint).toEqual({
       type: "runtime",
@@ -44,7 +57,7 @@ describe("MatrixProvider Foundation", () => {
   })
 
   test("bearer auth stores only environment variable names and no secrets", () => {
-    for (const provider of MatrixProvider.listProviders()) {
+    for (const provider of MatrixProvider.listProviders().filter((provider) => provider.auth.type === "bearer")) {
       expect(provider.auth.type).toBe("bearer")
       if (provider.auth.type !== "bearer") continue
       expect(provider.auth.apiKeyEnv).toMatch(/^[A-Z][A-Z0-9_]*$/)
@@ -74,9 +87,7 @@ describe("MatrixRoute Foundation", () => {
 
   test("separates OmniRoute automatic and known backend infrastructure", () => {
     const routes = MatrixRoute.listRoutes()
-    expect(routes.find((route) => route.id === "omniroute/matrix-free-coding")?.infrastructureId).toBe(
-      "omniroute-auto",
-    )
+    expect(routes.find((route) => route.id === "omniroute/matrix-free-coding")?.infrastructureId).toBe("omniroute-auto")
     expect(routes.find((route) => route.id === "omniroute/matrix-vision")?.infrastructureId).toBe("opencode")
     for (const route of routes) expect(route.infrastructureId.length).toBeGreaterThan(0)
   })
