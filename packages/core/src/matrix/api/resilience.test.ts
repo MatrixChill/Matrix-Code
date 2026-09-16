@@ -174,6 +174,26 @@ function directFallbackSettings(url: string) {
   })
 }
 
+function omnirouteReliableSettings(url: string) {
+  return baseSettings({
+    omnirouteBaseURL: url,
+    poolEnv: { OMNIROUTE_API_KEY: "omniroute-test-key" },
+  })
+}
+
+async function routingStatus(url: string, key: string) {
+  const response = await fetch(`${url}/v1/status`, { headers: { Authorization: `Bearer ${key}` } })
+  return (await response.json()) as {
+    readonly routing: {
+      readonly candidates: ReadonlyArray<{
+        readonly id: string
+        readonly cooldownUntil: number
+        readonly disabledReason?: string
+      }>
+    }
+  }
+}
+
 describe("Matrix API OmniRoute path", () => {
   test("forwards the persisted gateway key and uses only auto/coding:free", async () => {
     const stub = await stubServer("success")
@@ -251,6 +271,81 @@ describe("Matrix reliable fallback", () => {
         expect(await response.text()).toContain("Hello ")
         expect(stub.state.requests).toHaveLength(2)
         expect(stub.state.requests[0]!.model).not.toBe(stub.state.requests[1]!.model)
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("stops after three distinct candidates when every infrastructure fails", async () => {
+    const stub = await stubServer("all-503")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(503)
+        expect(stub.state.requests).toHaveLength(3)
+        expect(new Set(stub.state.requests.map((request) => request.model)).size).toBe(3)
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("does not blindly fall back on a request-level 400", async () => {
+    const stub = await stubServer("400")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(400)
+        expect(stub.state.requests).toHaveLength(1)
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("does not treat a credential 401 as a route failure", async () => {
+    const stub = await stubServer("401-auth")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(401)
+        expect(stub.state.requests).toHaveLength(1)
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("disables only an unsupported route and can use a sibling route", async () => {
+    const stub = await stubServer("401-model")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(200)
+        expect(stub.state.requests).toHaveLength(2)
+        const status = await routingStatus(listener.url, settings.apiKey!)
+        expect(status.routing.candidates.find((candidate) => candidate.disabledReason === "model_not_supported")).toBeDefined()
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("respects Retry-After when cooling a rate-limited route", async () => {
+    const stub = await stubServer("429-retry-after")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const startedAt = Date.now()
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(200)
+        const status = await routingStatus(listener.url, settings.apiKey!)
+        expect(status.routing.candidates.find((candidate) => candidate.cooldownUntil >= startedAt + 119_000)).toBeDefined()
       })
     } finally {
       await closeServer(stub.server)

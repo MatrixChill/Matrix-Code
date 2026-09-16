@@ -93,13 +93,28 @@ function recordFailure(router: MatrixRouter.Router, input: RecordFailureInput): 
   const candidate = candidateFor(input.providerID, input.modelID)
   if (candidate === undefined) return
   const code = input.code ?? (input.status === undefined ? undefined : String(input.status))
-  const kind = MatrixReliable.classifyError(code, input.message)
-  if (kind === "none") return
-  router.recordFailure(candidate, COOLDOWN_MS[kind], {
+  const disposition = MatrixReliable.classifyFailure(code, input.message)
+  const scope = MatrixReliable.failureScope(disposition)
+  if (scope === "credential" || scope === "request") return
+  const error = {
     message: sanitizeMessage(input.message),
     ...(code === undefined ? {} : { code }),
     ...(input.status === undefined ? {} : { status: input.status }),
-  })
+  }
+  if (disposition === "model_not_supported") {
+    router.disable(candidate, "model_not_supported", error)
+    return
+  }
+  if (disposition === "payment_required") {
+    router.disable(candidate, "payment_required", error)
+    return
+  }
+  router.recordFailure(
+    candidate,
+    COOLDOWN_MS[MatrixReliable.classifyError(code, input.message)],
+    error,
+    scope,
+  )
 }
 
 function recordSuccess(router: MatrixRouter.Router, input: { readonly providerID: string; readonly modelID: string }): void {

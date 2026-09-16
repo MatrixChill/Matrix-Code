@@ -1,5 +1,7 @@
 export * as MatrixCatalog from "./catalog"
 
+import { MatrixRoute } from "./route"
+
 // A candidate model in the Matrix catalog. The router ranks candidates per
 // profile using the metadata below. Health and latency are runtime state managed
 // by the router (not stored here); recent failures feed the health state.
@@ -7,6 +9,10 @@ export interface Candidate {
   readonly id: string
   readonly name: string
   readonly provider: string
+  // Physical backend used by this route. Optional during the Candidate ->
+  // Route migration; infrastructureId() resolves known routes and otherwise
+  // falls back to the provider identity.
+  readonly infrastructureId?: string
   // Gateway-facing model id: the string the OmniRoute gateway expects as
   // `model` in a chat completion. The opencode provider config aliases point
   // here (`matrix-free-coding` -> `auto/coding:free`), and the session runner records
@@ -158,6 +164,7 @@ export const RELIABLE_CANDIDATES: readonly Candidate[] = [
     id: "omniroute/opencode-zen/big-pickle",
     name: "Big Pickle",
     provider: "opencode-zen",
+    infrastructureId: "opencode",
     model: "opencode/big-pickle",
     coding: 0.9,
     reasoning: 0.85,
@@ -172,6 +179,7 @@ export const RELIABLE_CANDIDATES: readonly Candidate[] = [
     id: "omniroute/opencode-zen/mimo-v2.5-free",
     name: "MiMo V2.5 Free",
     provider: "opencode-zen",
+    infrastructureId: "opencode",
     model: "opencode/mimo-v2.5-free",
     coding: 0.85,
     reasoning: 0.8,
@@ -186,6 +194,7 @@ export const RELIABLE_CANDIDATES: readonly Candidate[] = [
     id: "omniroute/opencode-zen/deepseek-v4-flash-free",
     name: "DeepSeek V4 Flash Free",
     provider: "opencode-zen",
+    infrastructureId: "opencode",
     model: "opencode/deepseek-v4-flash-free",
     coding: 0.85,
     reasoning: 0.85,
@@ -200,6 +209,7 @@ export const RELIABLE_CANDIDATES: readonly Candidate[] = [
     id: "omniroute/opencode-zen/nemotron-3-ultra-free",
     name: "Nemotron 3 Ultra Free",
     provider: "opencode-zen",
+    infrastructureId: "opencode",
     model: "opencode/nemotron-3-ultra-free",
     coding: 0.8,
     reasoning: 0.85,
@@ -218,6 +228,14 @@ export function byId(catalog: readonly Candidate[], id: string): Candidate | und
 
 export function supportsProfile(candidate: Candidate, profile: string): boolean {
   return candidate.profiles === undefined || candidate.profiles.includes(profile)
+}
+
+export function infrastructureId(candidate: Candidate): string {
+  return (
+    candidate.infrastructureId ??
+    MatrixRoute.listRoutes().find((route) => route.id === candidate.id)?.infrastructureId ??
+    candidate.provider
+  )
 }
 
 // A model the OmniRoute gateway advertises through its OpenAI-style /v1/models

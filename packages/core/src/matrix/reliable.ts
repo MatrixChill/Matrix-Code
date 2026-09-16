@@ -3,6 +3,7 @@ export * as MatrixReliable from "./reliable"
 import { MatrixRouter } from "./router"
 import { MatrixProfile } from "./profile"
 import { MatrixCatalog } from "./catalog"
+import { MatrixProvider } from "./provider"
 
 // A failure is "recoverable" when a retry or a model/provider fallback is
 // reasonable. Prompt/permission/auth errors are permanent and must NOT trigger a
@@ -84,6 +85,14 @@ export function classifyFailure(code: string | undefined, text: string): Failure
   )
     return "upstream_failure"
   return "permanent"
+}
+
+export function failureScope(disposition: FailureDisposition): MatrixProvider.FailureScope {
+  if (disposition === "model_not_supported" || disposition === "payment_required" || disposition === "rate_limit")
+    return "route"
+  if (disposition === "upstream_failure") return "infrastructure"
+  if (disposition === "authentication") return "credential"
+  return "request"
 }
 
 export interface FallbackOutcome {
