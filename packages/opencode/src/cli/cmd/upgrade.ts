@@ -2,7 +2,7 @@ import type { Argv } from "yargs"
 import { UI } from "../ui"
 import * as prompts from "@clack/prompts"
 import { Installation } from "../../installation"
-import { InstallationVersion } from "@opencode-ai/core/installation/version"
+import { InstallationAutoUpdateDisabled, InstallationVersion } from "@opencode-ai/core/installation/version"
 
 export const UpgradeCommand = {
   command: "upgrade [target]",
@@ -21,6 +21,16 @@ export const UpgradeCommand = {
       })
   },
   handler: async (args: { target?: string; method?: string }) => {
+    if (InstallationAutoUpdateDisabled) {
+      UI.empty()
+      UI.println(UI.logo("  "))
+      UI.empty()
+      prompts.log.error("Matrix Code self-update is disabled in this build.")
+      prompts.log.info("Download a newer Matrix Code release manually from MatrixChill/Matrix-Code.")
+      process.exitCode = 1
+      return
+    }
+
     UI.empty()
     UI.println(UI.logo("  "))
     UI.empty()

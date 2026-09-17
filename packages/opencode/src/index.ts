@@ -73,8 +73,8 @@ export function invokeWindowsMatrixLauncher() {
   })()
 
   const args = launcher.toLowerCase().endsWith(".ps1")
-    ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", launcher]
-    : ["/d", "/c", launcher]
+    ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", launcher, ...process.argv.slice(2)]
+    : ["/d", "/c", launcher, ...process.argv.slice(2)]
 
   const result = spawnSync(shell, args, {
     stdio: "inherit",
