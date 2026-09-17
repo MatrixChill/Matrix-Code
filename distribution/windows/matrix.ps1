@@ -160,6 +160,29 @@ function Get-ProcessCommandLine {
   }
 }
 
+# Test launchers use isolated roots under a matrix-test directory. Refuse to
+# reuse one of their listeners in a real installation: its credentials and
+# storage belong to the test run, even when its public health endpoint answers.
+function Get-StaleMatrixTestListener {
+  param([int]$Port)
+  try {
+    $connection = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction Stop | Select-Object -First 1
+    if (-not $connection) { return $null }
+    $processInfo = Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($connection.OwningProcess)" -ErrorAction Stop
+    if (-not $processInfo.CommandLine -or $processInfo.CommandLine -notmatch '(?i)[\\/]matrix-test[\\/]') { return $null }
+    return $processInfo
+  } catch {
+    return $null
+  }
+}
+
+function Assert-NoStaleMatrixTestListener {
+  param([int]$Port)
+  $processInfo = Get-StaleMatrixTestListener -Port $Port
+  if (-not $processInfo) { return }
+  throw "Port $Port is held by stale matrix-test process PID $($processInfo.ProcessId). Close that process before starting Matrix Code."
+}
+
 # A .ps1/.cmd shim may exit after spawning the real service. Adopt only the
 # process that owns the expected listener and whose command line identifies the
 # service, so cleanup remains targeted even when the starter was a wrapper.
@@ -724,6 +747,7 @@ try {
   # Otherwise a launch axis is resolved: vendored standalone exe, vendored Node
   # runtime, or a normal/global omniroute installation. With none of those and
   # no active listener, Matrix runs on fallback without OmniRoute.
+  Assert-NoStaleMatrixTestListener -Port 20128
   $nodeExe   = Join-Path $root 'omniroute\node.exe'
   $entryMjs  = Join-Path $root 'omniroute\app\node_modules\omniroute\dist\server-ws.mjs'
   $omniExe   = Join-Path $root 'omniroute\omniroute.exe'
@@ -876,6 +900,7 @@ try {
   # headless child is started and tracked by PID so cleanup never touches a
   # process this launcher did not create.
   if ($matrixApiKey) {
+    Assert-NoStaleMatrixTestListener -Port $matrixApiPort
     $matrixApi = Start-ManagedService `
       -Name 'Matrix API' `
       -HealthUri $matrixApiHealth `

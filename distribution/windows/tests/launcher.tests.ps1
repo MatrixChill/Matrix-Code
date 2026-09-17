@@ -215,6 +215,43 @@ Describe 'Matrix API Support' {
   }
 }
 
+Describe 'Stale test listener isolation' {
+  BeforeAll {
+    $launcherPath = (Resolve-Path -LiteralPath (Join-Path $DistDir 'matrix.ps1')).Path
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($launcherPath, [ref]$tokens, [ref]$parseErrors)
+    foreach ($name in @('Get-StaleMatrixTestListener', 'Assert-NoStaleMatrixTestListener')) {
+      $fn = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true)
+      if (-not $fn) { throw "$name not found in matrix.ps1" }
+      . ([scriptblock]::Create($fn.Extent.Text))
+    }
+  }
+
+  It 'refuses matrix-test listeners on both managed service ports without killing them' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'function Assert-NoStaleMatrixTestListener'
+    $content | Should -Match "Assert-NoStaleMatrixTestListener -Port 20128"
+    $content | Should -Match 'Assert-NoStaleMatrixTestListener -Port \$matrixApiPort'
+    $content | Should -Match "matrix-test process PID"
+    $content | Should -Not -Match 'Get-StaleMatrixTestListener[^\r\n]*Stop-Process'
+  }
+
+  It 'identifies the listener owner by command line and reports its PID' {
+    Mock Get-NetTCPConnection { [pscustomobject]@{ OwningProcess = 4242 } }
+    Mock Get-CimInstance { [pscustomobject]@{ ProcessId = 4242; CommandLine = 'node C:\Temp\matrix-test\run\server.mjs' } }
+
+    { Assert-NoStaleMatrixTestListener -Port 20128 } | Should -Throw '*matrix-test process PID 4242*'
+  }
+
+  It 'allows unrelated listeners to continue through normal readiness validation' {
+    Mock Get-NetTCPConnection { [pscustomobject]@{ OwningProcess = 31337 } }
+    Mock Get-CimInstance { [pscustomobject]@{ ProcessId = 31337; CommandLine = 'node C:\Apps\OmniRoute\server.mjs' } }
+
+    { Assert-NoStaleMatrixTestListener -Port 20128 } | Should -Not -Throw
+  }
+}
+
 Describe 'Security Invariants' {
   It 'no launcher should contain plaintext API key patterns' {
     $patterns = @('sk-', 'ghp_', 'AKIA', 'Authorization: Bearer', 'xoxb-')
