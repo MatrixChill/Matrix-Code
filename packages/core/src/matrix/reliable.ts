@@ -62,10 +62,9 @@ export function classifyError(code: string | undefined, text: string): Recoverab
 export function classifyFailure(code: string | undefined, text: string): FailureDisposition {
   const normalized = text.toLowerCase()
   if (
-    code === "403" &&
+    (code === "403" || code === "400" || code === undefined) &&
     normalized.includes("opencode") &&
-    normalized.includes("free tier") &&
-    normalized.includes("within opencode")
+    normalized.includes("free tier")
   )
     return "restricted_external_route"
   if (code === "429" || normalized.includes("rate limit")) return "rate_limit"

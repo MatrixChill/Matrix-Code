@@ -1,6 +1,6 @@
-﻿{
+{
   "$schema": "https://opencode.ai/config.json",
-  "model": "omniroute/auto-coding-free",
+  "model": "matrix-api/matrix-free-auto",
   "provider": {
     "omniroute": {
       "name": "OmniRoute Free",
