@@ -428,7 +428,10 @@ describe("Matrix API HTTP", () => {
     const stub = await stubServer("ok")
     try {
       const settings = baseSettings({
-        poolBaseURLOverrides: { "openrouter/nemotron-3-ultra-free": stub.url },
+        poolBaseURLOverrides: {
+          "openrouter/free": stub.url,
+          "openrouter/nemotron-3-ultra-free": stub.url,
+        },
         poolEnv: { OPENROUTER_API_KEY: "test-openrouter", CEREBRAS_API_KEY: undefined },
       })
       await withApi(settings, async (listener) => {
@@ -450,7 +453,7 @@ describe("Matrix API HTTP", () => {
         )
         expect(response.status).toBe(200)
         const upstream = JSON.parse(stub.record.body) as { model: string; messages: unknown[] }
-        expect(upstream.model).toBe("nvidia/nemotron-3-ultra-550b-a55b:free")
+        expect(upstream.model).toBe("openrouter/free")
         expect(JSON.stringify(upstream.messages)).toContain("Read this image")
         expect(JSON.stringify(upstream.messages)).toContain("data:image/jpeg;base64,AQID")
       })
@@ -484,7 +487,10 @@ describe("Matrix API HTTP", () => {
     const stub = await stubServer("error500")
     try {
       const settings = baseSettings({
-        poolBaseURLOverrides: { "openrouter/nemotron-3-ultra-free": stub.url },
+        poolBaseURLOverrides: {
+          "openrouter/free": stub.url,
+          "openrouter/nemotron-3-ultra-free": stub.url,
+        },
         poolEnv: { OPENROUTER_API_KEY: "test-openrouter", CEREBRAS_API_KEY: undefined },
       })
       await withApi(settings, async (listener) => {

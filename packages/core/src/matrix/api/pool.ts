@@ -54,6 +54,25 @@ export interface ResolvedPool {
 export const POOL: readonly DirectCandidate[] = [
   {
     candidate: {
+      id: "openrouter/free",
+      name: "OpenRouter Free Models Router",
+      provider: "openrouter",
+      infrastructureId: "openrouter-cloud",
+      model: "openrouter/free",
+      coding: 0.8,
+      reasoning: 0.7,
+      speed: 0.6,
+      toolCalls: 0.8,
+      vision: true,
+      cost: 0,
+      context: 32768,
+    },
+    baseURL: "https://openrouter.ai/api/v1",
+    keyEnv: "OPENROUTER_API_KEY",
+    free: true,
+  },
+  {
+    candidate: {
       id: "openrouter/nemotron-3-ultra-free",
       name: "OpenRouter Nemotron 3 Ultra Free",
       provider: "openrouter",

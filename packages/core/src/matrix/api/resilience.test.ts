@@ -10,6 +10,7 @@ type StubMode =
   | "400"
   | "401-auth"
   | "401-model"
+  | "403-opencode"
   | "402"
   | "429"
   | "429-retry-after"
@@ -102,7 +103,10 @@ function stubServer(
         state.headers.push(request.headers)
         state.firstModel ??= input.model
 
-        if ((input.model === state.firstModel || mode === "all-503") && mode !== "success") {
+        if (
+          (input.model === state.firstModel || mode === "all-503" || mode === "403-opencode") &&
+          mode !== "success"
+        ) {
           if (mode === "timeout") {
             response.destroy()
             return
@@ -110,6 +114,8 @@ function stubServer(
           const status =
             mode === "401-auth" || mode === "401-model"
               ? 401
+              : mode === "403-opencode"
+                ? 403
               : mode === "429-retry-after"
                 ? 429
                 : mode === "all-503"
@@ -120,6 +126,8 @@ function stubServer(
               ? "Model is not supported by this route"
               : mode === "401-auth"
                 ? "Invalid API key"
+                : mode === "403-opencode"
+                  ? "OpenCode's free tier can only be used from within OpenCode"
                 : mode === "402"
                   ? "Payment required"
                   : mode === "400"
@@ -227,6 +235,7 @@ function directFallbackSettings(url: string) {
   return baseSettings({
     poolEnv: { OPENROUTER_API_KEY: "openrouter-test", CEREBRAS_API_KEY: "cerebras-test" },
     poolBaseURLOverrides: {
+      "openrouter/free": url,
       "openrouter/nemotron-3-ultra-free": url,
       "cerebras/glm-5-turbo": url,
     },
@@ -261,6 +270,7 @@ function mixedReliableSettings(
       ...(configured.cerebras ? { CEREBRAS_API_KEY: "cerebras-test-key" } : {}),
     },
     poolBaseURLOverrides: {
+      "openrouter/free": directURL,
       "openrouter/nemotron-3-ultra-free": directURL,
       "cerebras/glm-5-turbo": directURL,
     },
@@ -339,6 +349,28 @@ describe("Matrix API OmniRoute path", () => {
         expect(stub.state.requests).toHaveLength(1)
         expect(stub.state.requests[0]!.model).toBe("opencode/mimo-v2.5-free")
         expect(JSON.stringify(stub.state.requests[0]!.messages)).toContain("data:image/webp;base64,AQID")
+      })
+    } finally {
+      await closeServer(stub.server)
+    }
+  })
+
+  test("Free Auto fails fast with a sanitized error when OpenCode rejects external use", async () => {
+    const stub = await stubServer("403-opencode")
+    try {
+      const settings = omnirouteReliableSettings(stub.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        const payload = (await response.json()) as { error: { code: string; message: string } }
+        expect(response.status).toBe(503)
+        expect(stub.state.requests).toHaveLength(1)
+        expect(payload.error.code).toBe("no_usable_provider")
+        expect(payload.error.message).not.toContain("within OpenCode")
       })
     } finally {
       await closeServer(stub.server)
@@ -520,7 +552,7 @@ describe("Matrix reliable fallback", () => {
         expect(requests).toHaveLength(3)
         expect(requests.some((request) => request.model.startsWith("opencode/"))).toBe(true)
         expect(requests.some((request) => request.model === "glm-5-turbo")).toBe(true)
-        expect(requests.some((request) => request.model === "nvidia/nemotron-3-ultra-550b-a55b:free")).toBe(true)
+        expect(requests.some((request) => request.model === "openrouter/free")).toBe(true)
       })
     } finally {
       await closeServer(omniroute.server)
@@ -537,9 +569,7 @@ describe("Matrix reliable fallback", () => {
         const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
         expect(response.status).toBe(200)
         expect(omniroute.state.requests.map((request) => request.model)).toEqual(["opencode/big-pickle"])
-        expect(direct.state.requests.map((request) => request.model)).toEqual([
-          "nvidia/nemotron-3-ultra-550b-a55b:free",
-        ])
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
       })
     } finally {
       await closeServer(omniroute.server)
@@ -590,6 +620,7 @@ describe("Matrix reliable fallback", () => {
         expect(
           direct.state.requests.some((request) => request.model === "nvidia/nemotron-3-ultra-550b-a55b:free"),
         ).toBe(false)
+        expect(direct.state.requests.some((request) => request.model === "openrouter/free")).toBe(false)
       })
     } finally {
       await closeServer(omniroute.server)
@@ -605,9 +636,7 @@ describe("Matrix reliable fallback", () => {
       await withApi(settings, async (listener) => {
         await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
         expect(direct.state.requests.some((request) => request.model === "glm-5-turbo")).toBe(false)
-        expect(
-          direct.state.requests.some((request) => request.model === "nvidia/nemotron-3-ultra-550b-a55b:free"),
-        ).toBe(true)
+        expect(direct.state.requests.some((request) => request.model === "openrouter/free")).toBe(true)
       })
     } finally {
       await closeServer(omniroute.server)
@@ -624,9 +653,7 @@ describe("Matrix reliable fallback", () => {
         const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
         expect(response.status).toBe(200)
         expect(omniroute.state.requests.map((request) => request.model)).toEqual(["opencode/big-pickle"])
-        expect(direct.state.requests.map((request) => request.model)).toEqual([
-          "nvidia/nemotron-3-ultra-550b-a55b:free",
-        ])
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
       })
     } finally {
       await closeServer(omniroute.server)
@@ -676,6 +703,41 @@ describe("Matrix reliable fallback", () => {
       })
     } finally {
       await closeServer(stub.server)
+    }
+  })
+
+  test("OpenCode external-use 403 suppresses its infrastructure and falls back to OpenRouter", async () => {
+    const omniroute = await stubServer("403-opencode")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests).toHaveLength(1)
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("OpenCode external-use 403 without an independent provider returns a sanitized error", async () => {
+    const omniroute = await stubServer("403-opencode")
+    try {
+      const settings = omnirouteReliableSettings(omniroute.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        const payload = (await response.json()) as { error: { code: string; message: string } }
+        expect(response.status).toBe(503)
+        expect(omniroute.state.requests).toHaveLength(1)
+        expect(payload.error.code).toBe("no_usable_provider")
+        expect(payload.error.message).toContain("No usable AI provider is currently available")
+        expect(payload.error.message).not.toContain("within OpenCode")
+      })
+    } finally {
+      await closeServer(omniroute.server)
     }
   })
 

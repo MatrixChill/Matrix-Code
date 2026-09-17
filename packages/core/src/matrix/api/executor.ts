@@ -557,24 +557,40 @@ function runSingleCoding(
       const text = MatrixRouterService.sanitizeMessage(result.error.message)
       const code = result.status >= 400 && result.status < 600 ? String(result.status) : undefined
       const kind = MatrixReliable.classifyError(code, text)
+      const disposition = MatrixReliable.classifyFailure(code, text)
 
       // Permanent errors on a single-candidate pool (e.g. Direct auth 401
       // with no other candidates): fail immediately.
-      if (kind === "none") return yield* onFailure(ctx, entry, result)
+      if (kind === "none" && disposition !== "restricted_external_route") return yield* onFailure(ctx, entry, result)
 
       // Record the failure and try the next available candidate.
-      router.recordFailure(entry.candidate, COOLDOWN_MS[kind], {
+      router.recordFailure(entry.candidate, COOLDOWN_MS[kind] || COOLDOWN_MS.fallback, {
         message: text,
         ...(code === undefined ? {} : { code }),
         status: result.status,
-      })
+      }, MatrixReliable.failureScope(disposition))
+      if (disposition === "restricted_external_route") {
+        const opencode = toCandidates(eligible).find(
+          (candidate) => MatrixCatalog.infrastructureId(candidate) === "opencode",
+        )
+        if (opencode !== undefined) router.recordFailure(opencode, Number.POSITIVE_INFINITY, {
+          message: text,
+          ...(code === undefined ? {} : { code }),
+          status: result.status,
+        }, "infrastructure")
+      }
 
       const needsVision = requestHasImage(input.request)
       const others = toCandidates(eligible).filter(
-        (candidate) => !attempted.has(candidate.id) && (!needsVision || candidate.vision),
+        (candidate) =>
+          !attempted.has(candidate.id) &&
+          (!needsVision || candidate.vision) &&
+          (disposition !== "restricted_external_route" ||
+            (MatrixCatalog.infrastructureId(candidate) !== MatrixCatalog.infrastructureId(entry.candidate) &&
+              MatrixCatalog.infrastructureId(candidate) !== "opencode")),
       )
       const fallback = router.fallback(model.profile, others, () => true)
-      if (fallback === undefined) return yield* onFailure(ctx, entry, result)
+      if (fallback === undefined) return yield* Effect.fail(ApiSchema.noUsableProvider())
 
       currentId = fallback.candidate.id
     }
@@ -627,6 +643,8 @@ function runReliable(
           ? "disabled:model_not_supported"
           : disposition === "payment_required"
             ? "disabled:payment_required"
+            : disposition === "restricted_external_route"
+              ? "infrastructure-restricted"
             : disposition === "authentication"
               ? "credential-switch"
               : "cooldown"
@@ -635,6 +653,8 @@ function runReliable(
       if (disposition === "rate_limit")
         router.recordFailure(entry.candidate, Math.max(COOLDOWN_MS.retry, result.retryAfterMs ?? 0), error)
       if (disposition === "upstream_failure") router.recordFailure(entry.candidate, COOLDOWN_MS.fallback, error)
+      if (disposition === "restricted_external_route")
+        router.recordFailure(entry.candidate, Number.POSITIVE_INFINITY, error, "infrastructure")
       yield* Effect.logWarning("Matrix reliable fallback", {
         candidate: entry.candidate.id,
         provider: entry.candidate.provider,
@@ -645,13 +665,21 @@ function runReliable(
         maxAttempts,
       })
 
-      if (attempt >= maxAttempts) return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+      if (attempt >= maxAttempts)
+        return yield* (disposition === "authentication"
+          ? onFailure(ctx, entry, result)
+          : Effect.fail(ApiSchema.noUsableProvider()))
 
       const needsVision = requestHasImage(input.request)
       const needsTools = (input.request.tools?.length ?? 0) > 0
       const estimatedTokens = estimateRequestTokens(input.request)
       const others = reliableEligible
         .filter((candidateEntry) => disposition !== "authentication" || candidateEntry.keyEnv !== entry.keyEnv)
+        .filter(
+          (candidateEntry) =>
+            disposition !== "restricted_external_route" ||
+            MatrixCatalog.infrastructureId(candidateEntry.candidate) !== MatrixCatalog.infrastructureId(entry.candidate),
+        )
         .map((candidateEntry) => candidateEntry.candidate)
         .filter(
           (candidate) =>
@@ -661,7 +689,10 @@ function runReliable(
             (candidate.context < 0 || estimatedTokens <= candidate.context),
         )
       const fallback = router.fallback(model.profile as ProfileID, others, () => true, attemptedInfrastructures)
-      if (fallback === undefined) return yield* Effect.fail(ApiSchema.upstreamFailure(text, result.status))
+      if (fallback === undefined)
+        return yield* (disposition === "authentication"
+          ? onFailure(ctx, entry, result)
+          : Effect.fail(ApiSchema.noUsableProvider()))
       currentId = fallback.candidate.id
     }
   })

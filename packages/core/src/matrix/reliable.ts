@@ -15,6 +15,7 @@ export type RecoverableKind =
 
 export type FailureDisposition =
   | "rate_limit"
+  | "restricted_external_route"
   | "model_not_supported"
   | "payment_required"
   | "upstream_failure"
@@ -60,6 +61,13 @@ export function classifyError(code: string | undefined, text: string): Recoverab
 
 export function classifyFailure(code: string | undefined, text: string): FailureDisposition {
   const normalized = text.toLowerCase()
+  if (
+    code === "403" &&
+    normalized.includes("opencode") &&
+    normalized.includes("free tier") &&
+    normalized.includes("within opencode")
+  )
+    return "restricted_external_route"
   if (code === "429" || normalized.includes("rate limit")) return "rate_limit"
   if (
     (code === "400" || code === "401" || code === "404") &&
@@ -91,6 +99,7 @@ export function failureScope(disposition: FailureDisposition): MatrixProvider.Fa
   if (disposition === "model_not_supported" || disposition === "payment_required" || disposition === "rate_limit")
     return "route"
   if (disposition === "upstream_failure") return "infrastructure"
+  if (disposition === "restricted_external_route") return "infrastructure"
   if (disposition === "authentication") return "credential"
   return "request"
 }

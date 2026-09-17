@@ -89,6 +89,11 @@ describe("MatrixRoute Foundation", () => {
     const routes = MatrixRoute.listRoutes()
     expect(routes.find((route) => route.id === "omniroute/matrix-free-coding")?.infrastructureId).toBe("omniroute-auto")
     expect(routes.find((route) => route.id === "omniroute/matrix-vision")?.infrastructureId).toBe("opencode")
+    expect(routes.find((route) => route.id === "openrouter/free")).toMatchObject({
+      providerId: "openrouter",
+      infrastructureId: "openrouter-cloud",
+      modelId: "openrouter/free",
+    })
     for (const route of routes) expect(route.infrastructureId.length).toBeGreaterThan(0)
   })
 

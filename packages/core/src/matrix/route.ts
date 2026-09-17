@@ -42,6 +42,14 @@ const BUILTIN_ROUTES: readonly Route[] = [
     scoring: { coding: 0.7, reasoning: 0.7, speed: 0.7, toolCalls: 0.7, cost: 0 },
   },
   {
+    id: "openrouter/free",
+    providerId: "openrouter",
+    infrastructureId: "openrouter-cloud",
+    modelId: "openrouter/free",
+    capabilities: { vision: true, toolCalls: true, streaming: true, maxContext: 32768 },
+    scoring: { coding: 0.8, reasoning: 0.7, speed: 0.6, toolCalls: 0.8, cost: 0 },
+  },
+  {
     id: "openrouter/nemotron-3-ultra-free",
     providerId: "openrouter",
     infrastructureId: "openrouter-cloud",

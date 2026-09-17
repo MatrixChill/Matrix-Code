@@ -21,6 +21,18 @@ function env(overrides: Record<string, string | undefined> = {}) {
 }
 
 describe("Matrix API pool classification", () => {
+  test("classifies OpenRouter Free Models Router as DIRECT_FREE only when OPENROUTER_API_KEY is present", () => {
+    const unavailable = MatrixApiPool.resolvePool(testSettings({ poolEnv: env({}) }), env({}))
+    expect(unavailable.unavailable.some((entry) => entry.candidate.id === "openrouter/free")).toBe(true)
+
+    const settings = testSettings({ poolEnv: env({ OPENROUTER_API_KEY: "sk-test-openrouter" }) })
+    const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
+    expect(resolved.free.find((entry) => entry.candidate.id === "openrouter/free")).toMatchObject({
+      classification: "DIRECT_FREE",
+      candidate: { model: "openrouter/free", infrastructureId: "openrouter-cloud" },
+    })
+  })
+
   test("classifies OpenRouter Nemotron Free as DIRECT_FREE when OPENROUTER_API_KEY is present", () => {
     const settings = testSettings({ poolEnv: env({ OPENROUTER_API_KEY: "sk-test-openrouter" }) })
     const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
@@ -167,9 +179,9 @@ describe("Matrix API pool classification", () => {
     expect(cred).toBe("sk-test-credential")
   })
 
-  test("pool includes both OpenRouter Nemotron and Cerebras GLM-5-Turbo entries", () => {
+  test("pool includes OpenRouter free routes and Cerebras GLM-5-Turbo", () => {
     const allIds = MatrixApiPool.POOL.map((c) => c.candidate.id).sort()
-    expect(allIds).toEqual(["cerebras/glm-5-turbo", "openrouter/nemotron-3-ultra-free"])
+    expect(allIds).toEqual(["cerebras/glm-5-turbo", "openrouter/free", "openrouter/nemotron-3-ultra-free"])
   })
 })
 

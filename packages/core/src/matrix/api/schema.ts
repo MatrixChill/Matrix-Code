@@ -245,6 +245,15 @@ export function noFreeRoute(message: string): MatrixApiError {
   return new MatrixApiError(503, "server_config_error", message, "no_free_route")
 }
 
+export function noUsableProvider(): MatrixApiError {
+  return new MatrixApiError(
+    503,
+    "server_config_error",
+    "No usable AI provider is currently available. The bundled free upstream is unavailable. Configure an external provider such as OpenRouter and retry.",
+    "no_usable_provider",
+  )
+}
+
 export function upstreamFailure(message: string, status = 502): MatrixApiError {
   return new MatrixApiError(status, "upstream_error", message, "upstream_request_failed")
 }

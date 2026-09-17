@@ -271,6 +271,15 @@ describe("MatrixRouter fallback", () => {
     expect(MatrixReliable.failureScope(MatrixReliable.classifyFailure("429", "rate limit"))).toBe("route")
   })
 
+  test("recognizes OpenCode external-use restriction as infrastructure-wide", () => {
+    const disposition = MatrixReliable.classifyFailure(
+      "403",
+      "OpenCode's free tier can only be used from within OpenCode",
+    )
+    expect(disposition).toBe("restricted_external_route")
+    expect(MatrixReliable.failureScope(disposition)).toBe("infrastructure")
+  })
+
   test("select and fallback both skip a cooling candidate", async () => {
     const svc = await Effect.runPromise(service())
     svc.recordFailure({
