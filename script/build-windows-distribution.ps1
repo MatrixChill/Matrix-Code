@@ -36,6 +36,38 @@ function Test-MatrixPathInside {
   return $fullPath.StartsWith($fullRoot, [StringComparison]::OrdinalIgnoreCase)
 }
 
+function Invoke-MatrixNativeCommand {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FilePath,
+    [Parameter(Mandatory = $true)]
+    [string[]]$ArgumentList,
+    [Parameter(Mandatory = $true)]
+    [string]$FailureMessage
+  )
+
+  # Windows PowerShell 5.1 turns a native process's stderr output into a
+  # terminating NativeCommandError while $ErrorActionPreference is "Stop", even
+  # when the process exits 0. Tolerate stderr only for the duration of the call,
+  # capture the real exit code immediately, then restore the previous behavior.
+  # Native stdout is deliberately left on the success stream — never piped to
+  # Out-Host — so Tee-Object and ordinary redirection keep capturing it, and
+  # stderr is never redirected or suppressed. Success is judged only by the exit
+  # code, never by stderr output.
+  $previousErrorActionPreference = $ErrorActionPreference
+  $exitCode = $null
+  try {
+    $ErrorActionPreference = "Continue"
+    & $FilePath @ArgumentList
+    $exitCode = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) {
+    throw $FailureMessage
+  }
+}
+
 function Get-VerifiedDependency {
   param(
     [string]$Uri,
@@ -161,26 +193,18 @@ function Remove-MatrixNonRuntimeFiles {
 
 if (-not $SkipCliBuild) {
   $previousMatrixVersion = $env:MATRIX_VERSION
-  # Windows PowerShell 5.1 raises a terminating NativeCommandError when a native
-  # process writes to stderr while $ErrorActionPreference is "Stop" — even when
-  # the process exits 0. Bun writes ordinary progress and warnings to stderr, so
-  # success is judged solely by its real exit code, captured immediately below.
-  $previousErrorActionPreference = $ErrorActionPreference
-  $bunExitCode = $null
   try {
     $env:MATRIX_VERSION = $MatrixVersion
-    $ErrorActionPreference = "Continue"
-    & bun run --cwd (Join-Path $repo "packages\opencode") build --single --skip-install
-    $bunExitCode = $LASTEXITCODE
+    Invoke-MatrixNativeCommand -FilePath bun -ArgumentList @(
+      "run", "--cwd", (Join-Path $repo "packages\opencode"), "build", "--single", "--skip-install"
+    ) -FailureMessage "Windows CLI build failed"
   } finally {
-    $ErrorActionPreference = $previousErrorActionPreference
     if ($null -eq $previousMatrixVersion) {
       Remove-Item Env:MATRIX_VERSION -ErrorAction SilentlyContinue
     } else {
       $env:MATRIX_VERSION = $previousMatrixVersion
     }
   }
-  if ($bunExitCode -ne 0) { throw "Windows CLI build failed" }
 }
 
 $cli = Join-Path $dist "opencode-windows-x64\bin\opencode.exe"
@@ -191,29 +215,35 @@ if (-not $SkipVoiceBuild) {
   New-Item -ItemType Directory -Force -Path $voiceBuild | Out-Null
   New-Item -ItemType Directory -Force -Path (Join-Path $voiceBuild "spec") | Out-Null
   $voiceVenv = Join-Path $voiceBuild "venv"
-  & python -m venv $voiceVenv
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build environment creation failed" }
+  Invoke-MatrixNativeCommand -FilePath python -ArgumentList @(
+    "-m", "venv", $voiceVenv
+  ) -FailureMessage "Matrix Voice build environment creation failed"
   $voicePython = Join-Path $voiceVenv "Scripts\python.exe"
-  & $voicePython -m ensurepip --upgrade
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build pip bootstrap failed" }
-  & $voicePython -m pip install --disable-pip-version-check --no-input -r (Join-Path $repo "script\voice\requirements-build.txt")
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice build dependencies installation failed" }
+  Invoke-MatrixNativeCommand -FilePath $voicePython -ArgumentList @(
+    "-m", "ensurepip", "--upgrade"
+  ) -FailureMessage "Matrix Voice build pip bootstrap failed"
+  Invoke-MatrixNativeCommand -FilePath $voicePython -ArgumentList @(
+    "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
+    "-r", (Join-Path $repo "script\voice\requirements-build.txt")
+  ) -FailureMessage "Matrix Voice build dependencies installation failed"
 
   $model = Join-Path $voiceBuild "model"
-  & $voicePython (Join-Path $repo "script\voice\download-model.py") --output $model
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice model download failed" }
+  Invoke-MatrixNativeCommand -FilePath $voicePython -ArgumentList @(
+    (Join-Path $repo "script\voice\download-model.py"), "--output", $model
+  ) -FailureMessage "Matrix Voice model download failed"
   $modelCache = Join-Path $model ".cache"
   if (Test-Path -LiteralPath $modelCache) { Remove-Item -LiteralPath $modelCache -Recurse -Force }
 
-  & $voicePython -m PyInstaller --noconfirm --clean --onedir --name matrix-voice-helper `
-    --distpath (Join-Path $voiceBuild "dist") `
-    --workpath (Join-Path $voiceBuild "work") `
-    --specpath (Join-Path $voiceBuild "spec") `
-    --collect-all faster_whisper `
-    --collect-all ctranslate2 `
-    --collect-all sounddevice `
+  Invoke-MatrixNativeCommand -FilePath $voicePython -ArgumentList @(
+    "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--name", "matrix-voice-helper",
+    "--distpath", (Join-Path $voiceBuild "dist"),
+    "--workpath", (Join-Path $voiceBuild "work"),
+    "--specpath", (Join-Path $voiceBuild "spec"),
+    "--collect-all", "faster_whisper",
+    "--collect-all", "ctranslate2",
+    "--collect-all", "sounddevice",
     (Join-Path $repo "matrix-voice-helper.py")
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice executable build failed" }
+  ) -FailureMessage "Matrix Voice executable build failed"
 
   Copy-Item -LiteralPath $model -Destination (Join-Path $voiceBuild "dist\matrix-voice-helper\model") -Recurse
 }
@@ -224,8 +254,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $voice "matrix-voice-helper.exe"))) 
 }
 
 if (-not $SkipVoiceSelfTest) {
-  & (Join-Path $voice "matrix-voice-helper.exe") --self-test --model-dir (Join-Path $voice "model")
-  if ($LASTEXITCODE -ne 0) { throw "Matrix Voice self-test failed" }
+  Invoke-MatrixNativeCommand -FilePath (Join-Path $voice "matrix-voice-helper.exe") -ArgumentList @(
+    "--self-test", "--model-dir", (Join-Path $voice "model")
+  ) -FailureMessage "Matrix Voice self-test failed"
 }
 
 if (-not (Test-MatrixPathInside -Path $release -Root $dist)) {
@@ -277,8 +308,10 @@ $omniRouteMarker = Join-Path $omniRouteRuntime ".complete"
 if (-not (Test-Path -LiteralPath $omniRouteMarker)) {
   if (Test-Path -LiteralPath $omniRouteRuntime) { Remove-Item -LiteralPath $omniRouteRuntime -Recurse -Force }
   New-Item -ItemType Directory -Force -Path $omniRouteRuntime | Out-Null
-  & (Join-Path $nodeRoot "npm.cmd") install --prefix $omniRouteRuntime $omniRoutePackage --omit=dev --no-audit --no-fund --package-lock=false
-  if ($LASTEXITCODE -ne 0) { throw "OmniRoute runtime installation failed" }
+  Invoke-MatrixNativeCommand -FilePath (Join-Path $nodeRoot "npm.cmd") -ArgumentList @(
+    "install", "--prefix", $omniRouteRuntime, $omniRoutePackage,
+    "--omit=dev", "--no-audit", "--no-fund", "--package-lock=false"
+  ) -FailureMessage "OmniRoute runtime installation failed"
   if (-not (Test-Path -LiteralPath (Join-Path $omniRouteRuntime "node_modules\omniroute\dist\server-ws.mjs"))) {
     throw "Official OmniRoute standalone server entry point was not installed"
   }
@@ -336,18 +369,21 @@ try {
 }
 
 # Smoke tests
-& (Join-Path $standard "matrix.exe") --version
-if ($LASTEXITCODE -ne 0) { throw "Installed distribution smoke test failed" }
+Invoke-MatrixNativeCommand -FilePath (Join-Path $standard "matrix.exe") -ArgumentList @(
+  "--version"
+) -FailureMessage "Installed distribution smoke test failed"
 
 # Launcher smoke tests run from a disposable path-with-spaces copy so validation
 # can never seed runtime state or credentials into the release candidate.
 $smokeTest = Join-Path $release "smoke test portable"
 Copy-Item -LiteralPath $portable -Destination $smokeTest -Recurse
 try {
-  & cmd.exe /d /c (Join-Path $smokeTest "matrix.cmd") --version
-  if ($LASTEXITCODE -ne 0) { throw "Portable distribution CMD launcher smoke test failed" }
-  & powershell -NoProfile -File (Join-Path $smokeTest "matrix.ps1") --version
-  if ($LASTEXITCODE -ne 0) { throw "Portable distribution PowerShell launcher smoke test failed" }
+  Invoke-MatrixNativeCommand -FilePath "cmd.exe" -ArgumentList @(
+    "/d", "/c", (Join-Path $smokeTest "matrix.cmd"), "--version"
+  ) -FailureMessage "Portable distribution CMD launcher smoke test failed"
+  Invoke-MatrixNativeCommand -FilePath "powershell" -ArgumentList @(
+    "-NoProfile", "-File", (Join-Path $smokeTest "matrix.ps1"), "--version"
+  ) -FailureMessage "Portable distribution PowerShell launcher smoke test failed"
 } finally {
   Remove-Item -LiteralPath $smokeTest -Recurse -Force -ErrorAction SilentlyContinue
 }
