@@ -3,8 +3,10 @@
 // The preferred path is the local OmniRoute gateway's `auto/coding:free`
 // policy. OmniRoute owns provider health, quota filtering and provider-level
 // fallback; Matrix owns the logical models, recursion guard and route health.
-// Direct free providers remain isolated from Free Auto and Vision. Reliable
-// combines them with OmniRoute routes when their credentials are configured.
+// Free Auto prefers the bundled OmniRoute free path and keeps the configured
+// direct free providers eligible as its fallback. Vision stays isolated to the
+// OmniRoute vision candidate. Reliable combines both pools when their
+// credentials are configured.
 //
 // `matrix-coding-reliable` falls back across the eligible pool without
 // repeating a failed Matrix candidate.
@@ -86,7 +88,14 @@ export class Service extends Context.Service<Service, Executor>()("@opencode/Mat
 interface ExecutorContext {
   readonly settings: Settings
   readonly router: MatrixRouter.Router
+  // Preferred first-choice pool for Free Auto: the bundled OmniRoute free path.
+  // Empty when OmniRoute is not active, so selection falls through to `eligible`.
+  readonly preferredFree: readonly PoolEntry[]
+  // Pool every profile uses, unchanged: OmniRoute-backed candidates only when
+  // the gateway is active.
   readonly eligible: readonly PoolEntry[]
+  // Free Auto's pool: `eligible` plus the configured DIRECT_FREE routes.
+  readonly freeAutoEligible: readonly PoolEntry[]
   readonly reliableBase: readonly PoolEntry[]
   readonly local: { routes: readonly PoolEntry[] }
   readonly state: { lastSelected: string | undefined }
@@ -100,22 +109,8 @@ export function layer(settings: Settings) {
       const resolved = MatrixApiPool.resolvePool(settings, settings.poolEnv)
       const override = MatrixApiPool.overrideEntry(settings)
       const omnirouteActive = settings.omnirouteBaseURL !== undefined && settings.directBaseURL === undefined
-      const eligible = omnirouteActive
-        ? [
-            omnirouteEntry(settings.omnirouteBaseURL, "auto/coding:free"),
-            omnirouteEntry(settings.omnirouteBaseURL, "opencode/mimo-v2.5-free"),
-            ...MatrixCatalog.RELIABLE_CANDIDATES.map((candidate) => ({
-              candidate,
-              baseURL: settings.omnirouteBaseURL!,
-              keyEnv: "OMNIROUTE_API_KEY",
-              free: true,
-              classification: "OMNIROUTE_BACKED" as const,
-            })),
-          ]
-        : [
-            ...resolved.free,
-            ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
-          ]
+      const freeAuto = freeAutoPool(settings, resolved, override)
+      const eligible = freeAuto.shared
       const reliableBase = omnirouteActive
         ? [...eligible.filter((entry) => entry.candidate.profiles?.includes("reliable") === true), ...resolved.free]
         : eligible
@@ -123,7 +118,9 @@ export function layer(settings: Settings) {
       const ctx: ExecutorContext = {
         settings,
         router: MatrixRouter.make(),
+        preferredFree: freeAuto.preferred,
         eligible,
+        freeAutoEligible: freeAuto.eligible,
         reliableBase,
         local: { routes: local },
         state: { lastSelected: undefined },
@@ -133,6 +130,56 @@ export function layer(settings: Settings) {
       return Service.of({ settings, chatCompletion, routeStatus })
     }),
   )
+}
+
+export interface FreeAutoPool {
+  // First-choice pool: the bundled OmniRoute free candidates. Empty when
+  // OmniRoute is not active, so Free Auto scores the whole pool directly.
+  readonly preferred: readonly PoolEntry[]
+  // Free Auto's pool: the preferred routes first, then the remaining
+  // OmniRoute-backed free candidates, then the configured DIRECT_FREE routes.
+  readonly eligible: readonly PoolEntry[]
+  // The pool every other profile keeps using. Vision in particular must stay on
+  // the proven OmniRoute vision candidate, so the direct free routes are not
+  // added here.
+  readonly shared: readonly PoolEntry[]
+}
+
+// Free Auto's pool. The bundled OmniRoute free path is preferred; the remaining
+// OmniRoute-backed free candidates and the configured DIRECT_FREE routes
+// (OpenRouter/Cerebras, present only when their credential exists) stay in the
+// same pool as fallbacks, so a restrictive OmniRoute upstream no longer strands
+// Free Auto with no candidate at all. Nothing added here is paid:
+// `resolved.free` is DIRECT_FREE by construction, and the authenticated
+// `matrix-api/direct` override is never added while OmniRoute is active.
+export function freeAutoPool(
+  settings: Settings,
+  resolved: MatrixApiPool.ResolvedPool,
+  override: PoolEntry | undefined = MatrixApiPool.overrideEntry(settings),
+): FreeAutoPool {
+  if (settings.omnirouteBaseURL === undefined || settings.directBaseURL !== undefined) {
+    const shared = [
+      ...resolved.free,
+      ...(resolved.free.length === 0 && override?.classification === "DIRECT_AUTHENTICATED" ? [override] : []),
+    ]
+    return { preferred: [], eligible: shared, shared }
+  }
+  const baseURL = settings.omnirouteBaseURL
+  const preferred = [
+    omnirouteEntry(baseURL, "auto/coding:free"),
+    omnirouteEntry(baseURL, "opencode/mimo-v2.5-free"),
+  ]
+  const shared = [
+    ...preferred,
+    ...MatrixCatalog.RELIABLE_CANDIDATES.map((candidate) => ({
+      candidate,
+      baseURL,
+      keyEnv: "OMNIROUTE_API_KEY",
+      free: true,
+      classification: "OMNIROUTE_BACKED" as const,
+    })),
+  ]
+  return { preferred, eligible: dedupeEntries([...shared, ...resolved.free]), shared }
 }
 
 function omnirouteEntry(baseURL: string, model: "auto/coding:free" | "opencode/mimo-v2.5-free"): PoolEntry {
@@ -188,20 +235,50 @@ const chatCompletionImpl = (ctx: ExecutorContext) =>
     }
     const requiresTools = (input.request.tools?.length ?? 0) > 0
     const estimatedTokens = estimateRequestTokens(input.request)
-    const candidates = toCandidates(model.profile === "reliable" ? reliableEntries(ctx) : ctx.eligible)
-      .filter((candidate) => !hasImage || candidate.vision)
-      .filter((candidate) => !requiresTools || candidate.toolCalls > 0)
-      .filter((candidate) => candidate.context < 0 || estimatedTokens <= candidate.context)
-    const selection = candidates.length === 0 ? undefined : ctx.router.select(model.profile, candidates, () => true)
+    const usable = (candidate: MatrixCatalog.Candidate) =>
+      (!hasImage || candidate.vision) &&
+      (!requiresTools || candidate.toolCalls > 0) &&
+      (candidate.context < 0 || estimatedTokens <= candidate.context)
+    // Free Auto alone may reach the configured direct free providers; every
+    // other profile keeps the OmniRoute-only pool.
+    const pool = model.profile === "free" ? ctx.freeAutoEligible : ctx.eligible
+    const candidates = toCandidates(model.profile === "reliable" ? reliableEntries(ctx) : pool).filter(usable)
+    // Free Auto only: pick from the preferred OmniRoute free pool first and let
+    // scoring order it. Ranking the whole pool at once would let a
+    // higher-scoring direct free route (Cerebras' speed weighting) outrank
+    // OmniRoute on the very first attempt, which is not the intended policy.
+    const preferred =
+      model.profile === "free"
+        ? toCandidates(ctx.preferredFree)
+            .filter(usable)
+            .filter((candidate) => candidates.some((entry) => entry.id === candidate.id))
+        : []
+    const selection =
+      candidates.length === 0
+        ? undefined
+        : (ctx.router.select(model.profile, preferred, () => true) ??
+          ctx.router.select(model.profile, candidates, () => true))
 
     if (selection === undefined) return yield* Effect.fail(noFreeRouteError(ctx))
 
     if (model.profile === "reliable") return yield* runReliable(ctx, input, model, selection, hops)
-    return yield* runSingleCoding(ctx, input, model, selection, hops)
+    return yield* runSingleCoding(ctx, input, model, selection, hops, pool)
   })
 
 function toCandidates(entries: readonly PoolEntry[]) {
   return entries.map((entry) => entry.candidate)
+}
+
+// Free Auto's pool merges the OmniRoute-backed candidates with the configured
+// direct free routes, and a candidate can legitimately appear in both lists —
+// the pool must never offer the router two entries with the same candidate id.
+function dedupeEntries(entries: readonly PoolEntry[]): PoolEntry[] {
+  const seen = new Set<string>()
+  return entries.filter((entry) => {
+    if (seen.has(entry.candidate.id)) return false
+    seen.add(entry.candidate.id)
+    return true
+  })
 }
 
 function noFreeRouteError(ctx: ExecutorContext): MatrixApiError {
@@ -539,8 +616,9 @@ function runSingleCoding(
   model: MatrixModel,
   selection: MatrixRouter.Selection,
   hops: number,
+  pool: readonly PoolEntry[],
 ) {
-  const { router, eligible } = ctx
+  const { router } = ctx
   let currentId = selection.candidate.id
   const attempted = new Set<string>()
 
@@ -559,9 +637,33 @@ function runSingleCoding(
       const kind = MatrixReliable.classifyError(code, text)
       const disposition = MatrixReliable.classifyFailure(code, text)
 
-      // Permanent errors on a single-candidate pool (e.g. Direct auth 401
-      // with no other candidates): fail immediately.
-      if (kind === "none" && disposition !== "restricted_external_route") return yield* onFailure(ctx, entry, result)
+      // Free Auto leaves the bundled gateway entirely when the route it just
+      // tried is OmniRoute-backed and failed in a way an independent provider
+      // can absorb — but only when such a provider actually exists in the pool.
+      // Without one, the bundled OmniRoute siblings must still be tried, so a
+      // clean install is not left with an immediate no_usable_provider. Scoped
+      // to the free profile and to OmniRoute-backed entries, so direct free
+      // providers keep their existing sibling-fallback behavior and Vision and
+      // Coding are untouched.
+      const independentDirectFreeAvailable = pool.some(
+        (candidateEntry) =>
+          candidateEntry.classification === "DIRECT_FREE" &&
+          MatrixCatalog.infrastructureId(candidateEntry.candidate) !==
+            MatrixCatalog.infrastructureId(entry.candidate),
+      )
+      const switchToIndependentProvider =
+        model.profile === "free" &&
+        entry.classification === "OMNIROUTE_BACKED" &&
+        independentDirectFreeAvailable &&
+        (disposition === "payment_required" ||
+          disposition === "rate_limit" ||
+          disposition === "upstream_failure")
+      // Permanent errors on a single-candidate pool (e.g. Direct auth 401 with
+      // no other candidates): fail immediately. Free Auto's switch to an
+      // independent provider is exempt, so a payment-required or unavailable
+      // gateway route hands the request over instead of giving up.
+      if (kind === "none" && disposition !== "restricted_external_route" && !switchToIndependentProvider)
+        return yield* onFailure(ctx, entry, result)
 
       // Record the failure and try the next available candidate.
       router.recordFailure(entry.candidate, COOLDOWN_MS[kind] || COOLDOWN_MS.fallback, {
@@ -570,7 +672,7 @@ function runSingleCoding(
         status: result.status,
       }, MatrixReliable.failureScope(disposition))
       if (disposition === "restricted_external_route") {
-        const opencode = toCandidates(eligible).find(
+        const opencode = toCandidates(pool).find(
           (candidate) => MatrixCatalog.infrastructureId(candidate) === "opencode",
         )
         if (opencode !== undefined) router.recordFailure(opencode, Number.POSITIVE_INFINITY, {
@@ -580,12 +682,20 @@ function runSingleCoding(
         }, "infrastructure")
       }
 
+      // A refused or unavailable route must not be answered by a sibling on the
+      // same failed infrastructure. The restricted-route rule already drops
+      // every OpenCode-backed candidate; Free Auto extends it to a
+      // payment-required, rate-limited or unavailable OmniRoute route when an
+      // independent DIRECT_FREE provider can take over, so the next attempt is
+      // that provider rather than another route on the gateway that just failed.
+      const avoidFailedInfrastructure =
+        disposition === "restricted_external_route" || switchToIndependentProvider
       const needsVision = requestHasImage(input.request)
-      const others = toCandidates(eligible).filter(
+      const others = toCandidates(pool).filter(
         (candidate) =>
           !attempted.has(candidate.id) &&
           (!needsVision || candidate.vision) &&
-          (disposition !== "restricted_external_route" ||
+          (!avoidFailedInfrastructure ||
             (MatrixCatalog.infrastructureId(candidate) !== MatrixCatalog.infrastructureId(entry.candidate) &&
               MatrixCatalog.infrastructureId(candidate) !== "opencode")),
       )
@@ -698,8 +808,10 @@ function runReliable(
   })
 }
 
+// `freeAutoEligible` is a superset of `eligible`, and a direct free candidate
+// selected by Free Auto must resolve back to its own pool entry.
 function entryFor(ctx: ExecutorContext, candidateId: string): PoolEntry | undefined {
-  return [...ctx.eligible, ...reliableEntries(ctx)].find((entry) => entry.candidate.id === candidateId)
+  return [...ctx.freeAutoEligible, ...reliableEntries(ctx)].find((entry) => entry.candidate.id === candidateId)
 }
 
 // ---------------------------------------------------------------------------

@@ -3,6 +3,8 @@ import { Effect } from "effect"
 import { createServer, type IncomingMessage, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 import type { Settings } from "./config"
+import { freeAutoPool } from "./executor"
+import { MatrixApiPool } from "./pool"
 import { MatrixApiServer } from "./server"
 
 type StubMode =
@@ -15,6 +17,7 @@ type StubMode =
   | "429"
   | "429-retry-after"
   | "500"
+  | "502"
   | "503"
   | "timeout"
   | "all-503"
@@ -789,5 +792,294 @@ describe("Matrix reliable fallback", () => {
     } finally {
       await closeServer(stub.server)
     }
+  })
+})
+
+describe("Matrix Free Auto direct free fallback", () => {
+  test("prefers the bundled OmniRoute free route while it succeeds", async () => {
+    const omniroute = await stubServer("success")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true, cerebras: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests.map((request) => request.model)).toEqual(["auto/coding:free"])
+        expect(direct.state.requests).toHaveLength(0)
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("falls back to the configured OpenRouter free route when OmniRoute rejects external use", async () => {
+    const omniroute = await stubServer("403-opencode")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests).toHaveLength(1)
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
+        expect(direct.state.headers[0]!.authorization).toBe("Bearer openrouter-test-key")
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("falls back to the configured Cerebras free route when OmniRoute is exhausted", async () => {
+    const omniroute = await stubServer("403-opencode")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { cerebras: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["glm-5-turbo"])
+        expect(direct.state.headers[0]!.authorization).toBe("Bearer cerebras-test-key")
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("excludes OpenRouter entirely when OPENROUTER_API_KEY is absent", async () => {
+    const omniroute = await stubServer("403-opencode")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { cerebras: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(direct.state.requests.map((request) => request.model)).not.toContain("openrouter/free")
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("keeps the controlled no-usable-provider error when no free direct credential exists", async () => {
+    const omniroute = await stubServer("all-503")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        const payload = (await response.json()) as { error: { code: string } }
+        expect(response.status).toBe(503)
+        expect(payload.error.code).toBe("no_usable_provider")
+        expect(direct.state.requests).toHaveLength(0)
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("never retries the OmniRoute infrastructure after falling back", async () => {
+    const omniroute = await stubServer("403-opencode")
+    const direct = await stubServer("403-opencode")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(503)
+        expect(omniroute.state.requests).toHaveLength(1)
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("falls back to the configured OpenRouter free route when OmniRoute demands payment", async () => {
+    const omniroute = await stubServer("402")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests.map((request) => request.model)).toEqual(["auto/coding:free"])
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test.each(["429", "502", "503"] as const)(
+    "leaves the OmniRoute gateway for OpenRouter free after OmniRoute %s",
+    async (mode) => {
+      const omniroute = await stubServer(mode)
+      const direct = await stubServer("success")
+      try {
+        const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+        await withApi(settings, async (listener) => {
+          const response = await postChat(
+            `${listener.url}/v1/chat/completions`,
+            settings.apiKey!,
+            false,
+            "matrix-free-auto",
+          )
+          expect(response.status).toBe(200)
+          expect(omniroute.state.requests.map((request) => request.model)).toEqual(["auto/coding:free"])
+          expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
+        })
+      } finally {
+        await closeServer(omniroute.server)
+        await closeServer(direct.server)
+      }
+    },
+  )
+
+  test("switches to the configured Cerebras free route after an OmniRoute rate limit", async () => {
+    const omniroute = await stubServer("429")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { cerebras: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests.map((request) => request.model)).toEqual(["auto/coding:free"])
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["glm-5-turbo"])
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("keeps trying the bundled OmniRoute siblings when no independent provider exists", async () => {
+    const omniroute = await stubServer("all-503")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url)
+      await withApi(settings, async (listener) => {
+        const response = await postChat(
+          `${listener.url}/v1/chat/completions`,
+          settings.apiKey!,
+          false,
+          "matrix-free-auto",
+        )
+        const payload = (await response.json()) as { error: { code: string } }
+        const models = omniroute.state.requests.map((request) => request.model)
+        // No independent provider is configured, so the availability guard must
+        // not fire: every eligible bundled free candidate is still tried once.
+        expect(models.length).toBeGreaterThan(1)
+        expect(models[0]).toBe("auto/coding:free")
+        expect(new Set(models).size).toBe(models.length)
+        expect(response.status).toBe(503)
+        expect(payload.error.code).toBe("no_usable_provider")
+        expect(direct.state.requests).toHaveLength(0)
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("keeps matrix-vision on the proven OmniRoute vision candidate", async () => {
+    const omniroute = await stubServer("success")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true, cerebras: true })
+      await withApi(settings, async (listener) => {
+        const response = await postVision(`${listener.url}/v1/chat/completions`, settings.apiKey!)
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests.map((request) => request.model)).toEqual(["opencode/mimo-v2.5-free"])
+        expect(direct.state.requests).toHaveLength(0)
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
+    }
+  })
+
+  test("offers only free candidates, OmniRoute first and without duplicate ids", () => {
+    const settings = mixedReliableSettings("http://127.0.0.1:1", "http://127.0.0.1:2", {
+      openrouter: true,
+      cerebras: true,
+    })
+    const { preferred, eligible } = freeAutoPool(settings, MatrixApiPool.resolvePool(settings, settings.poolEnv))
+    const ids = eligible.map((entry) => entry.candidate.id)
+
+    expect(preferred.map((entry) => entry.candidate.id)).toEqual([
+      "omniroute/matrix-free-coding",
+      "omniroute/matrix-vision",
+    ])
+    expect(ids.slice(0, 2)).toEqual(preferred.map((entry) => entry.candidate.id))
+    expect(ids).toContain("openrouter/free")
+    expect(ids).toContain("cerebras/glm-5-turbo")
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).not.toContain("matrix-api/direct")
+    expect(eligible.every((entry) => entry.free)).toBe(true)
+    expect(eligible.every((entry) => entry.classification !== "DIRECT_AUTHENTICATED")).toBe(true)
+
+    // Every other profile keeps the OmniRoute-only pool, so Free Auto's direct
+    // free fallbacks never widen Vision or Coding.
+    const { shared } = freeAutoPool(settings, MatrixApiPool.resolvePool(settings, settings.poolEnv))
+    expect(shared.map((entry) => entry.candidate.id)).not.toContain("openrouter/free")
+    expect(shared.map((entry) => entry.candidate.id)).not.toContain("cerebras/glm-5-turbo")
+  })
+
+  test("omits the direct free routes entirely when no direct credential is configured", () => {
+    const settings = mixedReliableSettings("http://127.0.0.1:1", "http://127.0.0.1:2")
+    const { eligible } = freeAutoPool(settings, MatrixApiPool.resolvePool(settings, settings.poolEnv))
+    expect(eligible.map((entry) => entry.candidate.id)).toEqual([
+      "omniroute/matrix-free-coding",
+      "omniroute/matrix-vision",
+      "omniroute/opencode-zen/big-pickle",
+      "omniroute/opencode-zen/mimo-v2.5-free",
+      "omniroute/opencode-zen/deepseek-v4-flash-free",
+      "omniroute/opencode-zen/nemotron-3-ultra-free",
+    ])
   })
 })
