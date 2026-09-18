@@ -19,8 +19,21 @@ $nodeVersion = "24.13.0"
 $nodeUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
 $nodeSha256 = "ca2742695be8de44027d71b3f53a4bdb36009b95575fe1ae6f7f0b5ce091cb88"
 
-if (-not $release.StartsWith($repo, [StringComparison]::OrdinalIgnoreCase)) {
-  throw "Release path escaped the repository"
+function Test-MatrixPathInside {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    [Parameter(Mandatory = $true)]
+    [string]$Root
+  )
+
+  # Directory-boundary comparison: "C:\release-evil" must never satisfy root "C:\release".
+  $fullPath = [IO.Path]::GetFullPath($Path)
+  $fullRoot = [IO.Path]::GetFullPath($Root)
+  if (-not $fullRoot.EndsWith([string][IO.Path]::DirectorySeparatorChar)) {
+    $fullRoot += [IO.Path]::DirectorySeparatorChar
+  }
+  return $fullPath.StartsWith($fullRoot, [StringComparison]::OrdinalIgnoreCase)
 }
 
 function Get-VerifiedDependency {
@@ -43,6 +56,108 @@ function Get-VerifiedDependency {
   }
   return $Path
 }
+
+function Remove-MatrixNonRuntimeFiles {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TargetDir
+  )
+
+  if (-not (Test-Path -LiteralPath $TargetDir)) {
+    throw "Target directory for pruning does not exist: $TargetDir"
+  }
+
+  # Fail closed: pruning may only ever touch the disposable release tree.
+  $releaseRoot = (Resolve-Path -LiteralPath $release).Path
+  $resolvedTarget = (Resolve-Path -LiteralPath $TargetDir).Path
+  if (-not (Test-MatrixPathInside -Path $resolvedTarget -Root $releaseRoot)) {
+    throw "Pruning target escaped the disposable release tree: $resolvedTarget"
+  }
+
+  Write-Host "Pruning non-runtime files and non-Windows native binaries from: $TargetDir"
+  $initialFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File)
+  $initialCount = $initialFiles.Count
+  $initialBytes = ($initialFiles | Measure-Object -Property Length -Sum).Sum
+
+  $prunedMapsCount = 0
+  $prunedMapsBytes = 0
+  $prunedDocsCount = 0
+  $prunedDocsBytes = 0
+  $prunedNativeCount = 0
+  $prunedNativeBytes = 0
+
+  # 1. Source maps (*.map)
+  $mapFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File -Filter "*.map")
+  foreach ($f in $mapFiles) {
+    $prunedMapsBytes += $f.Length
+    $prunedMapsCount++
+    Remove-Item -LiteralPath $f.FullName -Force
+  }
+
+  # 2. Tests, docs, examples, and benchmarks directories
+  $devDirNames = @("test", "tests", "__tests__", "testing", "example", "examples", "benchmark", "benchmarks", "docs", "doc")
+  $devDirs = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -Directory | Where-Object { $devDirNames -contains $_.Name.ToLowerInvariant() })
+  foreach ($d in $devDirs) {
+    if (Test-Path -LiteralPath $d.FullName) {
+      $filesInDir = @(Get-ChildItem -LiteralPath $d.FullName -Recurse -File)
+      foreach ($f in $filesInDir) {
+        $prunedDocsBytes += $f.Length
+        $prunedDocsCount++
+      }
+      Remove-Item -LiteralPath $d.FullName -Recurse -Force
+    }
+  }
+
+  # 3. Foreign native binaries (Linux, macOS, non-x64 Windows)
+  # Keep LICENSE/LICENCE/NOTICE/COPYING files completely intact.
+  # Explicitly prune non-Windows native directories and files:
+  # - onnxruntime-node darwin, linux, and win32\arm64
+  # - koffi platforms on the explicit incompatible deny-list
+  # - foreign native extensions (.dylib, .so)
+  $foreignNativeDirs = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -Directory | Where-Object {
+    $norm = $_.FullName.Replace('\', '/')
+    # onnxruntime-node platform directories
+    ($norm -match '/onnxruntime-node/bin/napi-v6/(darwin|linux|win32/arm64)$') -or
+    # koffi: explicit deny-list of known incompatible platforms. Unknown/future
+    # platform directories are preserved, and win32_x64 is never matched.
+    ($norm -match '/koffi/build/koffi/(?:darwin_x64|darwin_arm64|linux_[^/]+|freebsd_x64|openbsd_x64|win32_ia32|win32_arm64)$')
+  })
+
+  foreach ($d in $foreignNativeDirs) {
+    if (Test-Path -LiteralPath $d.FullName) {
+      $filesInDir = @(Get-ChildItem -LiteralPath $d.FullName -Recurse -File)
+      foreach ($f in $filesInDir) {
+        $prunedNativeBytes += $f.Length
+        $prunedNativeCount++
+      }
+      Remove-Item -LiteralPath $d.FullName -Recurse -Force
+    }
+  }
+
+  # Any standalone foreign dynamic libraries (.dylib, .so) outside preserved folders
+  $foreignExtFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File | Where-Object {
+    $_.Extension -in @(".dylib", ".so")
+  })
+  foreach ($f in $foreignExtFiles) {
+    if (Test-Path -LiteralPath $f.FullName) {
+      $prunedNativeBytes += $f.Length
+      $prunedNativeCount++
+      Remove-Item -LiteralPath $f.FullName -Force
+    }
+  }
+
+  $finalFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File)
+  $finalCount = $finalFiles.Count
+  $finalBytes = ($finalFiles | Measure-Object -Property Length -Sum).Sum
+
+  Write-Host "Pruning statistics:"
+  Write-Host ("  Source maps:      {0} files, {1:N1} MiB" -f $prunedMapsCount, ($prunedMapsBytes / 1MB))
+  Write-Host ("  Tests/docs/dev:   {0} files, {1:N1} MiB" -f $prunedDocsCount, ($prunedDocsBytes / 1MB))
+  Write-Host ("  Foreign binaries: {0} files, {1:N1} MiB" -f $prunedNativeCount, ($prunedNativeBytes / 1MB))
+  Write-Host ("  Total removed:    {0} files, {1:N1} MiB" -f ($initialCount - $finalCount), (($initialBytes - $finalBytes) / 1MB))
+  Write-Host ("  Remaining:        {0} files, {1:N1} MiB" -f $finalCount, ($finalBytes / 1MB))
+}
+
 
 if (-not $SkipCliBuild) {
   $previousMatrixVersion = $env:MATRIX_VERSION
@@ -104,6 +219,9 @@ if (-not $SkipVoiceSelfTest) {
   if ($LASTEXITCODE -ne 0) { throw "Matrix Voice self-test failed" }
 }
 
+if (-not (Test-MatrixPathInside -Path $release -Root $dist)) {
+  throw "Release path escaped the Matrix build output root: $release"
+}
 if (Test-Path -LiteralPath $release) { Remove-Item -LiteralPath $release -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $release | Out-Null
 
@@ -173,6 +291,10 @@ if (Test-Path -LiteralPath $omniRouteGeneratedEnv) {
 }
 Get-ChildItem -LiteralPath $omniRouteStage -Filter '.env' -File -Recurse -Force |
   Remove-Item -Force
+
+# Prune source maps, non-runtime docs/tests/examples, and foreign native binaries
+Remove-MatrixNonRuntimeFiles -TargetDir (Join-Path $omniRouteStage "app\node_modules")
+
 
 $standardZip = Join-Path $release "Matrix-Code-Windows-x64.zip"
 $portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable-v$MatrixVersion-RC.zip"
