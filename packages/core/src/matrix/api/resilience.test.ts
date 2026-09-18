@@ -10,6 +10,7 @@ import { MatrixApiServer } from "./server"
 type StubMode =
   | "success"
   | "400"
+  | "400-model-unavailable"
   | "401-auth"
   | "401-model"
   | "403-opencode"
@@ -123,7 +124,9 @@ function stubServer(
                 ? 429
                 : mode === "all-503"
                   ? 503
-                  : Number(mode)
+                  : mode === "400-model-unavailable"
+                    ? 400
+                    : Number(mode)
           const message =
             mode === "401-model"
               ? "Model is not supported by this route"
@@ -135,7 +138,9 @@ function stubServer(
                   ? "Payment required"
                   : mode === "400"
                     ? "Invalid request payload"
-                    : "recoverable failure"
+                    : mode === "400-model-unavailable"
+                      ? "Upstream request failed: Model is unavailable."
+                      : "recoverable failure"
           response.writeHead(status, {
             "content-type": "application/json",
             ...(mode === "429-retry-after" ? { "retry-after": "120" } : {}),
@@ -706,6 +711,27 @@ describe("Matrix reliable fallback", () => {
       })
     } finally {
       await closeServer(stub.server)
+    }
+  })
+
+  test("treats an upstream 400 model-is-unavailable as a route failure and uses the next provider", async () => {
+    const omniroute = await stubServer("400-model-unavailable")
+    const direct = await stubServer("success")
+    try {
+      const settings = mixedReliableSettings(omniroute.url, direct.url, { openrouter: true })
+      await withApi(settings, async (listener) => {
+        const response = await postChat(`${listener.url}/v1/chat/completions`, settings.apiKey!, false)
+        expect(response.status).toBe(200)
+        expect(omniroute.state.requests.map((request) => request.model)).toEqual(["opencode/big-pickle"])
+        expect(direct.state.requests.map((request) => request.model)).toEqual(["openrouter/free"])
+        const status = await routingStatus(listener.url, settings.apiKey!)
+        expect(
+          status.routing.candidates.find((candidate) => candidate.disabledReason === "model_not_supported"),
+        ).toBeDefined()
+      })
+    } finally {
+      await closeServer(omniroute.server)
+      await closeServer(direct.server)
     }
   })
 

@@ -74,7 +74,13 @@ export function classifyFailure(code: string | undefined, text: string): Failure
       normalized.includes("model is not supported") ||
       normalized.includes("unsupported model") ||
       normalized.includes("unknown model") ||
-      normalized.includes("model_not_found"))
+      normalized.includes("model_not_found") ||
+      // Gateways answer a 400 when a route's model is temporarily unavailable.
+      // It is a route availability failure, not a malformed request, so Reliable
+      // may try another eligible candidate. Matching stays on the model itself:
+      // every other 400 keeps classifying as request_invalid.
+      normalized.includes("model is unavailable") ||
+      normalized.includes("model unavailable"))
   )
     return "model_not_supported"
   if (code === "402") return "payment_required"

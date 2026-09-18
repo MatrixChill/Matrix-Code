@@ -65,6 +65,22 @@ describe("classifyFailure", () => {
       expect(MatrixReliable.classifyFailure("400", "malformed request body")).toBe("request_invalid")
     })
 
+    test("400 model is unavailable", () => {
+      expect(
+        MatrixReliable.classifyFailure("400", "Upstream request failed: Model is unavailable."),
+      ).toBe("model_not_supported")
+    })
+
+    test("400 model unavailable without the auxiliary verb", () => {
+      expect(MatrixReliable.classifyFailure("400", "model unavailable")).toBe("model_not_supported")
+    })
+
+    test("400 invalid parameter unrelated to model availability stays request_invalid", () => {
+      expect(
+        MatrixReliable.classifyFailure("400", "invalid parameter: max_tokens must be a positive integer"),
+      ).toBe("request_invalid")
+    })
+
     test("429 rate limit", () => {
       expect(MatrixReliable.classifyFailure("429", "rate limited")).toBe("rate_limit")
     })

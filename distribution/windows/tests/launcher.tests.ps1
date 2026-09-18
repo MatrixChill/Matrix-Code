@@ -163,8 +163,9 @@ Describe 'OmniRoute Support' {
 Describe 'Matrix API Support' {
   It 'the bundled config preserves the direct OmniRoute free model and both Matrix API models' {
     $content = Get-Content -LiteralPath (Join-Path $DistDir 'templates\opencode.omniroute.jsonc') -Raw
-    $content | Should -Match 'omniroute/auto-coding-free'
-    $content | Should -Match 'auto/coding:free'
+    $content | Should -Match '"model"\s*:\s*"matrix-api/matrix-free-auto"'
+    $content | Should -Match '"auto-coding-free"\s*:'
+    $content | Should -Match '"id"\s*:\s*"auto/coding:free"'
     $content | Should -Match 'Matrix Coding Free \(Direct\)'
     $content | Should -Match 'matrix-free-auto'
     $content | Should -Match 'matrix-coding-reliable'
@@ -324,6 +325,30 @@ Describe 'Launcher Window Behaviour' {
     # Finally block should only kill services started by this launcher
     $content | Should -Match 'Stop-ManagedService -Name ''OmniRoute gateway''.*-Started \$omniRouteStarted'
     $content | Should -Match 'Stop-ManagedService -Name ''Matrix API''.*-Started \$matrixApiStarted'
+  }
+}
+
+Describe 'Service-Free Maintenance Commands' {
+  It 'matrix.ps1 passes upgrade straight to the child without starting portable services' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $content | Should -Match 'if \(@\(\$args\)\.Count -ge 1 -and \$args\[0\] -eq ''upgrade''\)'
+    $content | Should -Match '&\s+\$matrixExe\s+@args\s*\r?\n\s*exit \$LASTEXITCODE'
+  }
+
+  It 'the upgrade pass-through precedes portable state, credential, and service initialization' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $upgrade = $content.IndexOf("eq 'upgrade'")
+    $upgrade | Should -BeGreaterThan -1
+    foreach ($marker in @('$env:MATRIX_PORTABLE_ROOT', 'function Start-ManagedService', 'New-MatrixApiKey', 'function Read-OmniRouteApiKeysFromDatabase')) {
+      $content.IndexOf($marker) | Should -BeGreaterThan $upgrade
+    }
+  }
+
+  It 'a maintenance pass-through never re-enters the launcher in the child' {
+    $content = Get-Content -LiteralPath (Join-Path $DistDir 'matrix.ps1') -Raw
+    $launchedAt = $content.IndexOf("MATRIX_LAUNCHED = '1'")
+    $launchedAt | Should -BeGreaterThan -1
+    $launchedAt | Should -BeLessThan $content.IndexOf("eq 'upgrade'")
   }
 }
 

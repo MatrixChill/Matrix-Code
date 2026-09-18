@@ -198,6 +198,9 @@ try {
   // Some subprocesses don't react properly to SIGTERM and similar signals.
   // Most notably, some docker-container-based MCP servers don't handle such signals unless
   // run using `docker run --init`.
-  // Explicitly exit to avoid any hanging subprocesses.
-  process.exit()
+  // Explicitly exit to avoid any hanging subprocesses. The code is passed
+  // explicitly because a bare process.exit() drops an exit code set by a
+  // command handler (e.g. `upgrade` refusing to self-update), which would
+  // report success for a command that failed.
+  process.exit(process.exitCode ?? 0)
 }

@@ -73,6 +73,18 @@ if (@($args).Count -eq 1 -and $args[0] -eq '--version') {
   exit $LASTEXITCODE
 }
 
+# Maintenance commands manage the installation itself: they need no provider
+# routing, no gateway and no credential store. Running them through the portable
+# lifecycle would start OmniRoute and the Matrix API — and tear them down again —
+# only for the child to print a maintenance message. Pass the command straight
+# through instead, preserving the child's exit code so a refusal still reports
+# failure to the caller. MATRIX_LAUNCHED is already set above, so the child does
+# not re-enter this launcher.
+if (@($args).Count -ge 1 -and $args[0] -eq 'upgrade') {
+  & $matrixExe @args
+  exit $LASTEXITCODE
+}
+
 $env:MATRIX_PORTABLE_ROOT = $root
 $env:XDG_CONFIG_HOME      = Join-Path $root '.matrix\config'
 $env:XDG_DATA_HOME        = Join-Path $root '.matrix\data'
