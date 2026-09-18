@@ -161,17 +161,26 @@ function Remove-MatrixNonRuntimeFiles {
 
 if (-not $SkipCliBuild) {
   $previousMatrixVersion = $env:MATRIX_VERSION
+  # Windows PowerShell 5.1 raises a terminating NativeCommandError when a native
+  # process writes to stderr while $ErrorActionPreference is "Stop" — even when
+  # the process exits 0. Bun writes ordinary progress and warnings to stderr, so
+  # success is judged solely by its real exit code, captured immediately below.
+  $previousErrorActionPreference = $ErrorActionPreference
+  $bunExitCode = $null
   try {
     $env:MATRIX_VERSION = $MatrixVersion
+    $ErrorActionPreference = "Continue"
     & bun run --cwd (Join-Path $repo "packages\opencode") build --single --skip-install
+    $bunExitCode = $LASTEXITCODE
   } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
     if ($null -eq $previousMatrixVersion) {
       Remove-Item Env:MATRIX_VERSION -ErrorAction SilentlyContinue
     } else {
       $env:MATRIX_VERSION = $previousMatrixVersion
     }
   }
-  if ($LASTEXITCODE -ne 0) { throw "Windows CLI build failed" }
+  if ($bunExitCode -ne 0) { throw "Windows CLI build failed" }
 }
 
 $cli = Join-Path $dist "opencode-windows-x64\bin\opencode.exe"
