@@ -117,6 +117,10 @@ function Remove-MatrixNonRuntimeFiles {
   $prunedDocsBytes = 0
   $prunedNativeCount = 0
   $prunedNativeBytes = 0
+  $prunedCompilerCount = 0
+  $prunedCompilerBytes = 0
+  $prunedDeclCount = 0
+  $prunedDeclBytes = 0
 
   # 1. Source maps (*.map)
   $mapFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File -Filter "*.map")
@@ -178,6 +182,60 @@ function Remove-MatrixNonRuntimeFiles {
     }
   }
 
+  # 4. Next.js build-time SWC compiler bindings.
+  # @next/swc-* are optionalDependencies of next, lazily required by
+  # next/dist/build/swc only while compiling (next build / next dev). The
+  # production server path reaches that require() solely when the phase is not
+  # PHASE_PRODUCTION_SERVER *and* experimental.useLightningcss is enabled
+  # (next/dist/server/config.js) — the bundled OmniRoute build sets neither, and
+  # start-server.js, next.js, next-server.js and base-server.js never reference
+  # SWC at all. The Portable only ever serves a prebuilt graph, so the ~100 MiB
+  # win32-x64 binding can never be loaded.
+  $compilerBindingDirs = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -Directory | Where-Object {
+    $_.FullName.Replace('\', '/') -match '/@next/swc-[^/]+$'
+  })
+  foreach ($d in $compilerBindingDirs) {
+    if (Test-Path -LiteralPath $d.FullName) {
+      $filesInDir = @(Get-ChildItem -LiteralPath $d.FullName -Recurse -File)
+      foreach ($f in $filesInDir) {
+        $prunedCompilerBytes += $f.Length
+        $prunedCompilerCount++
+      }
+      Remove-Item -LiteralPath $d.FullName -Recurse -Force
+    }
+  }
+
+  # 5. TypeScript declaration files.
+  # Node can never load *.d.ts / *.d.mts / *.d.cts — they exist only for the
+  # type checker, and the Portable never type-checks or compiles at runtime.
+  $declarationFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File | Where-Object {
+    $_.Name.EndsWith('.d.ts', [StringComparison]::OrdinalIgnoreCase) -or
+    $_.Name.EndsWith('.d.mts', [StringComparison]::OrdinalIgnoreCase) -or
+    $_.Name.EndsWith('.d.cts', [StringComparison]::OrdinalIgnoreCase)
+  })
+  foreach ($f in $declarationFiles) {
+    if (Test-Path -LiteralPath $f.FullName) {
+      $prunedDeclBytes += $f.Length
+      $prunedDeclCount++
+      Remove-Item -LiteralPath $f.FullName -Force
+    }
+  }
+
+  # 6. Ambient type packages (@types/*), same reasoning as declaration files.
+  $typesDirs = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -Directory | Where-Object {
+    $_.FullName.Replace('\', '/') -match '/@types/[^/]+$'
+  })
+  foreach ($d in $typesDirs) {
+    if (Test-Path -LiteralPath $d.FullName) {
+      $filesInDir = @(Get-ChildItem -LiteralPath $d.FullName -Recurse -File)
+      foreach ($f in $filesInDir) {
+        $prunedDeclBytes += $f.Length
+        $prunedDeclCount++
+      }
+      Remove-Item -LiteralPath $d.FullName -Recurse -Force
+    }
+  }
+
   $finalFiles = @(Get-ChildItem -LiteralPath $TargetDir -Recurse -File)
   $finalCount = $finalFiles.Count
   $finalBytes = ($finalFiles | Measure-Object -Property Length -Sum).Sum
@@ -186,6 +244,8 @@ function Remove-MatrixNonRuntimeFiles {
   Write-Host ("  Source maps:      {0} files, {1:N1} MiB" -f $prunedMapsCount, ($prunedMapsBytes / 1MB))
   Write-Host ("  Tests/docs/dev:   {0} files, {1:N1} MiB" -f $prunedDocsCount, ($prunedDocsBytes / 1MB))
   Write-Host ("  Foreign binaries: {0} files, {1:N1} MiB" -f $prunedNativeCount, ($prunedNativeBytes / 1MB))
+  Write-Host ("  Build compilers:  {0} files, {1:N1} MiB" -f $prunedCompilerCount, ($prunedCompilerBytes / 1MB))
+  Write-Host ("  Type decls:       {0} files, {1:N1} MiB" -f $prunedDeclCount, ($prunedDeclBytes / 1MB))
   Write-Host ("  Total removed:    {0} files, {1:N1} MiB" -f ($initialCount - $finalCount), (($initialBytes - $finalBytes) / 1MB))
   Write-Host ("  Remaining:        {0} files, {1:N1} MiB" -f $finalCount, ($finalBytes / 1MB))
 }
