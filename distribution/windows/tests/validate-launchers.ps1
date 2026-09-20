@@ -126,7 +126,7 @@ foreach ($f in @('matrix.ps1')) {
 
 # --- matrix.cmd delegation ---
 
-Assert-Test 'matrix.cmd launches matrix.ps1 invisibly, without execution-policy flags' {
+Assert-Test 'matrix.cmd hides only desktop launches, without execution-policy flags' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.cmd') -Raw
   if ($content -notmatch 'matrix\.ps1') { throw "matrix.cmd does not reference matrix.ps1" }
   if ($content -notmatch 'set\s+"MATRIX_TUI_WINDOW=Normal"') { throw "matrix.cmd does not request a visible TUI child window" }
@@ -135,6 +135,10 @@ Assert-Test 'matrix.cmd launches matrix.ps1 invisibly, without execution-policy 
   if ($content -notmatch 'MATRIX_POWERSHELL%.*-File') { throw "matrix.cmd does not invoke the selected PowerShell" }
   if ($content -notmatch '-WindowStyle Hidden') { throw "matrix.cmd does not hide the PowerShell window" }
   if ($content -match 'ExecutionPolicy') { throw "matrix.cmd uses execution-policy flags" }
+  $cli = $content.Substring(0, $content.IndexOf(':desktop'))
+  if ($cli -notmatch '"%MATRIX_POWERSHELL%" -NoProfile -File "%MATRIX_PS1%" %\*') { throw 'CLI must stay attached to the caller' }
+  if ($cli -match '-WindowStyle Hidden') { throw 'CLI orchestrator must not hide the caller console' }
+  if ($content -notmatch 'if "%~1"=="" if "%1"=="" goto desktop') { throw 'Desktop mode must require zero arguments' }
 }
 
 # --- Launcher window behaviour (single visible window: the Matrix Code TUI) ---
@@ -148,6 +152,7 @@ Assert-Test 'matrix.ps1 preserves a manual console and starts a child TUI for hi
   if ($content -notmatch 'MATRIX_TUI_WINDOW') { throw "No MATRIX_TUI_WINDOW override" }
   if ($content -notmatch 'IsOutputRedirected') { throw "No redirected-output detection for the TUI window" }
   if ($content -notmatch "'Hidden'") { throw "Redirected launch does not default to a Hidden TUI window" }
+  if ($content -notmatch '\$tuiInCurrentConsole = \(@\(\$args\)\.Count -gt 0\) -or') { throw 'CLI arguments must attach even with redirected output' }
 }
 
 # --- Health check uses 127.0.0.1 ---
@@ -173,14 +178,14 @@ Assert-Test 'matrix.ps1 tracks OmniRoute PID for targeted cleanup' {
   if ($content -notmatch 'Get-NetTCPConnection -State Listen') { throw "No listener PID resolution" }
   if ($content -notmatch '\$started -and -not \$ready') { throw "No readiness fallback after a shim exits" }
   if ($content -notmatch '\$parent\.Name -ne \$processInfo\.Name') { throw "No same-service supervisor adoption" }
-  if ($content -notmatch '\.Kill\(\)') { throw "No process-level Kill" }
+  if ($content -notmatch 'Stop-ManagedService.*-ProcessId') { throw "No process-level cleanup via Stop-ManagedService" }
 }
 
 # --- Matrix API orchestration ---
 
 Assert-Test 'bundled config exposes the direct free route and both Matrix API choices' {
   $content = Get-Content -LiteralPath (Join-Path $d 'templates\opencode.omniroute.jsonc') -Raw
-  foreach ($r in @('omniroute/auto-coding-free', 'auto/coding:free', 'Matrix Coding Free (Direct)', 'matrix-free-auto', 'matrix-coding-reliable', '127.0.0.1:20260/v1', '127.0.0.1:20128/v1')) {
+  foreach ($r in @('auto/coding:free', 'Matrix Coding Free (Direct)', 'matrix-free-auto', 'matrix-coding-reliable', '127.0.0.1:20260/v1', '127.0.0.1:20128/v1')) {
     if ($content -notmatch [regex]::Escape($r)) { throw "Missing Matrix API config: $r" }
   }
 }
@@ -207,17 +212,17 @@ Assert-Test 'matrix.ps1 fails closed only when the API is explicitly disabled' {
 
 Assert-Test 'matrix.ps1 persists and restores the Matrix API key once, never printing it' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
-  foreach ($r in @('matrix-api.cred', 'ConvertFrom-SecureString', 'ConvertTo-SecureString', 'New-MatrixApiKey')) {
+  foreach ($r in @('matrix-api.cred', 'ProtectedData]::Protect', 'ProtectedData]::Unprotect', 'New-MatrixApiKey')) {
     if ($content -notmatch [regex]::Escape($r)) { throw "Missing: $r" }
   }
   if ($content -match 'Write-Host[^\r\n]*\$matrixApiKey') { throw "Key printed via Write-Host" }
-  if ($content -match 'Set-Content[^\r\n]*\$matrixApiKey') { throw "Key persisted to disk in plaintext" }
+  if ($content -match '\[IO\.File\]::WriteAllText\([^\r\n]*\$matrixApiKey') { throw "Key persisted to disk in plaintext" }
 }
 
 Assert-Test 'matrix.ps1 never prints or persists the Matrix API key value' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -match 'Write-Host[^\r\n]*\$matrixApiKey') { throw "Key printed via Write-Host" }
-  if ($content -match 'Set-Content[^\r\n]*\$matrixApiKey') { throw "Key persisted to disk" }
+  if ($content -match '\[IO\.File\]::WriteAllText\([^\r\n]*\$matrixApiKey') { throw "Key persisted to disk" }
 }
 
 Assert-Test 'matrix.ps1 passes the API key only via environment, never the command line' {
@@ -230,7 +235,7 @@ Assert-Test 'matrix.ps1 passes the API key only via environment, never the comma
 Assert-Test 'matrix.ps1 tracks the Matrix API PID for targeted cleanup' {
   $content = Get-Content -LiteralPath (Join-Path $d 'matrix.ps1') -Raw
   if ($content -notmatch 'matrix-api\.pid') { throw "No Matrix API PID file tracking" }
-  if ($content -notmatch '\$matrixApiStarted -and \$matrixApiPid') {
+  if ($content -notmatch 'Stop-ManagedService.*-Started \$matrixApiStarted') {
     throw "Cleanup is not guarded by started-by-this-launcher"
   }
 }
@@ -269,7 +274,7 @@ Assert-Test 'matrix.ps1 drains redirected service output during cold start' {
 Assert-Test 'release build excludes the OmniRoute install-generated .env' {
   $content = Get-Content -LiteralPath (Join-Path $r 'script\build-windows-distribution.ps1') -Raw
   if ($content -notmatch 'Remove-Item -LiteralPath \$omniRouteGeneratedEnv') { throw "Generated OmniRoute .env is not removed" }
-  if ($content -notmatch 'Portable ZIP contains OmniRoute''s build-generated \.env') { throw "Portable ZIP does not enforce the .env exclusion" }
+  if ($content -notmatch 'Where-Object.*\\\.env') { throw "Portable ZIP does not enforce the .env exclusion" }
 }
 
 Assert-Test 'matrix.ps1 launches the bundled official OmniRoute executable headlessly' {

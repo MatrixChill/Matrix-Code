@@ -687,7 +687,7 @@ describe("Matrix API HTTP", () => {
       expect(response.status).toBe(503)
       expect(payload.error.type).toBe("server_config_error")
       expect(payload.error.code).toBe("no_free_route")
-      expect(payload.error.message).toContain("eligible")
+      expect(payload.error.message).toContain("selectable")
     })
   })
 

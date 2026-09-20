@@ -91,10 +91,18 @@ export function DialogMatrixRouting() {
       const states = new Map<string, MatrixRouter.CandidateState>()
       for (const candidate of snapshot.candidates) {
         const lastError = candidate.lastError
+        const latencyMs = candidate.latencyMs
+        const disabledReason = candidate.disabledReason
         states.set(candidate.id, {
           health: Number(candidate.health),
           cooldownUntil: Number(candidate.cooldownUntil),
           recentFailures: Number(candidate.recentFailures),
+          successes: Number(candidate.successes),
+          failures: Number(candidate.failures),
+          // Every observed field the server sends is mirrored back, so the TUI
+          // does not silently drop state it was just told about.
+          ...(latencyMs === undefined || latencyMs === null ? {} : { latencyMs: Number(latencyMs) }),
+          ...(disabledReason === undefined || disabledReason === null ? {} : { disabledReason }),
           ...(lastError === undefined || lastError === null
             ? {}
             : {

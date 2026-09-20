@@ -106,3 +106,51 @@ describe("classifyFailure", () => {
     })
   })
 })
+
+// A daily provider/account allowance that is spent arrives as an ordinary HTTP
+// 429, and the body is the only thing that tells it apart from a transient rate
+// limit. Cooling the single route that answered would spend the next attempt on
+// its sibling, which draws on the same exhausted account.
+describe("classifyFailure quota exhaustion", () => {
+  const openRouterDaily = (message: string) =>
+    `Provider request failed with HTTP 429: {"error":{"message":"${message}"}}`
+
+  test("the OpenRouter free-models-per-day rejection is a spent allowance", () => {
+    const text = openRouterDaily(
+      "Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day.",
+    )
+    expect(MatrixReliable.classifyFailure("429", text)).toBe("quota_exhausted")
+    // Recoverable: another provider can serve the request, so it must reach the
+    // fallback path instead of stopping the request.
+    expect(MatrixReliable.classifyError("429", text)).toBe("retry")
+    // Route-scoped in the router: a spent allowance is not an outage, so it must
+    // not take an unrelated backend down with it.
+    expect(MatrixReliable.failureScope("quota_exhausted")).toBe("route")
+  })
+
+  test.each([
+    "Rate limit exceeded: free-models-per-day",
+    "You have exceeded your current quota, please check your plan",
+    "insufficient_quota",
+    "You have hit your daily limit for this model",
+    "This account reached its per-day limit",
+  ])("recognizes the allowance wording in %s", (message) => {
+    expect(MatrixReliable.classifyFailure("429", message)).toBe("quota_exhausted")
+  })
+
+  test("a 429 without allowance wording keeps its transient classification", () => {
+    expect(MatrixReliable.classifyFailure("429", "rate limited")).toBe("rate_limit")
+    expect(MatrixReliable.classifyFailure("429", "Too many requests, please slow down")).toBe("rate_limit")
+    expect(
+      MatrixReliable.classifyFailure("429", "Provider request failed with HTTP 429: recoverable failure"),
+    ).toBe("rate_limit")
+  })
+
+  test("allowance wording never reclassifies a structured status", () => {
+    // 403 with quota wording is an authentication problem, 402 a payment one —
+    // the allowance detector is confined to the 429 family so neither changes.
+    expect(MatrixReliable.classifyFailure("403", "Free quota exceeded for this provider")).toBe("authentication")
+    expect(MatrixReliable.classifyFailure("402", "quota exceeded")).toBe("payment_required")
+    expect(MatrixReliable.classifyFailure(undefined, "quota exceeded")).toBe("quota_exhausted")
+  })
+})

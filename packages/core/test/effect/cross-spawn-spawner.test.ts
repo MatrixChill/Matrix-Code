@@ -195,7 +195,10 @@ describe("cross-spawn spawner", () => {
     fx.effect(
       "captures stdout via .all when no stderr",
       Effect.gen(function* () {
-        const handle = yield* ChildProcess.make("echo", ["hello from stdout"])
+        // A deterministic JS producer rather than `echo`: on Windows `echo` is a
+        // cmd.exe builtin with its own quoting rules, so the shell would decide
+        // the bytes. That would test shell quoting, not `.all` with no stderr.
+        const handle = yield* js('process.stdout.write("hello from stdout")')
         const all = yield* decodeByteStream(handle.all)
         expect(all).toBe("hello from stdout")
       }),

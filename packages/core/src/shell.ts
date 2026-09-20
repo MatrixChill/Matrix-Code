@@ -153,6 +153,25 @@ export function ps(file: string) {
   return meta(file)?.ps === true
 }
 
+// The environment block the agent reads names the host platform but never the
+// shell, which is how a coding model ends up sending POSIX command lines
+// (`ls -la`, `cat`, `rm -rf`) to a Windows shell that cannot parse them. This
+// is the one line that tells it which shell its shell tool actually runs, and,
+// for the Windows shells that reject POSIX command lines, what to use instead.
+// POSIX shells and Git Bash keep the plain line, so their guidance is
+// unchanged. Deterministic in (shellName, platform) so every branch is
+// testable off-platform.
+export function environmentLine(
+  shellName: string = name(preferred()),
+  platform: NodeJS.Platform = process.platform,
+): string {
+  if (platform !== "win32" || (!ps(shellName) && shellName !== "cmd")) return `  Shell: ${shellName}`
+  const instead = ps(shellName)
+    ? "use PowerShell cmdlets or the native file tools (Glob, Grep, Read) instead"
+    : "use cmd.exe commands or the native file tools (Glob, Grep, Read) instead"
+  return `  Shell: ${shellName} (POSIX command lines such as \`ls -la\`, \`cat\`, \`grep\`, \`find\`, or \`rm -rf\` are not valid in it; ${instead})`
+}
+
 function info(file: string): Item {
   const item = full(file)
   const n = name(item)

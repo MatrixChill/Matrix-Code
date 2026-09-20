@@ -106,3 +106,45 @@ describe("shell", () => {
     })
   }
 })
+
+// The environment block is the only system-prompt surface that names the shell,
+// so its Windows branch is asserted here for every platform: a model that reads
+// only "Platform: win32" otherwise emits `ls -la`, `cat`, `grep`, `find`, and
+// `rm -rf` command lines the shell cannot parse.
+describe("shell environment line", () => {
+  test("names the shell without any caution on POSIX", () => {
+    expect(Shell.environmentLine("bash", "linux")).toBe("  Shell: bash")
+    expect(Shell.environmentLine("zsh", "darwin")).toBe("  Shell: zsh")
+  })
+
+  test("warns that POSIX command lines are invalid in Windows PowerShell", () => {
+    const line = Shell.environmentLine("powershell", "win32")
+    expect(line).toContain("  Shell: powershell (")
+    for (const command of ["ls -la", "cat", "grep", "find", "rm -rf"]) expect(line).toContain(command)
+    expect(line).toContain("PowerShell cmdlets")
+    expect(line).toContain("Glob, Grep, Read")
+  })
+
+  test("warns for PowerShell 7 the same way", () => {
+    expect(Shell.environmentLine("pwsh", "win32")).toContain("PowerShell cmdlets")
+  })
+
+  test("warns that POSIX command lines are invalid in cmd.exe", () => {
+    const line = Shell.environmentLine("cmd", "win32")
+    expect(line).toContain("  Shell: cmd (")
+    expect(line).toContain("ls -la")
+    expect(line).toContain("cmd.exe commands")
+  })
+
+  test("keeps Git Bash on Windows free of the PowerShell caution", () => {
+    expect(Shell.environmentLine("bash", "win32")).toBe("  Shell: bash")
+  })
+
+  test("keeps PowerShell on POSIX free of the Windows-only caution", () => {
+    expect(Shell.environmentLine("pwsh", "linux")).toBe("  Shell: pwsh")
+  })
+
+  test("defaults to the shell this host resolves", () => {
+    expect(Shell.environmentLine().startsWith(`  Shell: ${Shell.name(Shell.preferred())}`)).toBe(true)
+  })
+})

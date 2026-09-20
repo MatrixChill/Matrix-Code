@@ -65,7 +65,12 @@ export const POOL: readonly DirectCandidate[] = [
       toolCalls: 0.8,
       vision: true,
       cost: 0,
-      context: 32768,
+      // OpenRouter's Free Models Router advertises a 200k context window. The
+      // earlier 32768 understated it several times over, and because a session
+      // reserves its output budget inside the same context estimate
+      // (see estimateRequestTokens), it made this route unselectable on every
+      // realistic request while its credential was present and healthy.
+      context: 200000,
     },
     baseURL: "https://openrouter.ai/api/v1",
     keyEnv: "OPENROUTER_API_KEY",
@@ -76,6 +81,10 @@ export const POOL: readonly DirectCandidate[] = [
       id: "openrouter/nemotron-3-ultra-free",
       name: "OpenRouter Nemotron 3 Ultra Free",
       provider: "openrouter",
+      // The same physical provider as `openrouter/free` above. Without it the
+      // id would fall back to the provider name, and two routes onto one
+      // upstream would be scored as two independent infrastructures.
+      infrastructureId: "openrouter-cloud",
       model: "nvidia/nemotron-3-ultra-550b-a55b:free",
       coding: 0.7,
       reasoning: 0.7,

@@ -7,6 +7,7 @@ import { Location } from "@opencode-ai/core/location"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Global } from "@opencode-ai/core/global"
 import { AbsolutePath } from "@opencode-ai/core/schema"
+import { Shell } from "@opencode-ai/core/shell"
 import { SystemContext } from "@opencode-ai/core/system-context"
 import { SystemContextBuiltIns } from "@opencode-ai/core/system-context/builtins"
 import { SystemContextRegistry } from "@opencode-ai/core/system-context/registry"
@@ -69,6 +70,7 @@ describe("SystemContextBuiltIns", () => {
           `  Workspace root folder: ${projectDirectory}`,
           "  Is directory a git repo: yes",
           `  Platform: ${process.platform}`,
+          Shell.environmentLine(),
           "</env>",
           "",
           `Today's date: ${localDate(timestamp)}`,
@@ -117,6 +119,7 @@ describe("SystemContextBuiltIns", () => {
           `  Workspace root folder: ${projectDirectory}`,
           "  Is directory a git repo: yes",
           `  Platform: ${process.platform}`,
+          Shell.environmentLine(),
           "</env>",
           "",
           `Today's date: ${localDate(timestamp)}`,

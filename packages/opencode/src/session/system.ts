@@ -21,6 +21,7 @@ import { AbsolutePath } from "@opencode-ai/core/schema"
 import { Location } from "@opencode-ai/core/location"
 import { LocationServiceMap, locationServiceMapLayer } from "@opencode-ai/core/location-services"
 import { Reference } from "@opencode-ai/core/reference"
+import { Shell } from "@opencode-ai/core/shell"
 import { MCP } from "@/mcp"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 
@@ -78,6 +79,10 @@ const layer = Layer.effect(
             `  Workspace root folder: ${ctx.worktree}`,
             `  Is directory a git repo: ${ctx.project.vcs === "git" ? "yes" : "no"}`,
             `  Platform: ${process.platform}`,
+            // The shell tool description names the shell too, but this block is
+            // the context the model always reads first: without it a Windows
+            // session gets POSIX command lines the shell cannot parse.
+            Shell.environmentLine(),
             `  Today's date: ${new Date().toDateString()}`,
             `</env>`,
           ].join("\n"),

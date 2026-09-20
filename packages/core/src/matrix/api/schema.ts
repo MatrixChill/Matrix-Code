@@ -245,13 +245,14 @@ export function noFreeRoute(message: string): MatrixApiError {
   return new MatrixApiError(503, "server_config_error", message, "no_free_route")
 }
 
-export function noUsableProvider(): MatrixApiError {
-  return new MatrixApiError(
-    503,
-    "server_config_error",
-    "No usable AI provider is currently available. The bundled free upstream is unavailable. Configure an external provider such as OpenRouter and retry.",
-    "no_usable_provider",
-  )
+// The route set is exhausted rather than unconfigured. The message is required
+// because the diagnostics that distinguish "nothing is configured" from
+// "configured routes all failed" only exist at the call site: a fixed message
+// here previously told operators to configure OpenRouter while OpenRouter was
+// the provider that had just answered and failed. The code stays
+// `no_usable_provider` so the x-matrix-error contract is unchanged.
+export function noUsableProvider(message: string): MatrixApiError {
+  return new MatrixApiError(503, "server_config_error", message, "no_usable_provider")
 }
 
 export function upstreamFailure(message: string, status = 502): MatrixApiError {

@@ -15,6 +15,7 @@ export type RecoverableKind =
 
 export type FailureDisposition =
   | "rate_limit"
+  | "quota_exhausted"
   | "restricted_external_route"
   | "model_not_supported"
   | "payment_required"
@@ -22,6 +23,37 @@ export type FailureDisposition =
   | "request_invalid"
   | "authentication"
   | "permanent"
+
+// A 429 whose body names a spent provider/account allowance is not a transient
+// rate limit. The real OpenRouter free-account rejection — "Rate limit
+// exceeded: free-models-per-day" — is the case this exists for: it arrives as
+// an ordinary HTTP 429, so the generic path cooled the single route that
+// answered, tried its sibling on the same exhausted account, and only then
+// looked at another provider.
+//
+// Matching stays on explicit allowance wording. A plain rate-limit message, and
+// any 429 without one of these phrases, keeps its transient classification and
+// its Retry-After handling.
+const QUOTA_EXHAUSTION_SIGNALS: readonly string[] = [
+  "free-models-per-day",
+  "free models per day",
+  "daily quota",
+  "daily limit",
+  "per-day limit",
+  "per day limit",
+  "quota exceeded",
+  "exceeded your current quota",
+  "insufficient_quota",
+]
+
+// Quota exhaustion is only recognized where the message is the one thing that
+// separates it from a transient rate limit: the 429 family. A specific code
+// (402 payment_required, 403 authentication, ...) keeps its established
+// meaning, so this can never reclassify a structured failure.
+function signalsQuotaExhaustion(code: string | undefined, normalized: string): boolean {
+  if (code !== undefined && code !== "429") return false
+  return QUOTA_EXHAUSTION_SIGNALS.some((signal) => normalized.includes(signal))
+}
 
 export const RETRY_ERRORS = new Set([
   "429",
@@ -56,6 +88,9 @@ export function classifyError(code: string | undefined, text: string): Recoverab
   if (normalized.includes("authentication") || normalized.includes("unauthorized"))
     return "none"
   if (normalized.includes("permission")) return "none"
+  // A spent allowance is not permanent: another provider can serve the request,
+  // so it must reach the fallback path instead of stopping the request.
+  if (signalsQuotaExhaustion(code, normalized)) return "retry"
   return "none"
 }
 
@@ -67,6 +102,10 @@ export function classifyFailure(code: string | undefined, text: string): Failure
     normalized.includes("free tier")
   )
     return "restricted_external_route"
+  // Checked before the generic rate-limit branch: a spent allowance is not a
+  // transient 429. `quota_exhausted` is what lets the executor scope the
+  // failure to the provider credential instead of the one route that answered.
+  if (signalsQuotaExhaustion(code, normalized)) return "quota_exhausted"
   if (code === "429" || normalized.includes("rate limit")) return "rate_limit"
   if (
     (code === "400" || code === "401" || code === "404") &&
@@ -103,6 +142,11 @@ export function classifyFailure(code: string | undefined, text: string): Failure
 export function failureScope(disposition: FailureDisposition): MatrixProvider.FailureScope {
   if (disposition === "model_not_supported" || disposition === "payment_required" || disposition === "rate_limit")
     return "route"
+  // A spent allowance cools the route that answered and nothing else. It is not
+  // an infrastructure outage — sibling backends are unaffected — and not an
+  // invalid credential. The provider-wide half is tracked by the executor's own
+  // credential-scoped quota state, which never touches router health.
+  if (disposition === "quota_exhausted") return "route"
   if (disposition === "upstream_failure") return "infrastructure"
   if (disposition === "restricted_external_route") return "infrastructure"
   if (disposition === "authentication") return "credential"

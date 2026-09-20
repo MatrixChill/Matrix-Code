@@ -5,7 +5,44 @@ import { MatrixProfile, LABELS, PROFILE_IDS } from "@opencode-ai/core/matrix/pro
 
 const available = (candidate: MatrixCatalog.Candidate) => !candidate.id.includes("offline")
 
+// A gateway-backed candidate and a configured independent direct provider side
+// by side. A gateway failure cools its own route and its own infrastructure; it
+// must never take the independent provider out of the pool with it.
+const independent: MatrixCatalog.Candidate = {
+  id: "openrouter/free",
+  name: "OpenRouter Free Models Router",
+  provider: "openrouter",
+  infrastructureId: "openrouter-cloud",
+  model: "openrouter/free",
+  coding: 0.8,
+  reasoning: 0.7,
+  speed: 0.6,
+  toolCalls: 0.8,
+  vision: true,
+  cost: 0,
+  context: 32768,
+}
+const mixedPool = [...MatrixCatalog.RELIABLE_CANDIDATES, independent]
+
 describe("MatrixProfile", () => {
+  test("emergency fallback honors rate-limit cooldown until expiry but relaxes health cooldown", () => {
+    let now = 1_000_000
+    const router = MatrixRouter.make(() => now)
+    const other = { ...independent, id: "other/free", provider: "other", infrastructureId: "other" }
+    router.recordFailure(independent, 120_000, { status: 429, message: "Too many requests" }, "route")
+    router.recordFailure(other, 120_000, { status: 503, message: "Unavailable" }, "route")
+    expect(router.select("reliable", [independent], () => true)).toBeUndefined()
+    expect(router.fallback("reliable", [independent], () => true)).toBeUndefined()
+    expect(router.emergencyFallback("reliable", [independent], () => true)).toBeUndefined()
+    expect(router.emergencyFallback("reliable", [independent, other], () => true)?.candidate.id).toBe(other.id)
+    now += 119_999
+    expect(router.emergencyFallback("reliable", [independent], () => true)).toBeUndefined()
+    now += 1
+    expect(router.select("reliable", [independent], () => true)?.candidate.id).toBe(independent.id)
+    expect(router.fallback("reliable", [independent], () => true)?.candidate.id).toBe(independent.id)
+    expect(router.emergencyFallback("reliable", [independent], () => true)?.candidate.id).toBe(independent.id)
+  })
+
   test("exposes all seven profiles", () => {
     expect(PROFILE_IDS).toEqual([
       "smart",
@@ -78,6 +115,19 @@ describe("MatrixRouter selection and fallback", () => {
     expect(router.health(first)).toBe(0.85)
   })
 
+  test("a failure with no error is route-scoped, never infrastructure-scoped", () => {
+    const router = MatrixRouter.make(() => 1_000_000)
+    const first = MatrixCatalog.CATALOG[0]
+    router.recordFailure(first, 10_000)
+    // No error means nothing to classify, so the failure is route-level. The
+    // shared infrastructure must stay untouched, otherwise a sibling route on
+    // the same backend would be cooled down by a failure it never had.
+    expect(router.state(first)?.health).toBe(0.75)
+    expect(router.state(first)?.failures).toBe(1)
+    expect(router.infrastructureState(first)).toBeUndefined()
+    expect(router.infrastructureSnapshot().size).toBe(0)
+  })
+
   test("no available candidate yields undefined rather than a loop", () => {
     const router = MatrixRouter.make()
     const selection = router.select("fast", MatrixCatalog.CATALOG, () => false)
@@ -98,5 +148,21 @@ describe("MatrixRouter selection and fallback", () => {
     router.recordFailure(first, 100_000)
     const degraded = router.fallback("reliable", MatrixCatalog.CATALOG, available)
     expect(degraded).toBeDefined()
+  })
+
+  test("a cooling gateway does not hide the configured independent provider", () => {
+    const router = MatrixRouter.make()
+    for (const candidate of MatrixCatalog.RELIABLE_CANDIDATES)
+      router.recordFailure(candidate, 120_000, { status: 503, message: "upstream unavailable" }, "infrastructure")
+    const selection = router.select("reliable", mixedPool, available)
+    expect(selection?.candidate.id).toBe("openrouter/free")
+    expect(router.selectableCount("reliable", mixedPool, available)).toBe(1)
+  })
+
+  test("a disabled gateway route does not hide the configured independent provider", () => {
+    const router = MatrixRouter.make()
+    for (const candidate of MatrixCatalog.RELIABLE_CANDIDATES) router.disable(candidate, "model_not_supported")
+    const selection = router.fallback("reliable", mixedPool, available)
+    expect(selection?.candidate.id).toBe("openrouter/free")
   })
 })

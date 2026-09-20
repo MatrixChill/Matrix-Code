@@ -98,6 +98,17 @@ export class Router {
     return state !== undefined && state.cooldownUntil > this.now()
   }
 
+  // A hold a route can never leave on its own: `disable` and the
+  // restricted-route rule write POSITIVE_INFINITY. Both tiers exclude it — a
+  // route the provider itself refuses to serve is not an option at any tier —
+  // while generic health cooldowns may be relaxed. An active rate limit is
+  // an upstream instruction and must also hold in the emergency tier.
+  private isMandatoryCooldown(candidate: MatrixCatalog.Candidate): boolean {
+    const state = this.states.get(candidate.id)
+    return state !== undefined && state.cooldownUntil > this.now() &&
+      (!Number.isFinite(state.cooldownUntil) || state.lastError?.status === 429 || state.lastError?.code === "429")
+  }
+
   private isEnabled(candidate: MatrixCatalog.Candidate): boolean {
     return this.states.get(candidate.id)?.disabledReason === undefined
   }
@@ -108,17 +119,76 @@ export class Router {
     return score(candidate, profile) + (routeHealth - 1) * 2 + (infrastructureHealth - 1)
   }
 
+  // The one filter chain selection uses: profile match, caller availability,
+  // then the circuit state. Cooldown and disable state are per candidate, so a
+  // failing gateway never removes a healthy independent provider from a pool.
+  private eligibleFor(
+    profile: MatrixProfile.ProfileID,
+    candidates: readonly MatrixCatalog.Candidate[],
+    isAvailable: Available,
+  ): MatrixCatalog.Candidate[] {
+    return this.eligibleForEmergency(profile, candidates, isAvailable).filter(
+      (candidate) => !this.isCoolingDown(candidate),
+    )
+  }
+
+  // The same chain with generic health cooldowns relaxed. Rate-limit and
+  // terminal cooldowns remain mandatory.
+  // It is the emergency tier's candidate set and never feeds selection or the
+  // status counts, so cooldown keeps its full meaning everywhere else. Keep the
+  // rest in step with `eligibleFor`: profile match and caller availability are
+  // the caller's eligibility rules and terminal disable state is the provider's
+  // own verdict, and none of the three is something a pause may override.
+  private eligibleForEmergency(
+    profile: MatrixProfile.ProfileID,
+    candidates: readonly MatrixCatalog.Candidate[],
+    isAvailable: Available,
+  ): MatrixCatalog.Candidate[] {
+    return candidates
+      .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
+      .filter(isAvailable)
+      .filter((candidate) => !this.isMandatoryCooldown(candidate))
+      .filter((candidate) => this.isEnabled(candidate))
+  }
+
+  // Shared ordering for the two fallback tiers: the caller's infrastructure
+  // diversity first, then infrastructure health, then the profile rank.
+  private pickFallback(
+    profile: MatrixProfile.ProfileID,
+    eligible: MatrixCatalog.Candidate[],
+    avoidInfrastructureIds: ReadonlySet<string>,
+  ): Selection | undefined {
+    const ranked = eligible.sort((a, b) => {
+      const diversity =
+        Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(a))) -
+        Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(b)))
+      if (diversity !== 0) return diversity
+      const health = this.infrastructureHealth(b) - this.infrastructureHealth(a)
+      return health === 0 ? this.rank(b, profile) - this.rank(a, profile) : health
+    })
+    const top = ranked[0]
+    if (top === undefined) return undefined
+    return { candidate: top, rank: this.rank(top, profile), profile }
+  }
+
+  // Diagnostics only: how many candidates the router would actually consider.
+  // Reported instead of the pool size so "no route" errors separate "the pool
+  // has entries" from "an entry is selectable right now".
+  selectableCount(
+    profile: MatrixProfile.ProfileID,
+    candidates: readonly MatrixCatalog.Candidate[],
+    isAvailable: Available,
+  ): number {
+    return this.eligibleFor(profile, candidates, isAvailable).length
+  }
+
   // Best available candidate for a profile; undefined when none usable.
   select(
     profile: MatrixProfile.ProfileID,
     candidates: readonly MatrixCatalog.Candidate[],
     isAvailable: Available,
   ): Selection | undefined {
-    const eligible = candidates
-      .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
-      .filter(isAvailable)
-      .filter((candidate) => !this.isCoolingDown(candidate))
-      .filter((candidate) => this.isEnabled(candidate))
+    const eligible = this.eligibleFor(profile, candidates, isAvailable)
     const preferred = this.preferred.get(profile)
     const sticky = eligible.find((candidate) => candidate.id === preferred)
     if (sticky !== undefined && this.infrastructureHealth(sticky) === 1)
@@ -137,29 +207,48 @@ export class Router {
     isAvailable: Available,
     avoidInfrastructureIds: ReadonlySet<string> = new Set(),
   ): Selection | undefined {
-    const eligible = candidates
-      .filter((candidate) => MatrixCatalog.supportsProfile(candidate, profile))
-      .filter(isAvailable)
-      .filter((candidate) => !this.isCoolingDown(candidate))
-      .filter((candidate) => this.isEnabled(candidate))
-      .sort((a, b) => {
-        const diversity =
-          Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(a))) -
-          Number(avoidInfrastructureIds.has(MatrixCatalog.infrastructureId(b)))
-        if (diversity !== 0) return diversity
-        const health = this.infrastructureHealth(b) - this.infrastructureHealth(a)
-        return health === 0 ? this.rank(b, profile) - this.rank(a, profile) : health
-      })
-    const top = eligible[0]
-    if (top === undefined) return undefined
-    return { candidate: top, rank: this.rank(top, profile), profile }
+    return this.pickFallback(profile, this.eligibleFor(profile, candidates, isAvailable), avoidInfrastructureIds)
   }
 
+  // The emergency tier, and only ever a second call to the same question: the
+  // caller asks `fallback` first and reaches this one only when that returned
+  // nothing. It ranks and filters identically except that a route pausing after
+  // a non-rate-limit transient upstream error is no longer excluded.
+  //
+  // The pause is not evidence about the credential the request was just using.
+  // When that credential cannot serve the request at all — a spent daily
+  // allowance is the case this exists for — an independent provider that is
+  // merely cooling down from one earlier 503 is the only thing left that can
+  // answer, and failing the request instead strands a configured, capable
+  // provider behind a cooldown nothing else in the pool is competing with.
+  // Everything the caller's own filtering already decided still holds: this
+  // only ever sees candidates that survived the pool, profile, capability,
+  // context, credential and loop guards, and it can never reach a route the
+  // request was not already allowed to use.
+  emergencyFallback(
+    profile: MatrixProfile.ProfileID,
+    candidates: readonly MatrixCatalog.Candidate[],
+    isAvailable: Available,
+    avoidInfrastructureIds: ReadonlySet<string> = new Set(),
+  ): Selection | undefined {
+    return this.pickFallback(
+      profile,
+      this.eligibleForEmergency(profile, candidates, isAvailable),
+      avoidInfrastructureIds,
+    )
+  }
+
+  // Recording a failure without an error object is an explicit, route-level
+  // failure assertion: there is no upstream response to classify, so the scope
+  // cannot be inferred and the caller's cooldown applies to this route alone.
+  // Inference stays reserved for a real error, so a request- or
+  // credential-scoped error still cannot poison route health, and a route-level
+  // default must not take a shared infrastructure (or its sibling routes) down.
   recordFailure(
     candidate: MatrixCatalog.Candidate,
     cooldownMs: number,
     error?: Omit<CandidateError, "at">,
-    scope: MatrixProvider.FailureScope = failureScope(error),
+    scope: MatrixProvider.FailureScope = error === undefined ? "route" : failureScope(error),
   ): void {
     if (scope === "credential" || scope === "request") return
     const current = this.states.get(candidate.id) ?? freshState

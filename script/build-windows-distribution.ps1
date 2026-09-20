@@ -338,8 +338,8 @@ Get-ChildItem -LiteralPath $omniRouteStage -Filter '.env' -File -Recurse -Force 
 Remove-MatrixNonRuntimeFiles -TargetDir (Join-Path $omniRouteStage "app\node_modules")
 
 
-$standardZip = Join-Path $release "Matrix-Code-Windows-x64.zip"
-$portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable-v$MatrixVersion-RC.zip"
+$standardZip = Join-Path $release "Matrix-Code-Windows-x64-v$MatrixVersion.zip"
+$portableZip = Join-Path $release "Matrix-Code-Windows-x64-Portable-v$MatrixVersion.zip"
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 if (Test-Path -LiteralPath $standardZip) { Remove-Item -LiteralPath $standardZip -Force }
 if (Test-Path -LiteralPath $portableZip) { Remove-Item -LiteralPath $portableZip -Force }

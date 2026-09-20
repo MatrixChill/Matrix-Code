@@ -2429,6 +2429,10 @@ export type MatrixRouterCandidateFailure = {
   at: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
 }
 
+// Regeneration currently reproduces these four fields from
+// MatrixRouterService.RouterCandidateState; they were missing from the last
+// generated output, so a client mirroring this snapshot into
+// MatrixRouter.CandidateState could not satisfy its required counters.
 export type MatrixRouterCandidateState = {
   id: string
   provider: string
@@ -2436,6 +2440,10 @@ export type MatrixRouterCandidateState = {
   health: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
   cooldownUntil: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
   recentFailures: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  successes: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  failures: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  latencyMs?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  disabledReason?: "model_not_supported" | "payment_required"
   lastError?: MatrixRouterCandidateFailure
 }
 

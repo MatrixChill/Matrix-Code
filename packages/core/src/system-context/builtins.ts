@@ -8,6 +8,7 @@ import { InstructionContext } from "../instruction-context"
 import { SystemContextRegistry } from "./registry"
 import { FSUtil } from "../fs-util"
 import { Global } from "../global"
+import { Shell } from "../shell"
 
 const builtIns = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -19,6 +20,9 @@ const builtIns = Layer.effectDiscard(
       `  Workspace root folder: ${location.project.directory}`,
       `  Is directory a git repo: ${location.vcs?.type === "git" ? "yes" : "no"}`,
       `  Platform: ${process.platform}`,
+      // Names the shell the agent's shell tool will actually run, so a model
+      // does not send POSIX command lines to a Windows shell.
+      Shell.environmentLine(),
       "</env>",
     ].join("\n")
     const context = SystemContext.combine([

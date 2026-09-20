@@ -5,7 +5,7 @@
 .DESCRIPTION
   Portable launcher that resolves all paths relative to its own location.
   Works in restricted Windows environments where cmd.exe may be blocked by
-  administrator policy. matrix.cmd launches this script invisibly, so the only
+  administrator policy. With no arguments, matrix.cmd launches this script invisibly, so the only
   window the user sees is the Matrix Code TUI, opened in its own window. It
   owns the lifecycle of two optional local services that run in the background:
 
@@ -41,8 +41,9 @@
   start are never killed.
 
 .NOTES
-  matrix.cmd delegates here and runs this script with a hidden window; the
+  Without arguments, matrix.cmd runs this script with a hidden window; the
   Matrix Code TUI is then started visibly as the single user-facing window.
+  CLI arguments instead keep the process and its output attached to the caller.
   Does not use execution-policy flags, never weakens machine security controls,
   requires no admin privileges, no npm install, no global Node dependency.
 #>
@@ -937,14 +938,15 @@ try {
   }
 
   # --- Matrix TUI -----------------------------------------------------------
-  # A manually invoked matrix.ps1 keeps the TUI in the current console so the
-  # user's font, window and buffer remain attached to the same host. matrix.cmd
-  # explicitly requests a Normal child window because its PowerShell process is
-  # hidden; redirected automation uses a Hidden child unless overridden.
+  # CLI arguments always keep stdout/stderr in the caller's console, including
+  # redirected invocation. Only zero-argument desktop launches request a new
+  # Normal TUI window while the orchestrator is hidden.
   $tuiWindow = $env:MATRIX_TUI_WINDOW
-  $tuiInCurrentConsole = (-not $tuiWindow) -and (-not [Console]::IsOutputRedirected)
+  $tuiInCurrentConsole = (@($args).Count -gt 0) -or ((-not $tuiWindow) -and (-not [Console]::IsOutputRedirected))
+  # Native argv quoting: preserve literal quotes and backslashes before a
+  # quote or the closing delimiter, rather than PowerShell quote doubling.
   $tuiArgString = (@($args) | ForEach-Object {
-    if ($_ -match '\s') { "`"$($_.Replace('"', '""'))`"" } else { $_ }
+    if ($_ -match '[\s"]') { '"' + ($_ -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"' } else { $_ }
   }) -join ' '
 
   if ($tuiInCurrentConsole) {
@@ -960,6 +962,9 @@ try {
       Stop-Process -Id $tuiProcess.Id -Force -ErrorAction SilentlyContinue
       throw
     }
+    # Retain the process handle so Windows PowerShell can read ExitCode after
+    # a short-lived CLI command exits.
+    $null = $tuiProcess.Handle
     $tuiProcess.WaitForExit()
     $matrixExit = $tuiProcess.ExitCode
   } else {
@@ -976,6 +981,7 @@ try {
       Stop-Process -Id $tuiProcess.Id -Force -ErrorAction SilentlyContinue
       throw
     }
+    $null = $tuiProcess.Handle
     $tuiProcess.WaitForExit()
     $matrixExit = $tuiProcess.ExitCode
   }
